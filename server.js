@@ -12,7 +12,15 @@ const handler = app.getRequestHandler();
 app.prepare().then(() => {
   const httpServer = createServer(handler);
 
-  const io = new Server(httpServer);
+  const io = new Server(httpServer, {
+    cors: {
+      origin: process.env.ALLOWED_ORIGINS
+        ? process.env.ALLOWED_ORIGINS.split(",")
+        : "*",
+      methods: ["GET", "POST"],
+      credentials: true
+    }
+  });
 
   // In-memory room store: roomCode -> array of { id, name, isHost }
   const rooms = {};

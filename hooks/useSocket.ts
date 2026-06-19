@@ -8,7 +8,14 @@ export const useSocket = () => {
 
   useEffect(() => {
     if (!socketInstance) {
-      socketInstance = io(); // Defaults to same domain/port
+      const serverUrl = process.env.NEXT_PUBLIC_SOCKET_SERVER_URL || "";
+      if (serverUrl) {
+        socketInstance = io(serverUrl, {
+          transports: ["websocket", "polling"],
+        });
+      } else {
+        socketInstance = io(); // Defaults to same domain/port
+      }
     }
     setSocket(socketInstance);
 
