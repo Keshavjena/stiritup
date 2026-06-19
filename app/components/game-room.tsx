@@ -37,80 +37,75 @@ export function GameRoom({
   const activeGame = games.find((g) => g.id === selectedGame) || games[0]
 
   return (
-    <div className="min-h-screen bg-[#1c1c1c] text-[#e8e5dc] font-sans selection:bg-[#8be8e5] selection:text-black relative overflow-hidden">
-      {/* Background Shapes */}
-      <div className="absolute top-[-20%] right-[-10%] w-[60vw] h-[60vw] bg-[#8be8e5] rounded-full mix-blend-screen filter blur-[120px] opacity-20"></div>
-      <div className="absolute bottom-[-20%] left-[-10%] w-[50vw] h-[50vw] bg-[#c9a7f1] rounded-full mix-blend-screen filter blur-[100px] opacity-20 animate-pulse"></div>
-
-      <header className="relative z-10 p-6 lg:p-12 flex justify-between items-center">
-        <Button variant="ghost" onClick={onLeaveRoom} className="text-[#e8e5dc] hover:bg-white/10 hover:text-white rounded-full">
-          <ArrowLeft className="w-5 h-5 mr-2" /> Leave
+    <div className="min-h-screen bg-neutral-950 text-zinc-100 font-sans selection:bg-zinc-800 selection:text-white overflow-x-hidden relative flex flex-col justify-between">
+      
+      <header className="relative z-10 py-3 px-6 border-b border-zinc-900 bg-neutral-950/80 backdrop-blur-sm flex justify-between items-center">
+        <Button variant="ghost" onClick={onLeaveRoom} className="rounded-lg border border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-900 h-8 px-3 text-[9px] uppercase tracking-wider">
+          <ArrowLeft className="w-4 h-4 mr-1.5" /> Leave
         </Button>
       </header>
 
-      <main className="relative z-10 max-w-6xl mx-auto px-6 flex flex-col lg:flex-row gap-8 items-start min-h-[70vh] pb-12">
+      <main className="relative z-10 max-w-6xl mx-auto px-6 flex flex-col lg:flex-row gap-8 items-start min-h-[70vh] py-8 w-full flex-1">
         {/* Left Column: Room Code & Selected Game Details */}
-        <div className="flex-1 w-full text-center lg:text-left flex flex-col gap-6">
+        <div className="flex-1 w-full text-center lg:text-left flex flex-col gap-5">
           <div>
-            <h2 className="text-xl font-serif italic text-[#f1a7c5] mb-2">Room Code</h2>
+            <h2 className="text-zinc-500 font-bold uppercase text-[10px] tracking-wider mb-1">Room Code</h2>
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
+              initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              className="text-[3.5rem] sm:text-[6rem] lg:text-[7.5rem] font-display font-bold tracking-tighter leading-none mb-4"
+              className="text-5xl sm:text-6xl font-extrabold tracking-tight text-white mb-3"
             >
               {roomCode}
             </motion.div>
             <Button
               onClick={copyRoomCode}
-              className={`rounded-full h-12 px-6 font-display uppercase tracking-widest font-bold transition-all text-xs ${
-                copied ? "bg-green-400 text-black" : "bg-white text-black hover:bg-[#e8e5dc]"
+              className={`rounded-lg h-9 px-4 font-bold uppercase text-[9px] tracking-wider transition-colors border-0 ${
+                copied ? "bg-green-600 text-white" : "bg-zinc-100 text-black hover:bg-zinc-200"
               }`}
             >
-              {copied ? "Copied!" : <><Copy className="w-4 h-4 mr-2" /> Copy Code</>}
+              {copied ? "Copied!" : <><Copy className="w-3.5 h-3.5 mr-1.5" /> Copy Code</>}
             </Button>
           </div>
 
           {/* Current Selected Game Details Card */}
-          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2rem] p-6 text-left max-w-xl shadow-2xl">
-            <span className="text-[#f1a7c5] font-serif italic text-xs">Selected Game:</span>
-            <div className="flex items-center gap-4 mt-2 mb-3">
-              <span className="text-4xl">{activeGame.icon}</span>
+          <div className="bg-zinc-900/30 border border-zinc-800 rounded-xl p-5 text-left max-w-xl shadow-xl">
+            <span className="text-zinc-500 uppercase font-bold text-[9px] tracking-wider block mb-1">Selected Game</span>
+            <div className="flex items-center gap-4">
               <div>
-                <h4 className="font-display font-bold text-2xl uppercase tracking-tighter text-white">{activeGame.name}</h4>
+                <h4 className="font-bold text-lg uppercase tracking-tight text-white">{activeGame.name}</h4>
                 {activeGame.mature && (
-                  <span className="bg-red-500/10 text-red-400 text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full border border-red-500/20 mt-1 inline-block">
+                  <span className="bg-red-950/40 text-red-400 text-[8px] font-extrabold uppercase px-2 py-0.5 rounded-md border border-red-900/30 mt-1 inline-block">
                     18+ Only
                   </span>
                 )}
               </div>
             </div>
-            <p className="text-sm text-white/70 leading-relaxed font-medium">{activeGame.description}</p>
+            <p className="text-xs text-zinc-400 font-normal leading-relaxed mt-2">{activeGame.description}</p>
           </div>
 
-          {/* Host Game Selector Carousel */}
+          {/* Host Game Selector Grid (Static Grid, No Scrolls) */}
           {isHost && (
             <div className="w-full max-w-xl text-left">
-              <h3 className="font-display font-bold uppercase tracking-tighter text-sm text-[#8be8e5] mb-3">
+              <h3 className="font-bold uppercase text-[10px] tracking-wider text-zinc-500 mb-2">
                 Change Selected Game
               </h3>
-              <div className="flex gap-4 overflow-x-auto pb-4 scrollbar-thin scrollbar-thumb-white/10">
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-2 w-full">
                 {games.map((game) => (
                   <motion.div
                     key={game.id}
-                    whileHover={{ scale: 1.02 }}
+                    whileHover={{ scale: 1.01 }}
                     onClick={() => onSelectGame(game.id)}
-                    className={`flex-shrink-0 w-48 relative overflow-hidden cursor-pointer rounded-2xl p-4 flex flex-col justify-end transition-all border-2 ${
+                    className={`cursor-pointer rounded-xl p-3 flex flex-col justify-between transition-all border ${
                       selectedGame === game.id
-                        ? "border-[#8be8e5] bg-white/10 shadow-lg shadow-[#8be8e5]/10"
-                        : "border-white/10 bg-white/5 hover:bg-white/10"
+                        ? "border-zinc-200 bg-zinc-900/40 shadow-sm"
+                        : "border-zinc-800 bg-zinc-900/10 hover:border-zinc-700"
                     }`}
                   >
-                    <div className="absolute top-3 right-3 text-2xl">{game.icon}</div>
-                    <div className="mt-8">
-                      <h5 className="font-display font-bold text-sm tracking-tight uppercase leading-tight text-white line-clamp-1">
+                    <div>
+                      <h5 className="font-bold text-[11px] tracking-wide uppercase leading-tight text-white line-clamp-1">
                         {game.name}
                       </h5>
-                      <span className="text-[10px] text-white/50">{game.duration}</span>
+                      <span className="text-[8px] font-bold text-zinc-500 uppercase tracking-wider mt-0.5 block">{game.duration}</span>
                     </div>
                   </motion.div>
                 ))}
@@ -120,31 +115,31 @@ export function GameRoom({
         </div>
 
         {/* Right Column: Player Roster & Actions */}
-        <div className="w-full lg:max-w-md bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2rem] p-8 shadow-2xl">
-          <div className="flex justify-between items-end mb-8 border-b border-white/10 pb-4">
-            <h3 className="text-3xl font-display font-bold uppercase tracking-tighter">
+        <div className="w-full lg:max-w-sm bg-zinc-900/30 border border-zinc-800 rounded-2xl p-6 shadow-xl">
+          <div className="flex justify-between items-end mb-4 border-b border-zinc-900 pb-3">
+            <h3 className="text-sm font-bold uppercase tracking-wider text-zinc-300">
               Players
             </h3>
-            <span className="text-2xl font-serif text-white/40">({players.length})</span>
+            <span className="text-xs font-mono text-zinc-500">({players.length})</span>
           </div>
 
-          <div className="space-y-4 mb-8 max-h-[35vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-white/10">
+          <div className="space-y-2 mb-6">
             {players.map((player, index) => (
               <motion.div
-                initial={{ opacity: 0, x: 20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: index * 0.1 }}
+                initial={{ opacity: 0, y: 5 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ delay: index * 0.05 }}
                 key={index}
-                className="flex items-center justify-between p-4 bg-white/10 rounded-2xl"
+                className="flex items-center justify-between p-2.5 bg-zinc-900/50 border border-zinc-800 rounded-xl"
               >
-                <div className="flex items-center space-x-4">
-                  <div className="w-10 h-10 bg-gradient-to-br from-[#8be8e5] to-[#c9a7f1] rounded-full flex items-center justify-center text-black font-display font-bold text-lg">
+                <div className="flex items-center space-x-3">
+                  <div className="w-7 h-7 bg-zinc-800 border border-zinc-700 rounded-full flex items-center justify-center text-zinc-300 font-bold text-xs">
                     {player.charAt(0).toUpperCase()}
                   </div>
-                  <span className="font-display font-medium text-base uppercase tracking-wider">{player}</span>
+                  <span className="font-bold text-xs uppercase tracking-wider text-zinc-200">{player}</span>
                 </div>
                 {index === 0 && (
-                  <span className="bg-[#f1a7c5] text-black text-[10px] font-bold uppercase px-2.5 py-0.5 rounded-full">
+                  <span className="bg-zinc-800 border border-zinc-700 text-zinc-400 text-[8px] font-bold uppercase px-2 py-0.5 rounded-md">
                     Host
                   </span>
                 )}
@@ -152,7 +147,7 @@ export function GameRoom({
             ))}
 
             {players.length < 2 && (
-              <div className="p-4 border-2 border-dashed border-white/20 rounded-2xl flex items-center justify-center text-white/40 font-display uppercase tracking-widest text-xs">
+              <div className="p-3 border border-dashed border-zinc-800 rounded-xl flex items-center justify-center text-zinc-600 font-bold uppercase tracking-wider text-[9px]">
                 Waiting for players...
               </div>
             )}
@@ -162,17 +157,21 @@ export function GameRoom({
             <Button
               onClick={onStartGame}
               disabled={players.length < 2}
-              className="w-full h-16 rounded-xl bg-[#8be8e5] hover:bg-[#68d8d5] text-black font-display uppercase tracking-widest font-bold text-base disabled:opacity-50 disabled:bg-white/20 disabled:text-white btn-press"
+              className="w-full h-11 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-black font-bold uppercase tracking-wider text-xs disabled:opacity-40 disabled:bg-zinc-850 disabled:text-zinc-600 border-0 transition-all"
             >
               Start Game
             </Button>
           ) : (
-            <div className="w-full h-16 rounded-xl bg-white/5 border border-white/10 flex items-center justify-center text-white/60 font-display uppercase tracking-widest font-bold text-sm">
+            <div className="w-full h-11 rounded-xl bg-zinc-900/50 border border-zinc-800 flex items-center justify-center text-zinc-500 font-bold uppercase tracking-wider text-[10px]">
               Waiting for Host...
             </div>
           )}
         </div>
       </main>
+
+      <footer className="relative z-10 text-center py-4 border-t border-zinc-900 bg-neutral-950">
+        <p className="text-[9px] text-zinc-600 uppercase tracking-widest font-bold">Stir It Up Party Engine © 2026</p>
+      </footer>
     </div>
   )
 }

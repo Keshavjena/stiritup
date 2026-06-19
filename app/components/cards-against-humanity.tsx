@@ -71,6 +71,14 @@ export function CardsAgainstHumanity({
     { text: "What's fun until it gets weird?", blanks: 1 },
     { text: "What's the most awkward thing to say at a wedding?", blanks: 1 },
     { text: "What ruins a first date?", blanks: 1 },
+    { text: "What's my secret bedroom superpower?", blanks: 1 },
+    { text: "In my previous relationship, what was the biggest red flag?", blanks: 1 },
+    { text: "What did I find in my partner's bedside drawer?", blanks: 1 },
+    { text: "I never expected to find _ in my parents' bedroom.", blanks: 1 },
+    { text: "What's the best icebreaker on a first date?", blanks: 1 },
+    { text: "My weirdest kink involves _.", blanks: 1 },
+    { text: "What's the worst thing to say right after sex?", blanks: 1 },
+    { text: "A successful relationship is 10% love and 90% _.", blanks: 1 },
   ]
 
   const whiteCards: WhiteCard[] = [
@@ -124,6 +132,22 @@ export function CardsAgainstHumanity({
     { text: "Bling" },
     { text: "Getting really high" },
     { text: "Crystal meth" },
+    { text: "My partner's parents walking in" },
+    { text: "An uncomfortably intense mommy/daddy kink" },
+    { text: "A secret OnlyFans account" },
+    { text: "Snooping through browser history" },
+    { text: "A hate-fuck session" },
+    { text: "Consensual non-consent (CNC) roleplay" },
+    { text: "Texting my ex at 3 AM" },
+    { text: "A pregnancy scare on purpose" },
+    { text: "Roleplay that would ruin my reputation" },
+    { text: "A backup partner just in case" },
+    { text: "A massive sugar arrangement" },
+    { text: "Using ice and temperature play in bed" },
+    { text: "Sucking whipped cream off someone's leg" },
+    { text: "An awkward friends-with-benefits deal" },
+    { text: "Degradation talk in bed" },
+    { text: "Sleeping with my boss for a promotion" },
   ]
 
   useEffect(() => {

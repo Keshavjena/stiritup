@@ -20,7 +20,8 @@ import {
   Plus,
   Minus,
   Crown,
-  Wine
+  Wine,
+  Sparkles
 } from "lucide-react"
 import { Trophy as TrophyIcon } from "lucide-react"
 import { Switch } from "@/components/ui/switch"
@@ -41,6 +42,11 @@ interface GameComponentProps {
   soundEnabled: boolean
   playSound: (type: "click" | "success" | "transition") => void
   matureContent: boolean
+}
+
+function getTimerDuration(gameId: string): number {
+  if (gameId === "rapid-fire") return 10
+  return 30
 }
 
 export function GameComponent({
@@ -66,6 +72,15 @@ export function GameComponent({
   const [playerScores, setPlayerScores] = useState<Record<string, number>>({})
   const [showScoring, setShowScoring] = useState(false)
   const [gameMode, setGameMode] = useState<"standard" | "challenge" | "spicy">("standard")
+
+  const [aiEnabled, setAiEnabled] = useState(false)
+  const [isLoading, setIsLoading] = useState(false)
+  const [bottleRotation, setBottleRotation] = useState(0)
+  const [isSpinning, setIsSpinning] = useState(false)
+  const [spinTargetPlayer, setSpinTargetPlayer] = useState("")
+  const [kmkSelections, setKmkSelections] = useState<Record<string, string>>({ kiss: "", marry: "", kill: "" })
+  const [customDeck, setCustomDeck] = useState<string[]>([])
+  const [newCustomPrompt, setNewCustomPrompt] = useState("")
 
   const [sips, setSips] = useState<Record<string, number>>({})
   const [showLeaderboard, setShowLeaderboard] = useState(false)
@@ -114,21 +129,58 @@ export function GameComponent({
   }, [gameId])
 
   useEffect(() => {
-    const content = getGameContent(gameId, matureContent, gameMode)
-    setGameContent(content)
+    const fetchQuestions = async () => {
+      if (roomCode && !isHost) {
+        setIsLoading(true)
+        return
+      }
+
+      setIsLoading(true)
+      let fetchedQuestions: string[] = []
+      try {
+        const res = await fetch(`/api/questions?gameId=${gameId}&mature=${matureContent}&mode=${gameMode}&ai=${aiEnabled}`)
+        if (res.ok) {
+          const data = await res.json()
+          if (data.questions && data.questions.length > 0) {
+            fetchedQuestions = data.questions
+          }
+        }
+      } catch (err) {
+        console.error("Error fetching questions from API:", err)
+      }
+      
+      if (fetchedQuestions.length === 0) {
+        fetchedQuestions = getGameContent(gameId, matureContent, gameMode)
+      }
+
+      if (gameId === "custom-game") {
+        setCustomDeck(fetchedQuestions)
+      }
+
+      setGameContent(fetchedQuestions)
+      if (fetchedQuestions.length > 0) {
+        setCurrentContent(fetchedQuestions[0])
+      }
+      setContentIndex(0)
+      setIsLoading(false)
+
+      if (roomCode && isHost && socket && fetchedQuestions.length > 0) {
+        socket.emit("game-action", roomCode, {
+          type: "sync-questions",
+          payload: { gameContent: fetchedQuestions, currentContent: fetchedQuestions[0] }
+        })
+      }
+    }
+
+    fetchQuestions()
+
     // Initialize player scores
     const scores: Record<string, number> = {}
     players.forEach((player) => {
       scores[player] = 0
     })
     setPlayerScores(scores)
-  }, [gameId, matureContent, gameMode, players])
-
-  useEffect(() => {
-    if (gameContent.length > 0) {
-      setCurrentContent(gameContent[0])
-    }
-  }, [gameContent])
+  }, [gameId, matureContent, gameMode, players, aiEnabled, isHost, roomCode, socket])
 
   useEffect(() => {
     if (!socket) return
@@ -138,9 +190,10 @@ export function GameComponent({
         setGameMode(action.payload.gameMode)
         setTimerEnabled(action.payload.timerEnabled)
         setShowScoring(action.payload.showScoring)
+        setAiEnabled(action.payload.aiEnabled || false)
         setGameStarted(true)
         if (action.payload.timerEnabled) {
-          setTimeLeft(30)
+          setTimeLeft(getTimerDuration(gameIdRef.current))
           setTimerActive(true)
         }
       } else if (action.type === "next-turn") {
@@ -168,27 +221,82 @@ export function GameComponent({
         setVotes({})
         setHasVoted(false)
         setVotingReveal(false)
+        setKmkSelections({ kiss: "", marry: "", kill: "" })
+        setSpinTargetPlayer("")
+        setBottleRotation(0)
         if (timerEnabled) {
-          setTimeLeft(30)
+          setTimeLeft(getTimerDuration(activeGameId))
           setTimerActive(true)
         }
       } else if (action.type === "skip-content") {
         setContentIndex(action.payload.contentIndex)
         setCurrentContent(action.payload.currentContent)
+        setKmkSelections({ kiss: "", marry: "", kill: "" })
+        setSpinTargetPlayer("")
+        setBottleRotation(0)
       } else if (action.type === "shuffle-content") {
         setGameContent(action.payload.gameContent)
         setCurrentContent(action.payload.currentContent)
         setContentIndex(0)
+        setKmkSelections({ kiss: "", marry: "", kill: "" })
+        setSpinTargetPlayer("")
+        setBottleRotation(0)
       } else if (action.type === "award-point") {
         setPlayerScores(action.payload.playerScores)
       } else if (action.type === "toggle-timer") {
         setTimerActive(action.payload.timerActive)
         setTimeLeft(action.payload.timeLeft)
       } else if (action.type === "reset-timer") {
-        setTimeLeft(30)
+        setTimeLeft(getTimerDuration(gameIdRef.current))
         setTimerActive(false)
       } else if (action.type === "reveal-votes") {
         setVotingReveal(true)
+      } else if (action.type === "end-game") {
+        if (currentContentRef.current) {
+          const prevVotes = votesRef.current
+          const prevPlayers = playersRef.current
+          const activeGameId = gameIdRef.current
+          
+          const tallies: Record<string, number> = {}
+          prevPlayers.forEach(p => tallies[p] = 0)
+          Object.values(prevVotes).forEach(candidate => {
+            tallies[candidate] = (tallies[candidate] || 0) + 1
+          })
+
+          const lastItem = {
+            question: currentContentRef.current,
+            currentPlayer: prevPlayers[currentPlayerRef.current],
+            votes: activeGameId === "whos-most-likely" ? { ...prevVotes } : undefined,
+            tallies: activeGameId === "whos-most-likely" ? tallies : undefined
+          }
+
+          setGameHistory((prev) => {
+            if (prev.length > 0 && prev[prev.length - 1].question === currentContentRef.current) {
+              return prev
+            }
+            return [...prev, lastItem]
+          })
+        }
+        setShowSummary(true)
+      } else if (action.type === "spin-bottle") {
+        setBottleRotation(action.payload.targetAngle)
+        setIsSpinning(true)
+        setSpinTargetPlayer("")
+        playSound("transition")
+        setTimeout(() => {
+          setIsSpinning(false)
+          setSpinTargetPlayer(playersRef.current[action.payload.targetIdx])
+          playSound("success")
+        }, 3000)
+      } else if (action.type === "sync-questions") {
+        setGameContent(action.payload.gameContent)
+        setCurrentContent(action.payload.currentContent)
+        setContentIndex(0)
+        setIsLoading(false)
+      } else if (action.type === "add-custom-prompt") {
+        setCustomDeck(prev => [...prev, action.payload])
+      } else if (action.type === "remove-custom-prompt") {
+        setCustomDeck(prev => prev.filter((_, idx) => idx !== action.payload))
       }
     })
 
@@ -248,7 +356,7 @@ export function GameComponent({
             setTimerActive(false)
             playSound("transition")
             nextTurn()
-            return 30
+            return getTimerDuration(gameIdRef.current)
           }
           return prev - 1
         })
@@ -259,14 +367,56 @@ export function GameComponent({
 
   const startGame = () => {
     playSound("success")
+    
+    let activeContent = gameContent
+    if (gameId === "custom-game") {
+      activeContent = customDeck
+      setGameContent(customDeck)
+      if (customDeck.length > 0) {
+        setCurrentContent(customDeck[0])
+      }
+    }
+    
     setGameStarted(true)
     if (timerEnabled) {
+      setTimeLeft(getTimerDuration(gameId))
       setTimerActive(true)
     }
     if (socket && roomCode) {
       socket.emit("game-action", roomCode, {
         type: "start-game",
-        payload: { gameMode, matureContent, timerEnabled, showScoring }
+        payload: { gameMode, matureContent, timerEnabled, showScoring, aiEnabled }
+      })
+      if (gameId === "custom-game" && customDeck.length > 0) {
+        socket.emit("game-action", roomCode, {
+          type: "sync-questions",
+          payload: { gameContent: customDeck, currentContent: customDeck[0] }
+        })
+      }
+    }
+  }
+
+  const handleAddCustomPrompt = () => {
+    if (!newCustomPrompt.trim()) return
+    const text = newCustomPrompt.trim()
+    setCustomDeck(prev => [...prev, text])
+    setNewCustomPrompt("")
+    
+    if (socket && roomCode) {
+      socket.emit("game-action", roomCode, {
+        type: "add-custom-prompt",
+        payload: text
+      })
+    }
+  }
+
+  const handleRemoveCustomPrompt = (index: number) => {
+    setCustomDeck(prev => prev.filter((_, idx) => idx !== index))
+    
+    if (socket && roomCode) {
+      socket.emit("game-action", roomCode, {
+        type: "remove-custom-prompt",
+        payload: index
       })
     }
   }
@@ -289,9 +439,19 @@ export function GameComponent({
     }
     setGameHistory((prev) => [...prev, historyItem])
 
+    const nextContentIndex = contentIndex + 1
+    if (nextContentIndex >= gameContent.length) {
+      handleEndGame()
+      if (socket && roomCode) {
+        socket.emit("game-action", roomCode, {
+          type: "end-game"
+        })
+      }
+      return
+    }
+
     const nextPlayer = (currentPlayer + 1) % players.length
-    const nextContentIndex = (contentIndex + 1) % gameContent.length
-    const nextContentStr = gameContent[(contentIndex + 1) % gameContent.length]
+    const nextContentStr = gameContent[nextContentIndex]
     
     setCurrentPlayer(nextPlayer)
     setContentIndex(nextContentIndex)
@@ -299,6 +459,9 @@ export function GameComponent({
     setVotes({})
     setHasVoted(false)
     setVotingReveal(false)
+    setKmkSelections({ kiss: "", marry: "", kill: "" })
+    setSpinTargetPlayer("")
+    setBottleRotation(0)
 
     if (socket && roomCode) {
       socket.emit("game-action", roomCode, {
@@ -308,17 +471,30 @@ export function GameComponent({
     }
 
     if (timerEnabled) {
-      setTimeLeft(30)
+      setTimeLeft(getTimerDuration(gameId))
       setTimerActive(true)
     }
   }
 
   const skipContent = () => {
     playSound("click")
-    const newIndex = (contentIndex + Math.floor(Math.random() * 10) + 1) % gameContent.length
+    const newIndex = contentIndex + 1
+    if (newIndex >= gameContent.length) {
+      handleEndGame()
+      if (socket && roomCode) {
+        socket.emit("game-action", roomCode, {
+          type: "end-game"
+        })
+      }
+      return
+    }
+
     const nextContentStr = gameContent[newIndex]
     setContentIndex(newIndex)
     setCurrentContent(nextContentStr)
+    setKmkSelections({ kiss: "", marry: "", kill: "" })
+    setSpinTargetPlayer("")
+    setBottleRotation(0)
 
     if (socket && roomCode) {
       socket.emit("game-action", roomCode, {
@@ -334,6 +510,9 @@ export function GameComponent({
     setGameContent(shuffled)
     setCurrentContent(shuffled[0])
     setContentIndex(0)
+    setKmkSelections({ kiss: "", marry: "", kill: "" })
+    setSpinTargetPlayer("")
+    setBottleRotation(0)
 
     if (socket && roomCode) {
       socket.emit("game-action", roomCode, {
@@ -347,9 +526,9 @@ export function GameComponent({
     playSound("click")
     const nextActive = !timerActive
     setTimerActive(nextActive)
-    const nextTimeLeft = !nextActive && timerEnabled ? 30 : timeLeft
+    const nextTimeLeft = !nextActive && timerEnabled ? getTimerDuration(gameId) : timeLeft
     if (!nextActive && timerEnabled) {
-      setTimeLeft(30)
+      setTimeLeft(getTimerDuration(gameId))
     }
 
     if (socket && roomCode) {
@@ -362,7 +541,7 @@ export function GameComponent({
 
   const resetTimer = () => {
     playSound("click")
-    setTimeLeft(30)
+    setTimeLeft(getTimerDuration(gameId))
     setTimerActive(false)
 
     if (socket && roomCode) {
@@ -370,6 +549,59 @@ export function GameComponent({
         type: "reset-timer"
       })
     }
+  }
+
+  const spinBottle = () => {
+    if (isSpinning) return
+    setIsSpinning(true)
+    playSound("transition")
+    
+    const otherPlayers = players.filter((_, idx) => idx !== currentPlayer)
+    const target = otherPlayers.length > 0 
+      ? otherPlayers[Math.floor(Math.random() * otherPlayers.length)]
+      : players[Math.floor(Math.random() * players.length)]
+      
+    setSpinTargetPlayer("")
+    
+    const targetIdx = players.indexOf(target)
+    const degreesPerPlayer = 360 / players.length
+    const targetAngle = 1800 + (targetIdx * degreesPerPlayer)
+    
+    setBottleRotation(targetAngle)
+    
+    if (socket && roomCode) {
+      socket.emit("game-action", roomCode, {
+        type: "spin-bottle",
+        payload: { targetIdx, targetAngle }
+      })
+    }
+    
+    setTimeout(() => {
+      setIsSpinning(false)
+      setSpinTargetPlayer(target)
+      playSound("success")
+    }, 3000)
+  }
+
+  const getKMKOptions = () => {
+    const kmkMatch = currentContent.match(/Choose between:?\s*(.+?),\s*(.+?),\s*and\s*(.+?)\s*for Kiss/i) || currentContent.match(/Choose between:?\s*(.+?),\s*(.+?),\s*and\s*(.+?)\./i)
+    if (kmkMatch) {
+      return [kmkMatch[1].trim(), kmkMatch[2].trim(), kmkMatch[3].trim()]
+    }
+    return null
+  }
+
+  const selectKMK = (option: string, role: "kiss" | "marry" | "kill") => {
+    setKmkSelections(prev => {
+      const updated = { ...prev }
+      Object.keys(updated).forEach(k => {
+        if (updated[k] === option) {
+          updated[k] = ""
+        }
+      })
+      updated[role] = option
+      return updated
+    })
   }
 
   const awardPoint = (playerName: string) => {
@@ -463,8 +695,23 @@ export function GameComponent({
   }
 
   const triggerReaction = (emoji: string) => {
+    const reactionId = Math.random().toString()
+    const newReact = { emoji, id: reactionId }
     if (socket && roomCode) {
-      socket.emit("send-reaction", roomCode, { emoji, id: Math.random().toString() })
+      socket.emit("send-reaction", roomCode, newReact)
+    } else {
+      // Local fallback for local play
+      const id = reactionId
+      const newReaction = {
+        id,
+        emoji: emoji,
+        x: Math.floor(Math.random() * 60) + 20,
+        y: 100
+      }
+      setReactions((prev) => [...prev, newReaction])
+      setTimeout(() => {
+        setReactions((prev) => prev.filter((r) => r.id !== id))
+      }, 3000)
     }
   }
 
@@ -478,7 +725,7 @@ export function GameComponent({
   }
 
   // Special game components
-  const specialGameComponents = {
+  const specialGameComponents: Record<string, any> = {
     "cards-against-humanity": CardsAgainstHumanity,
     "indian-drinking-game": IndianDrinkingGame,
     "drama-dol": DramaDol,
@@ -500,127 +747,168 @@ export function GameComponent({
 
   if (!gameStarted) {
     return (
-      <div className="min-h-screen bg-[#1c1c1c] text-[#e8e5dc] font-sans selection:bg-[#8be8e5] selection:text-black relative overflow-hidden flex items-center justify-center py-12">
-        {/* Background Shapes */}
-        <div className="absolute top-[-20%] right-[-10%] w-[60vw] h-[60vw] bg-[#8be8e5] rounded-full mix-blend-screen filter blur-[120px] opacity-10"></div>
-        <div className="absolute bottom-[-20%] left-[-10%] w-[50vw] h-[50vw] bg-[#c9a7f1] rounded-full mix-blend-screen filter blur-[100px] opacity-15 animate-pulse"></div>
-
-        <div className="container mx-auto px-6 relative z-10">
-          <div className="max-w-2xl mx-auto text-center">
+      <div className="min-h-screen bg-neutral-950 text-zinc-100 font-sans selection:bg-zinc-800 selection:text-white flex flex-col items-center justify-center py-12 w-full">
+        <div className="container mx-auto px-6 relative z-10 w-full max-w-xl">
+          <div className="text-center w-full">
             <Button
               variant="ghost"
               onClick={onBack}
-              className="mb-8 text-[#e8e5dc] hover:bg-white/10 hover:text-white rounded-full h-12 px-6"
+              className="mb-8 text-zinc-400 hover:text-white border border-zinc-800 rounded-lg h-9 px-4 text-xs"
             >
-              <ArrowLeft className="w-5 h-5 mr-2" />
+              <ArrowLeft className="w-4 h-4 mr-1.5" />
               Back to Setup
             </Button>
 
-            <div className="mb-10">
-              <h1 className="text-5xl lg:text-7xl font-display font-bold mb-4 uppercase tracking-tighter leading-none">Ready to Play?</h1>
-              <p className="text-2xl font-serif italic text-[#f1a7c5]">
+            <div className="mb-8">
+              <h1 className="text-3xl font-extrabold mb-2 uppercase tracking-tight text-white">Ready to Play?</h1>
+              <p className="text-sm font-bold uppercase tracking-wider text-zinc-500">
                 {players.length} players ready for {getGameName(gameId)}
               </p>
             </div>
 
-            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2rem] p-8 mb-8 text-left">
-              <h3 className="font-display font-bold uppercase tracking-tighter text-2xl border-b border-white/10 pb-4 mb-6">
+            <div className="bg-zinc-900/30 border border-zinc-800 rounded-2xl p-6 mb-6 text-left w-full shadow-lg">
+              <h3 className="font-bold uppercase tracking-wider text-xs border-b border-zinc-900 pb-3 mb-4 text-zinc-300">
                 Players
               </h3>
-              <div className="flex flex-wrap gap-3">
+              <div className="flex flex-wrap gap-2">
                 {players.map((player, index) => (
                   <Badge
                     key={index}
-                    className={`text-lg px-5 py-2.5 rounded-full font-display uppercase tracking-wider font-semibold border ${
+                    className={`text-xs px-3.5 py-1.5 rounded-lg font-bold uppercase tracking-wider border ${
                       index === currentPlayer
-                        ? "bg-[#8be8e5] text-black border-transparent"
-                        : "bg-white/5 text-[#e8e5dc] border-white/10 hover:bg-white/10"
+                        ? "bg-zinc-100 text-black border-transparent"
+                        : "bg-zinc-900 border-zinc-850 text-zinc-400 hover:text-zinc-200"
                     }`}
                   >
-                    {index === 0 && <Crown className="w-4 h-4 mr-2 text-[#f1a7c5]" />}
+                    {index === 0 && <Crown className="w-3.5 h-3.5 mr-1.5 text-zinc-400" />}
                     {player}
                   </Badge>
                 ))}
               </div>
             </div>
 
-            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2rem] p-8 mb-8 text-left">
-              <h3 className="flex items-center font-display font-bold uppercase tracking-tighter text-2xl border-b border-white/10 pb-4 mb-6">
-                <Settings className="w-5 h-5 mr-2" />
+            {gameId === "custom-game" && (
+              <div className="bg-zinc-900/30 border border-zinc-800 rounded-2xl p-6 mb-6 text-left w-full shadow-lg">
+                <h3 className="font-bold uppercase tracking-wider text-xs border-b border-zinc-900 pb-3 mb-4 text-zinc-300">
+                  Custom Game Deck Builder
+                </h3>
+                <div className="space-y-4">
+                  <div className="flex gap-2">
+                    <input
+                      type="text"
+                      placeholder="Type a custom prompt, rule, or action..."
+                      value={newCustomPrompt}
+                      onChange={(e) => setNewCustomPrompt(e.target.value)}
+                      className="flex-1 bg-zinc-900 border border-zinc-800 rounded-xl px-4 h-10 text-xs text-white placeholder-zinc-650 focus:outline-none focus:border-zinc-700 bg-transparent"
+                      onKeyDown={(e) => {
+                        if (e.key === "Enter") {
+                          handleAddCustomPrompt();
+                        }
+                      }}
+                    />
+                    <Button
+                      onClick={handleAddCustomPrompt}
+                      className="bg-zinc-100 hover:bg-zinc-200 text-black font-bold uppercase text-[10px] px-4 rounded-xl border-0 h-10 transition-colors"
+                    >
+                      Add Prompt
+                    </Button>
+                  </div>
+                  
+                  <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
+                    {customDeck.length === 0 ? (
+                      <p className="text-zinc-650 text-xs font-semibold">Deck is empty. Add custom prompts to start!</p>
+                    ) : (
+                      customDeck.map((promptText, idx) => (
+                        <div key={idx} className="flex justify-between items-center bg-zinc-900/50 p-2.5 rounded-lg border border-zinc-800 text-[11px] font-semibold text-zinc-300">
+                          <span className="truncate flex-1 pr-3 text-left">{promptText}</span>
+                          <Button
+                            variant="ghost"
+                            size="sm"
+                            onClick={() => handleRemoveCustomPrompt(idx)}
+                            className="text-red-500 hover:text-red-400 hover:bg-transparent h-7 px-2 border-0"
+                          >
+                            Remove
+                          </Button>
+                        </div>
+                      ))
+                    )}
+                  </div>
+                  <span className="text-[9px] text-zinc-500 uppercase tracking-wider font-bold block mt-1">Total prompts in deck: {customDeck.length}</span>
+                </div>
+              </div>
+            )}
+
+            <div className="bg-zinc-900/30 border border-zinc-800 rounded-2xl p-6 mb-6 text-left w-full shadow-lg">
+              <h3 className="flex items-center font-bold uppercase tracking-wider text-xs border-b border-zinc-900 pb-3 mb-4 text-zinc-300">
+                <Settings className="w-4 h-4 mr-1.5 text-zinc-500" />
                 Game Settings
               </h3>
-              <div className="space-y-6">
+              <div className="space-y-4">
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <Timer className="w-5 h-5 text-[#8be8e5]" />
-                    <span className="text-lg font-medium">Enable Timer (30s per turn)</span>
+                    <Timer className="w-4 h-4 text-zinc-500" />
+                    <span className="text-sm font-bold uppercase tracking-wider text-zinc-300">Enable Timer (30s per turn)</span>
                   </div>
                   <Switch
                     checked={timerEnabled}
                     onCheckedChange={setTimerEnabled}
                     disabled={!isHost}
-                    className="data-[state=checked]:bg-[#8be8e5]"
+                    className="data-[state=checked]:bg-zinc-100"
                   />
                 </div>
 
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
-                    <TrophyIcon className="w-5 h-5 text-[#c9a7f1]" />
-                    <span className="text-lg font-medium">Enable Scoring</span>
+                    <TrophyIcon className="w-4 h-4 text-zinc-500" />
+                    <span className="text-sm font-bold uppercase tracking-wider text-zinc-300">Enable Scoring</span>
                   </div>
                   <Switch
                     checked={showScoring}
                     onCheckedChange={setShowScoring}
                     disabled={!isHost}
-                    className="data-[state=checked]:bg-[#c9a7f1]"
+                    className="data-[state=checked]:bg-zinc-100"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Sparkles className="w-4 h-4 text-zinc-500" />
+                    <span className="text-sm font-bold uppercase tracking-wider text-zinc-300">Enable Groq AI Questions</span>
+                  </div>
+                  <Switch
+                    checked={aiEnabled}
+                    onCheckedChange={setAiEnabled}
+                    disabled={!isHost}
+                    className="data-[state=checked]:bg-zinc-100"
                   />
                 </div>
 
                 {matureContent && (
-                  <div>
-                    <label className="block text-sm font-medium mb-3 opacity-60">
+                  <div className="pt-2 border-t border-zinc-900">
+                    <label className="block text-[10px] font-bold uppercase tracking-wider mb-2 text-zinc-500">
                       Content Mode
                     </label>
-                    <div className="flex space-x-3">
-                      <Button
-                        variant={gameMode === "standard" ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => isHost && setGameMode("standard")}
-                        disabled={!isHost}
-                        className={`rounded-full h-11 px-6 font-display font-bold uppercase text-xs tracking-wider transition-all ${
-                          gameMode === "standard"
-                            ? "bg-[#8be8e5] text-black border-transparent"
-                            : "border-white/10 text-[#e8e5dc] hover:bg-white/5 bg-transparent"
-                        }`}
-                      >
-                        Standard
-                      </Button>
-                      <Button
-                        variant={gameMode === "challenge" ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => isHost && setGameMode("challenge")}
-                        disabled={!isHost}
-                        className={`rounded-full h-11 px-6 font-display font-bold uppercase text-xs tracking-wider transition-all ${
-                          gameMode === "challenge"
-                            ? "bg-[#c9a7f1] text-black border-transparent"
-                            : "border-white/10 text-[#e8e5dc] hover:bg-white/5 bg-transparent"
-                        }`}
-                      >
-                        Challenge
-                      </Button>
-                      <Button
-                        variant={gameMode === "spicy" ? "default" : "outline"}
-                        size="sm"
-                        onClick={() => isHost && setGameMode("spicy")}
-                        disabled={!isHost}
-                        className={`rounded-full h-11 px-6 font-display font-bold uppercase text-xs tracking-wider transition-all ${
-                          gameMode === "spicy"
-                            ? "bg-[#f1a7c5] text-black border-transparent"
-                            : "border-white/10 text-[#e8e5dc] hover:bg-white/5 bg-transparent"
-                        }`}
-                      >
-                        Spicy
-                      </Button>
+                    <div className="flex space-x-2">
+                      {(["standard", "challenge", "spicy"] as const).map((mode) => {
+                        const active = gameMode === mode
+                        const labels = { standard: "Standard", challenge: "Challenge", spicy: "Spicy" }
+                        return (
+                          <Button
+                            key={mode}
+                            variant={active ? "default" : "outline"}
+                            size="sm"
+                            onClick={() => isHost && setGameMode(mode)}
+                            disabled={!isHost}
+                            className={`rounded-lg h-9 px-4 font-bold uppercase text-[10px] tracking-wider transition-colors ${
+                              active
+                                ? "bg-zinc-100 text-black border-transparent"
+                                : "border-zinc-800 text-zinc-400 hover:bg-zinc-900 bg-transparent"
+                            }`}
+                          >
+                            {labels[mode]}
+                          </Button>
+                        )
+                      })}
                     </div>
                   </div>
                 )}
@@ -628,25 +916,25 @@ export function GameComponent({
             </div>
 
             {/* Game Rules Preview */}
-            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2rem] p-8 mb-8 text-left">
-              <h3 className="font-display font-bold uppercase tracking-tighter text-2xl border-b border-white/10 pb-4 mb-4">
+            <div className="bg-zinc-900/30 border border-zinc-800 rounded-2xl p-6 mb-6 text-left w-full shadow-lg">
+              <h3 className="font-bold uppercase tracking-wider text-xs border-b border-zinc-900 pb-3 mb-3 text-zinc-300">
                 Quick Rules for {getGameName(gameId)}
               </h3>
-              <div className="text-white/70 leading-relaxed font-medium">{getGameRules(gameId)}</div>
+              <div className="text-zinc-400 leading-relaxed text-xs font-semibold">{getGameRules(gameId)}</div>
             </div>
 
             {isHost ? (
               <Button
                 onClick={startGame}
                 size="lg"
-                className="bg-white hover:bg-[#e8e5dc] text-black rounded-full h-16 px-12 font-display uppercase tracking-widest font-bold text-lg w-full max-w-sm inline-flex items-center justify-center btn-press"
+                className="bg-zinc-100 hover:bg-zinc-200 text-black rounded-xl h-12 px-8 font-bold uppercase tracking-wider text-xs w-full max-w-sm inline-flex items-center justify-center border-0 transition-colors"
               >
-                <Play className="w-5 h-5 mr-2 fill-black" />
+                <Play className="w-4 h-4 mr-1.5 fill-black" />
                 Start Game!
               </Button>
             ) : (
-              <div className="bg-white/5 border border-white/10 text-[#e8e5dc]/60 py-4 px-8 rounded-2xl font-semibold text-lg inline-block animate-pulse">
-                Waiting for Host to start the game...
+              <div className="bg-zinc-900/30 border border-zinc-800 text-zinc-500 py-3 px-6 rounded-xl font-bold uppercase text-xs tracking-wider inline-block">
+                Waiting for Host to start...
               </div>
             )}
           </div>
@@ -657,29 +945,25 @@ export function GameComponent({
 
   if (showSummary) {
     return (
-      <div className="min-h-screen bg-[#1c1c1c] text-[#e8e5dc] font-sans selection:bg-[#8be8e5] selection:text-black relative overflow-hidden py-12 flex flex-col justify-between">
-        {/* Background Shapes */}
-        <div className="absolute top-[-20%] right-[-10%] w-[60vw] h-[60vw] bg-[#8be8e5] rounded-full mix-blend-screen filter blur-[120px] opacity-10 pointer-events-none"></div>
-        <div className="absolute bottom-[-20%] left-[-10%] w-[50vw] h-[50vw] bg-[#c9a7f1] rounded-full mix-blend-screen filter blur-[100px] opacity-15 animate-pulse pointer-events-none"></div>
-
-        <div className="container mx-auto px-6 relative z-10 max-w-5xl flex-1 flex flex-col justify-between">
+      <div className="min-h-screen bg-neutral-950 text-zinc-100 font-sans selection:bg-zinc-800 selection:text-white py-12 flex flex-col justify-between">
+        <div className="container mx-auto px-6 relative z-10 max-w-4xl flex-1 flex flex-col justify-between w-full">
           <div>
             {/* Header */}
-            <div className="text-center mb-12">
-              <h1 className="text-5xl lg:text-7xl font-display font-bold mb-4 uppercase tracking-tighter leading-none">Match Summary</h1>
-              <p className="text-2xl font-serif italic text-[#f1a7c5]">
+            <div className="text-center mb-8">
+              <h1 className="text-3xl font-extrabold mb-1 uppercase tracking-tight text-white">Match Summary</h1>
+              <p className="text-sm font-bold uppercase tracking-wider text-zinc-500">
                 {getGameName(gameId)}
               </p>
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start mb-12">
-              {/* Standings / Leaderboard (Left 5 cols) */}
-              <div className="lg:col-span-5 bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-8 shadow-2xl w-full">
-                <h3 className="font-display font-bold uppercase tracking-tighter text-2xl border-b border-white/10 pb-4 mb-6">
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start mb-8">
+              {/* Standings / Leaderboard */}
+              <div className="lg:col-span-5 bg-zinc-900/30 border border-zinc-800 rounded-2xl p-6 shadow-xl w-full">
+                <h3 className="font-bold uppercase tracking-wider text-xs border-b border-zinc-900 pb-3 mb-4 text-zinc-300">
                   Standings
                 </h3>
                 
-                <div className="space-y-4">
+                <div className="space-y-3">
                   {(() => {
                     const sortedPlayers = [...players].sort((a, b) => {
                       const scoreA = playerScores[a] || 0
@@ -696,25 +980,21 @@ export function GameComponent({
                       const sipCount = sips[player] || 0
                       
                       return (
-                        <div key={player} className="flex items-center justify-between p-4 bg-white/10 rounded-2xl border border-white/5">
+                        <div key={player} className="flex items-center justify-between p-3 bg-zinc-900/50 rounded-xl border border-zinc-800">
                           <div className="flex items-center space-x-3">
-                            <div className={`w-8 h-8 rounded-full flex items-center justify-center font-display font-bold text-sm ${
-                              index === 0 ? "bg-amber-400 text-black" :
-                              index === 1 ? "bg-slate-300 text-black" :
-                              index === 2 ? "bg-amber-700 text-white" :
-                              "bg-white/10 text-white"
+                            <div className={`w-7 h-7 rounded-full flex items-center justify-center font-bold text-xs ${
+                              index === 0 ? "bg-zinc-100 text-black font-extrabold" : "bg-zinc-800 text-zinc-400"
                             }`}>
                               {index + 1}
                             </div>
-                            <span className="font-display font-medium text-base uppercase tracking-wider flex items-center gap-1.5">
-                              {index === 0 && <Crown className="w-4 h-4 text-[#f1a7c5]" />}
+                            <span className="font-bold text-xs uppercase tracking-wider flex items-center gap-1.5 text-zinc-200">
                               {player}
                             </span>
                           </div>
                           <div className="flex flex-col items-end">
-                            {showScoring && <span className="font-bold text-[#8be8e5] text-sm">{score} pts</span>}
-                            <span className="text-xs opacity-60 flex items-center gap-1 mt-0.5">
-                              <Wine className="w-3 h-3 text-[#c9a7f1]" /> {sipCount} {sipCount === 1 ? 'sip' : 'sips'}
+                            {showScoring && <span className="font-bold text-zinc-300 text-xs">{score} pts</span>}
+                            <span className="text-[10px] text-zinc-500 font-bold uppercase mt-0.5">
+                              {sipCount} {sipCount === 1 ? 'sip' : 'sips'}
                             </span>
                           </div>
                         </div>
@@ -724,44 +1004,44 @@ export function GameComponent({
                 </div>
               </div>
 
-              {/* Timeline of Questions (Right 7 cols) */}
-              <div className="lg:col-span-7 bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2.5rem] p-8 shadow-2xl w-full">
-                <h3 className="font-display font-bold uppercase tracking-tighter text-2xl border-b border-white/10 pb-4 mb-6">
+              {/* Timeline of Questions */}
+              <div className="lg:col-span-7 bg-zinc-900/30 border border-zinc-800 rounded-2xl p-6 shadow-xl w-full">
+                <h3 className="font-bold uppercase tracking-wider text-xs border-b border-zinc-900 pb-3 mb-4 text-zinc-300">
                   Round History
                 </h3>
 
                 {gameHistory.length === 0 ? (
-                  <div className="p-8 border-2 border-dashed border-white/20 rounded-2xl flex items-center justify-center text-white/40 font-display uppercase tracking-widest text-xs">
+                  <div className="p-6 border border-dashed border-zinc-800 rounded-xl flex items-center justify-center text-zinc-650 font-bold uppercase tracking-wider text-[10px]">
                     No rounds played yet
                   </div>
                 ) : (
-                  <div className="relative pl-6 border-l-2 border-white/10 space-y-8 max-h-[50vh] overflow-y-auto pr-2 scrollbar-thin scrollbar-thumb-white/10">
+                  <div className="relative pl-5 border-l border-zinc-800 space-y-6 max-h-[45vh] overflow-y-auto pr-1">
                     {gameHistory.map((item, index) => {
                       return (
                         <div key={index} className="relative">
                           {/* Timeline indicator node */}
-                          <div className="absolute -left-[31px] top-1.5 w-[10px] h-[10px] rounded-full bg-[#8be8e5]" />
+                          <div className="absolute -left-[24.5px] top-1.5 w-2.5 h-2.5 rounded-full bg-zinc-700" />
                           
-                          <div className="flex flex-col gap-2">
-                            <div className="flex justify-between items-center text-xs">
-                              <span className="text-[#f1a7c5] font-display font-bold uppercase tracking-wider">Round {index + 1}</span>
-                              <span className="opacity-60">{item.currentPlayer}'s turn</span>
+                          <div className="flex flex-col gap-1.5">
+                            <div className="flex justify-between items-center text-[9px] font-bold uppercase tracking-wider text-zinc-500">
+                              <span>Round {index + 1}</span>
+                              <span>{item.currentPlayer}'s turn</span>
                             </div>
                             
-                            <p className="font-display font-medium text-white text-base leading-snug uppercase tracking-wide">
+                            <p className="font-bold text-zinc-200 text-xs leading-relaxed uppercase tracking-wider">
                               {item.question}
                             </p>
 
                             {/* Render vote results breakdown if whos-most-likely */}
                             {item.tallies && (
-                              <div className="mt-3 bg-white/5 border border-white/5 rounded-xl p-3 space-y-2">
-                                <span className="text-[10px] font-display uppercase tracking-widest text-white/50 block">Voting Breakdown:</span>
+                              <div className="mt-2 bg-zinc-900/50 border border-zinc-800 rounded-lg p-2.5 space-y-1.5">
+                                <span className="text-[8px] font-bold uppercase tracking-wider text-zinc-500 block">Voting Breakdown</span>
                                 {Object.entries(item.tallies).map(([player, votesCount]) => {
                                   if (votesCount === 0) return null
                                   return (
-                                    <div key={player} className="flex justify-between items-center text-xs">
-                                      <span className="opacity-80 uppercase tracking-wider font-display">{player}</span>
-                                      <span className="font-bold text-[#8be8e5]">{votesCount} {votesCount === 1 ? 'vote' : 'votes'}</span>
+                                    <div key={player} className="flex justify-between items-center text-[10px]">
+                                      <span className="font-bold text-zinc-400 uppercase tracking-wider">{player}</span>
+                                      <span className="font-bold text-zinc-300">{votesCount} {votesCount === 1 ? 'vote' : 'votes'}</span>
                                     </div>
                                   )
                                 })}
@@ -778,11 +1058,11 @@ export function GameComponent({
           </div>
 
           {/* Action button */}
-          <div className="text-center mt-auto">
+          <div className="text-center mt-6">
             <Button
               onClick={onBack}
               size="lg"
-              className="bg-white hover:bg-[#e8e5dc] text-black rounded-full h-16 px-12 font-display uppercase tracking-widest font-bold text-lg w-full max-w-sm inline-flex items-center justify-center btn-press shadow-xl"
+              className="bg-zinc-100 hover:bg-zinc-200 text-black rounded-xl h-11 px-8 font-bold uppercase tracking-wider text-xs w-full max-w-sm inline-flex items-center justify-center border-0 transition-colors shadow-md"
             >
               Back to Lobby
             </Button>
@@ -793,20 +1073,17 @@ export function GameComponent({
   }
 
   return (
-    <div className="min-h-screen bg-[#1c1c1c] text-[#e8e5dc] font-sans selection:bg-[#8be8e5] selection:text-black relative overflow-hidden flex flex-col justify-between py-8">
-      {/* Background Shapes */}
-      <div className="absolute top-[-20%] right-[-10%] w-[60vw] h-[60vw] bg-[#8be8e5] rounded-full mix-blend-screen filter blur-[120px] opacity-10 pointer-events-none"></div>
-      <div className="absolute bottom-[-20%] left-[-10%] w-[50vw] h-[50vw] bg-[#c9a7f1] rounded-full mix-blend-screen filter blur-[100px] opacity-15 animate-pulse pointer-events-none"></div>
-
+    <div className="min-h-screen bg-neutral-950 text-zinc-100 font-sans selection:bg-zinc-800 selection:text-white flex flex-col justify-between py-6">
+      
       {/* Floating Reactions Overlay */}
       <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
         {reactions.map((r) => (
           <motion.div
             key={r.id}
             initial={{ y: "100vh", opacity: 1, scale: 0.8 }}
-            animate={{ y: "-10vh", opacity: 0, scale: 1.5 }}
+            animate={{ y: "-10vh", opacity: 0, scale: 1.2 }}
             transition={{ duration: 3, ease: "easeOut" }}
-            className="absolute text-6xl"
+            className="absolute text-5xl"
             style={{ left: `${r.x}%`, bottom: "10px" }}
           >
             {r.emoji}
@@ -814,23 +1091,23 @@ export function GameComponent({
         ))}
       </div>
 
-      <div className="container mx-auto px-6 relative z-10 flex-1 flex flex-col justify-between max-w-4xl">
+      <div className="container mx-auto px-6 relative z-10 flex-1 flex flex-col justify-between max-w-4xl w-full">
         {/* Header */}
-        <header className="flex flex-col sm:flex-row gap-4 items-center justify-between mb-8">
+        <header className="flex flex-col sm:flex-row gap-4 items-center justify-between mb-6">
           <Button
             variant="ghost"
             onClick={handleEndGame}
-            className="text-[#e8e5dc] hover:bg-white/10 hover:text-white rounded-full h-12 px-6"
+            className="rounded-lg border border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-900 h-8 px-3 text-[9px] uppercase tracking-wider"
           >
-            <ArrowLeft className="w-5 h-5 mr-2" />
+            <ArrowLeft className="w-4 h-4 mr-1.5" />
             End Game
           </Button>
 
           <div className="text-center">
-            <h1 className="text-3xl font-display font-bold uppercase tracking-tighter leading-none">{getGameName(gameId)}</h1>
-            <p className="text-lg font-serif italic text-[#f1a7c5] mt-1">{players[currentPlayer]}'s turn</p>
+            <h1 className="text-lg font-bold uppercase tracking-tight text-white leading-none">{getGameName(gameId)}</h1>
+            <p className="text-xs text-zinc-450 uppercase tracking-wider font-semibold mt-1">{players[currentPlayer]}'s turn</p>
             {gameMode === "spicy" && (
-              <Badge className="bg-[#f1a7c5] text-black border-transparent font-display font-semibold uppercase text-xs px-3 py-1 rounded-full mt-2">Spicy Mode</Badge>
+              <Badge className="bg-red-950/40 text-red-400 border border-red-900/30 font-bold uppercase text-[8px] px-2 py-0.5 rounded-md mt-1.5">Spicy Mode</Badge>
             )}
           </div>
 
@@ -838,133 +1115,275 @@ export function GameComponent({
             <Button
               variant="outline"
               onClick={() => setShowLeaderboard(true)}
-              className="rounded-full border-white/10 hover:bg-white/5 text-[#e8e5dc] h-12 px-6"
+              className="rounded-lg border border-zinc-800 hover:bg-zinc-900 text-zinc-300 h-8 px-3 text-[9px] uppercase tracking-wider"
             >
-              <TrophyIcon className="w-5 h-5 mr-2 text-[#f1a7c5]" />
               Scores
             </Button>
           </div>
         </header>
 
         {/* Main Content Area */}
-        <main className="flex-1 flex flex-col justify-center gap-6">
+        <main className="flex-1 flex flex-col justify-center gap-5 w-full">
           
           {/* Active Player banner */}
-          <div className="text-center mb-2">
-            <Badge className="bg-[#c9a7f1] text-black text-lg px-6 py-2 rounded-full font-display font-bold uppercase tracking-wider">
+          <div className="text-center mb-1">
+            <Badge className="bg-zinc-900 border border-zinc-800 text-zinc-300 text-xs px-4 py-1.5 rounded-xl uppercase tracking-wider font-bold">
               {players[currentPlayer]}'s Turn
             </Badge>
           </div>
 
           {/* Timer (optional) */}
           {timerEnabled && (
-            <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2rem] p-6 max-w-md mx-auto w-full mb-2">
-              <div className="flex items-center justify-between mb-3">
-                <span className="font-display font-bold uppercase tracking-wider text-sm">Time Remaining</span>
+            <div className="bg-zinc-900/30 border border-zinc-800 rounded-xl p-4 max-w-sm mx-auto w-full mb-1">
+              <div className="flex items-center justify-between mb-2">
+                <span className="text-[9px] font-bold uppercase tracking-wider text-zinc-500">Time Remaining</span>
                 <div className="flex items-center space-x-1">
-                  <Button variant="ghost" size="sm" onClick={toggleTimer} className="text-white hover:bg-white/10">
-                    {timerActive ? <Pause className="w-4 h-4" /> : <Play className="w-4 h-4" />}
+                  <Button variant="ghost" size="icon" onClick={toggleTimer} className="text-zinc-400 hover:text-white w-6 h-6 p-0 hover:bg-zinc-800">
+                    {timerActive ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
                   </Button>
-                  <Button variant="ghost" size="sm" onClick={resetTimer} className="text-white hover:bg-white/10">
-                    <RotateCcw className="w-4 h-4" />
+                  <Button variant="ghost" size="icon" onClick={resetTimer} className="text-zinc-400 hover:text-white w-6 h-6 p-0 hover:bg-zinc-800">
+                    <RotateCcw className="w-3.5 h-3.5" />
                   </Button>
                 </div>
               </div>
               <Progress
-                value={(timeLeft / 30) * 100}
-                className="h-3 bg-white/10"
+                value={(timeLeft / getTimerDuration(gameId)) * 100}
+                className="h-2 bg-zinc-900"
               />
-              <div className="text-center mt-2 font-display font-bold text-2xl text-[#8be8e5]">{timeLeft}s</div>
+              <div className="text-center mt-1.5 font-mono font-bold text-xl text-zinc-300">{timeLeft}s</div>
             </div>
           )}
 
           {/* Game Question Card */}
-          <div className="bg-white/5 backdrop-blur-xl border border-white/10 rounded-[2rem] sm:rounded-[3rem] p-6 sm:p-12 min-h-[250px] sm:min-h-[300px] flex flex-col items-center justify-center text-center shadow-2xl relative max-w-3xl mx-auto w-full">
-            <div className="text-xl sm:text-2xl md:text-4xl font-display font-bold text-white tracking-tight leading-snug uppercase max-w-2xl">
-              {currentContent}
-            </div>
-            
-            {/* Real-time voting for Whos Most Likely To */}
-            {gameId === "whos-most-likely" && (
-              <div className="mt-8 border-t border-white/10 pt-6 w-full max-w-md mx-auto">
-                <h4 className="text-sm font-display uppercase tracking-wider mb-4 text-[#f1a7c5]">
-                  {votingReveal ? "Voting Results!" : "Cast Your Vote:"}
-                </h4>
+          <div className="bg-zinc-900/20 border border-zinc-800 rounded-2xl p-6 sm:p-10 min-h-[220px] flex flex-col items-center justify-center text-center shadow-xl relative max-w-3xl mx-auto w-full">
+            {isLoading ? (
+              <div className="flex flex-col items-center gap-2">
+                <span className="text-xs font-bold uppercase tracking-widest text-zinc-500 animate-pulse">Loading...</span>
+              </div>
+            ) : (
+              <>
+                <div className="text-lg sm:text-xl md:text-2xl font-bold text-white tracking-tight uppercase max-w-2xl leading-normal">
+                  {currentContent}
+                </div>
                 
-                {!votingReveal ? (
-                  <div className="grid grid-cols-2 gap-3">
-                    {players.map((player) => {
-                      const voterSocketId = socket?.id || ""
-                      const hasVotedForThis = votes[voterSocketId] === player
-                      return (
-                        <Button
-                          key={player}
-                          onClick={() => castVote(player)}
-                          disabled={hasVoted}
-                          className={`h-11 rounded-xl border font-display uppercase tracking-wider font-semibold text-xs ${
-                            hasVotedForThis 
-                              ? "bg-[#8be8e5] text-black border-transparent" 
-                              : "border-white/10 bg-white/5 hover:bg-white/10 text-white"
-                          }`}
-                        >
-                          {player}
-                        </Button>
-                      )
-                    })}
-                  </div>
-                ) : (
-                  <div className="space-y-3">
-                    {(() => {
-                      const tallies = getVoteTally()
-                      const maxVotes = Math.max(...Object.values(tallies), 0)
-                      return players.map((player) => {
-                        const count = tallies[player] || 0
-                        const isWinner = count > 0 && count === maxVotes
+                {/* Interactive Kiss Marry Kill */}
+                {(() => {
+                  const kmkOptionsList = getKMKOptions()
+                  if (gameId === "kiss-marry-kill" && kmkOptionsList) {
+                    const [o1, o2, o3] = kmkOptionsList
+                    return (
+                      <div className="mt-6 border-t border-zinc-900 pt-5 w-full max-w-md mx-auto space-y-3">
+                        <h4 className="text-[10px] font-bold uppercase tracking-wider mb-2 text-zinc-500">
+                          Assign choices
+                        </h4>
+                        <div className="space-y-2">
+                          {[o1, o2, o3].map((opt) => {
+                            const currentRole = Object.keys(kmkSelections).find(k => kmkSelections[k] === opt)
+                            return (
+                              <div key={opt} className="p-2.5 bg-zinc-900/40 border border-zinc-800 rounded-xl flex flex-col sm:flex-row justify-between items-center gap-2">
+                                <span className="font-bold text-[11px] text-left uppercase tracking-wider text-zinc-300 flex-1">{opt}</span>
+                                <div className="flex gap-1.5">
+                                  {(['kiss', 'marry', 'kill'] as const).map((role) => {
+                                    const labels = { kiss: "Kiss", marry: "Marry", kill: "Kill" }
+                                    const isSelected = kmkSelections[role] === opt
+                                    return (
+                                      <Button
+                                        key={role}
+                                        size="sm"
+                                        onClick={() => selectKMK(opt, role)}
+                                        className={`h-8 px-2.5 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-colors ${
+                                          isSelected 
+                                            ? "bg-zinc-100 text-black border-transparent" 
+                                            : "border border-zinc-800 bg-transparent text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300"
+                                        }`}
+                                      >
+                                        {labels[role]}
+                                      </Button>
+                                    )
+                                  })}
+                                </div>
+                              </div>
+                            )
+                          })}
+                        </div>
+                      </div>
+                    )
+                  }
+                  return null
+                })()}
+
+                {/* Interactive Spin the Bottle */}
+                {gameId === "spin-the-bottle" && (
+                  <div className="mt-6 flex flex-col items-center justify-center relative min-h-[200px] w-full">
+                    <div className="relative w-48 h-48 flex items-center justify-center">
+                      <motion.div
+                        animate={{ rotate: bottleRotation }}
+                        transition={{ duration: 3, ease: "easeOut" }}
+                        className="w-12 h-12 flex items-center justify-center cursor-pointer select-none z-10"
+                        onClick={spinBottle}
+                      >
+                        <span className="text-5xl select-none filter drop-shadow-md">🍾</span>
+                      </motion.div>
+                      
+                      {players.map((player, idx) => {
+                        const angle = (idx * 360) / players.length
+                        const radius = 70
+                        const x = Math.sin((angle * Math.PI) / 180) * radius
+                        const y = -Math.cos((angle * Math.PI) / 180) * radius
+                        const isTarget = player === spinTargetPlayer
+                        const isCurrent = player === players[currentPlayer]
+                        
                         return (
-                          <div key={player} className="flex justify-between items-center p-3 bg-white/5 border border-white/5 rounded-xl">
-                            <span className="font-display font-medium uppercase text-xs tracking-wider flex items-center gap-1">
-                              {isWinner && <Crown className="w-4 h-4 text-[#f1a7c5]" />}
-                              {player}
-                            </span>
-                            <span className="font-bold text-[#8be8e5] text-sm">{count} {count === 1 ? 'vote' : 'votes'}</span>
+                          <div
+                            key={player}
+                            className={`absolute px-2.5 py-0.5 rounded-full border text-[8px] font-bold uppercase transition-all duration-300 ${
+                              isTarget 
+                                ? "bg-zinc-100 text-black border-transparent scale-105 shadow-md" 
+                                : isCurrent 
+                                ? "bg-zinc-800 border-zinc-700 text-zinc-300"
+                                : "bg-zinc-950 text-zinc-600 border-zinc-900"
+                            }`}
+                            style={{
+                              transform: `translate(${x}px, ${y}px)`,
+                            }}
+                          >
+                            {player}
                           </div>
                         )
-                      })
-                    })()}
+                      })}
+                    </div>
+                    
+                    <Button
+                      onClick={spinBottle}
+                      disabled={isSpinning}
+                      className="mt-3 bg-zinc-100 hover:bg-zinc-200 text-black font-bold uppercase rounded-lg px-4 h-8 text-[9px] tracking-wider border-0 transition-colors"
+                    >
+                      {isSpinning ? "Spinning..." : "Tap Bottle to Spin!"}
+                    </Button>
+                    
+                    {spinTargetPlayer && (
+                      <motion.div
+                        initial={{ opacity: 0, y: 5 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        className="mt-2 text-center"
+                      >
+                        <p className="font-bold text-[10px] uppercase text-zinc-400">
+                          Points to {spinTargetPlayer}!
+                        </p>
+                      </motion.div>
+                    )}
                   </div>
                 )}
+                
+                {/* Real-time voting for Whos Most Likely To */}
+                {gameId === "whos-most-likely" && (
+                  <div className="mt-6 border-t border-zinc-900 pt-5 w-full max-w-md mx-auto">
+                    <h4 className="text-[10px] font-bold uppercase tracking-wider mb-3 text-zinc-500">
+                      {votingReveal ? "Voting Results" : "Cast Your Vote"}
+                    </h4>
+                    
+                    {!votingReveal ? (
+                      <div className="grid grid-cols-2 gap-2">
+                        {players.map((player) => {
+                          const voterSocketId = socket?.id || ""
+                          const hasVotedForThis = votes[voterSocketId] === player
+                          return (
+                            <Button
+                              key={player}
+                              onClick={() => castVote(player)}
+                              disabled={hasVoted}
+                              className={`h-9 rounded-lg border font-bold uppercase tracking-wider text-[10px] transition-colors ${
+                                hasVotedForThis 
+                                  ? "bg-zinc-100 text-black border-transparent" 
+                                  : "border-zinc-800 bg-zinc-900/10 hover:border-zinc-700 text-zinc-400 hover:text-zinc-200"
+                              }`}
+                            >
+                              {player}
+                            </Button>
+                          )
+                        })}
+                      </div>
+                    ) : (
+                      <div className="space-y-2">
+                        {(() => {
+                          const tallies = getVoteTally()
+                          const maxVotes = Math.max(...Object.values(tallies), 0)
+                          return players.map((player) => {
+                            const count = tallies[player] || 0
+                            const isWinner = count > 0 && count === maxVotes
+                            return (
+                              <div key={player} className="flex justify-between items-center p-2 bg-zinc-900/50 border border-zinc-800 rounded-xl">
+                                <span className="font-bold uppercase text-[10px] tracking-wider flex items-center gap-1.5 text-zinc-300">
+                                  {player}
+                                </span>
+                                <span className="font-bold text-zinc-400 text-xs">{count} {count === 1 ? 'vote' : 'votes'}</span>
+                              </div>
+                            )
+                          })
+                        })()}
+                      </div>
+                    )}
 
-                {isHost && !votingReveal && (
-                  <Button
-                    onClick={revealVotes}
-                    disabled={Object.keys(votes).length === 0}
-                    className="w-full h-12 mt-6 bg-[#c9a7f1] hover:bg-[#b08ce0] text-black font-display uppercase font-bold rounded-xl text-xs tracking-wider"
-                  >
-                    Reveal Votes ({Object.keys(votes).length} Cast)
-                  </Button>
+                    {isHost && !votingReveal && (
+                      <Button
+                        onClick={revealVotes}
+                        disabled={Object.keys(votes).length === 0}
+                        className="w-full h-10 mt-4 bg-zinc-100 hover:bg-zinc-200 text-black font-bold uppercase rounded-lg text-[10px] tracking-wider border-0 transition-colors"
+                      >
+                        Reveal Votes ({Object.keys(votes).length} Cast)
+                      </Button>
+                    )}
+                  </div>
                 )}
-              </div>
+              </>
             )}
           </div>
 
+          {/* Quick Sip Tracker / Drink Logger directly under question card */}
+          {matureContent && (
+            <div className="bg-zinc-900/20 border border-zinc-800 rounded-2xl p-5 max-w-3xl mx-auto w-full mt-1 text-center">
+              <h4 className="text-[10px] font-bold uppercase tracking-wider mb-3 text-zinc-500 flex items-center justify-center gap-1">
+                Log Sips For This Round
+              </h4>
+              <div className="flex flex-wrap justify-center gap-1.5">
+                {players.map((player) => {
+                  const count = sips[player] || 0
+                  return (
+                    <Button
+                      key={player}
+                      onClick={() => updateSips(player, 1)}
+                      variant="outline"
+                      className="rounded-lg border-zinc-800 bg-zinc-900/10 hover:border-zinc-700 text-zinc-400 flex items-center gap-2 h-8 px-2.5 text-[9px] font-bold uppercase tracking-wider"
+                    >
+                      <span>{player}</span>
+                      <span className="bg-zinc-850 border border-zinc-700 text-zinc-300 text-[9px] font-bold px-1.5 py-0.5 rounded-md">
+                        {count}
+                      </span>
+                    </Button>
+                  )
+                })}
+              </div>
+            </div>
+          )}
+
           {/* Game Controls */}
-          <div className="flex flex-col sm:flex-row gap-3 sm:gap-4 max-w-2xl mx-auto w-full mt-4 sm:mt-6">
+          <div className="flex flex-col sm:flex-row gap-2.5 max-w-xl mx-auto w-full mt-3">
             <Button
               onClick={skipContent}
               variant="outline"
               size="lg"
-              className="h-12 sm:h-16 text-sm sm:text-lg border-white/10 text-[#e8e5dc] hover:bg-white/5 bg-transparent rounded-full font-display uppercase tracking-wider font-semibold flex-1"
+              className="h-11 text-xs border-zinc-800 text-zinc-400 hover:bg-zinc-900 hover:text-white rounded-xl font-bold uppercase tracking-wider flex-1 transition-colors"
             >
-              <SkipForward className="w-5 h-5 mr-2" />
+              <SkipForward className="w-4 h-4 mr-1.5" />
               Skip
             </Button>
 
             <Button
               onClick={nextTurn}
               size="lg"
-              className="h-12 sm:h-16 text-sm sm:text-lg bg-[#8be8e5] hover:bg-[#68d8d5] text-black rounded-full font-display uppercase tracking-widest font-bold flex-1 shadow-lg shadow-[#8be8e5]/20 btn-press"
+              className="h-11 text-xs bg-zinc-100 hover:bg-zinc-200 text-black rounded-xl font-bold uppercase tracking-wider flex-1 transition-colors"
             >
-              <Play className="w-5 h-5 mr-2 fill-black" />
+              <Play className="w-4 h-4 mr-1.5 fill-black" />
               Next Turn
             </Button>
 
@@ -972,42 +1391,42 @@ export function GameComponent({
               onClick={shuffleContent}
               variant="outline"
               size="lg"
-              className="h-12 sm:h-16 text-sm sm:text-lg border-white/10 text-[#e8e5dc] hover:bg-white/5 bg-transparent rounded-full font-display uppercase tracking-wider font-semibold flex-1"
+              className="h-11 text-xs border-zinc-800 text-zinc-400 hover:bg-zinc-900 hover:text-white rounded-xl font-bold uppercase tracking-wider flex-1 transition-colors"
             >
-              <Shuffle className="w-5 h-5 mr-2" />
+              <Shuffle className="w-4 h-4 mr-1.5" />
               Shuffle
             </Button>
           </div>
         </main>
 
         {/* Footer Player Badges row */}
-        <footer className="mt-8 border-t border-white/10 pt-6">
-          <div className="flex flex-wrap justify-center gap-3">
+        <footer className="mt-6 border-t border-zinc-900 pt-4">
+          <div className="flex flex-wrap justify-center gap-2">
             {players.map((player, index) => (
               <Badge
                 key={player}
-                className={`text-sm px-4 py-2 rounded-full font-display uppercase tracking-wider font-semibold border ${
+                className={`text-xs px-3.5 py-1.5 rounded-lg font-bold uppercase tracking-wider border ${
                   index === currentPlayer
-                    ? "bg-[#8be8e5] text-black border-transparent"
-                    : "bg-white/5 text-[#e8e5dc] border-white/10"
+                    ? "bg-zinc-100 text-black border-transparent"
+                    : "bg-zinc-900 border-zinc-850 text-zinc-400 hover:text-zinc-200"
                 }`}
               >
                 {player}
-                {showScoring && <span className="ml-2 text-xs opacity-70">({playerScores[player] || 0})</span>}
+                {showScoring && <span className="ml-1.5 text-[10px] text-zinc-500">({playerScores[player] || 0})</span>}
               </Badge>
             ))}
           </div>
         </footer>
       </div>
 
-      {/* Floating Reactions Tray */}
-      <div className="fixed right-4 bottom-24 flex flex-col gap-3 z-40 bg-white/5 backdrop-blur-md border border-white/10 rounded-full p-2.5 shadow-2xl">
+      {/* Floating Reactions Tray - Sleek Dark Minimalist */}
+      <div className="fixed right-4 bottom-20 flex flex-col gap-2 z-40 bg-zinc-900/60 backdrop-blur-md border border-zinc-800 rounded-full p-2 shadow-xl">
         {["🔥", "😂", "🍺", "😈", "💀"].map((emoji) => (
           <Button
             key={emoji}
             variant="ghost"
             onClick={() => triggerReaction(emoji)}
-            className="w-12 h-12 rounded-full hover:bg-white/10 text-2xl p-0 flex items-center justify-center btn-press bg-transparent border-0"
+            className="w-10 h-10 rounded-full hover:bg-zinc-850 text-xl p-0 flex items-center justify-center bg-transparent border-0 transition-colors"
           >
             {emoji}
           </Button>
@@ -1021,7 +1440,7 @@ export function GameComponent({
             {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
-              animate={{ opacity: 0.5 }}
+              animate={{ opacity: 0.4 }}
               exit={{ opacity: 0 }}
               onClick={() => setShowLeaderboard(false)}
               className="fixed inset-0 bg-black z-40"
@@ -1032,44 +1451,43 @@ export function GameComponent({
               animate={{ x: 0 }}
               exit={{ x: "100%" }}
               transition={{ type: "spring", damping: 25, stiffness: 200 }}
-              className="fixed right-0 top-0 bottom-0 w-80 bg-[#1c1c1c] border-l border-white/10 z-50 p-6 flex flex-col text-[#e8e5dc] shadow-2xl"
+              className="fixed right-0 top-0 bottom-0 w-80 bg-neutral-950 border-l border-zinc-900 z-50 p-6 flex flex-col text-zinc-100 shadow-2xl"
             >
-              <div className="flex justify-between items-center mb-8 border-b border-white/10 pb-4">
-                <h3 className="text-2xl font-display font-bold uppercase tracking-tighter">Leaderboard</h3>
-                <Button variant="ghost" size="icon" onClick={() => setShowLeaderboard(false)} className="text-[#e8e5dc] hover:bg-white/10 rounded-full">
-                  <X className="w-6 h-6" />
+              <div className="flex justify-between items-center mb-6 border-b border-zinc-900 pb-3">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-zinc-350">Leaderboard</h3>
+                <Button variant="ghost" size="icon" onClick={() => setShowLeaderboard(false)} className="text-zinc-500 hover:bg-zinc-900 hover:text-white rounded-full">
+                  <X className="w-5 h-5" />
                 </Button>
               </div>
 
-              <div className="space-y-6 flex-1 overflow-y-auto pr-2">
+              <div className="space-y-4 flex-1 overflow-y-auto pr-1">
                 {players.map((player, index) => (
-                  <div key={player} className="flex flex-col gap-3 p-4 bg-white/5 border border-white/5 rounded-2xl">
+                  <div key={player} className="flex flex-col gap-2.5 p-3.5 bg-zinc-900/40 border border-zinc-800 rounded-xl">
                     <div className="flex justify-between items-center">
-                      <span className="font-display font-medium uppercase text-sm tracking-wider flex items-center gap-1.5">
-                        {index === 0 && <Crown className="w-4 h-4 text-[#f1a7c5]" />}
+                      <span className="font-bold uppercase text-xs tracking-wider flex items-center gap-1.5 text-zinc-300">
                         {player}
                       </span>
-                      {showScoring && <span className="text-[#8be8e5] font-bold font-display text-sm">{playerScores[player] || 0} pts</span>}
+                      {showScoring && <span className="text-zinc-400 font-bold text-xs">{playerScores[player] || 0} pts</span>}
                     </div>
                     
-                    <div className="flex justify-between items-center mt-1 border-t border-white/5 pt-2">
-                      <span className="text-xs opacity-60 flex items-center gap-1">
-                        <Wine className="w-3.5 h-3.5 text-[#c9a7f1]" /> Sips Taken:
+                    <div className="flex justify-between items-center mt-1 border-t border-zinc-900 pt-2.5">
+                      <span className="text-[10px] text-zinc-500 font-bold uppercase flex items-center gap-1">
+                        Sips Taken
                       </span>
-                      <div className="flex items-center gap-2">
+                      <div className="flex items-center gap-1.5">
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="w-6 h-6 rounded-full hover:bg-white/10 p-0 text-white/60"
+                          className="w-6 h-6 rounded-full hover:bg-zinc-850 p-0 text-zinc-500"
                           onClick={() => updateSips(player, -1)}
                         >
                           <Minus className="w-3 h-3" />
                         </Button>
-                        <span className="font-bold text-[#c9a7f1] text-sm">{sips[player] || 0}</span>
+                        <span className="font-bold text-zinc-300 text-xs font-mono">{sips[player] || 0}</span>
                         <Button
                           variant="ghost"
                           size="icon"
-                          className="w-6 h-6 rounded-full hover:bg-white/10 p-0 text-white/60"
+                          className="w-6 h-6 rounded-full hover:bg-zinc-850 p-0 text-zinc-500"
                           onClick={() => updateSips(player, 1)}
                         >
                           <Plus className="w-3 h-3" />
@@ -1080,13 +1498,30 @@ export function GameComponent({
                 ))}
               </div>
 
+              {/* Reactions panel in Sidebar */}
+              <div className="mt-4 border-t border-zinc-900 pt-3.5 mb-2">
+                <h4 className="text-[9px] font-bold uppercase tracking-wider mb-2 text-zinc-500">Quick Reactions</h4>
+                <div className="flex justify-between">
+                  {["🔥", "😂", "🍺", "😈", "💀"].map((emoji) => (
+                    <Button
+                      key={emoji}
+                      variant="ghost"
+                      onClick={() => triggerReaction(emoji)}
+                      className="w-9 h-9 rounded-full hover:bg-zinc-850 text-lg p-0 flex items-center justify-center bg-transparent border-0 transition-colors"
+                    >
+                      {emoji}
+                    </Button>
+                  ))}
+                </div>
+              </div>
+
               {/* Submit Dares button */}
               <Button
                 onClick={() => {
                   setShowLeaderboard(false)
                   setCustomPromptOpen(true)
                 }}
-                className="w-full h-14 mt-6 bg-[#c9a7f1] hover:bg-[#b08ce0] text-black font-display uppercase font-bold rounded-xl tracking-widest text-xs btn-press"
+                className="w-full h-11 bg-zinc-100 hover:bg-zinc-200 text-black font-bold uppercase rounded-xl tracking-wider text-[10px] transition-colors border-0"
               >
                 Submit Custom Dare
               </Button>
@@ -1102,26 +1537,26 @@ export function GameComponent({
             {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
-              animate={{ opacity: 0.5 }}
+              animate={{ opacity: 0.4 }}
               exit={{ opacity: 0 }}
               onClick={() => setCustomPromptOpen(false)}
               className="fixed inset-0 bg-black z-40"
             />
             {/* Input Modal */}
             <motion.div
-              initial={{ scale: 0.9, opacity: 0 }}
+              initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
-              exit={{ scale: 0.9, opacity: 0 }}
-              className="fixed inset-0 m-auto w-full max-w-md h-fit bg-[#1c1c1c] border border-white/10 rounded-[2.5rem] p-8 z-50 text-[#e8e5dc] flex flex-col gap-6 shadow-2xl"
+              exit={{ scale: 0.95, opacity: 0 }}
+              className="fixed inset-0 m-auto w-full max-w-sm h-fit bg-neutral-950 border border-zinc-800 rounded-2xl p-6 z-50 text-zinc-100 flex flex-col gap-4 shadow-2xl"
             >
-              <div className="flex justify-between items-center border-b border-white/10 pb-4">
-                <h3 className="text-2xl font-display font-bold uppercase tracking-tighter">Submit Spicy Scenario</h3>
-                <Button variant="ghost" size="icon" onClick={() => setCustomPromptOpen(false)} className="text-[#e8e5dc] hover:bg-white/10 rounded-full">
-                  <X className="w-5 h-5" />
+              <div className="flex justify-between items-center border-b border-zinc-900 pb-3">
+                <h3 className="text-sm font-bold uppercase tracking-wider text-zinc-300">Submit Spicy Scenario</h3>
+                <Button variant="ghost" size="icon" onClick={() => setCustomPromptOpen(false)} className="text-zinc-500 hover:bg-zinc-900 hover:text-white rounded-full">
+                  <X className="w-4 h-4" />
                 </Button>
               </div>
               
-              <p className="text-sm opacity-60 font-medium">
+              <p className="text-xs text-zinc-500 font-semibold leading-relaxed">
                 Type in an anonymous truth, dare, or scenario. It will be randomly shuffled into the deck to surprise players!
               </p>
 
@@ -1129,12 +1564,12 @@ export function GameComponent({
                 placeholder="e.g., Never have I ever kissed someone in this room..."
                 value={customPromptText}
                 onChange={(e) => setCustomPromptText(e.target.value)}
-                className="bg-white/5 border border-white/10 rounded-2xl p-4 h-28 text-white placeholder-white/30 focus:outline-none focus:ring-2 focus:ring-[#f1a7c5] resize-none"
+                className="bg-zinc-900 border border-zinc-800 rounded-xl p-3 h-24 text-white placeholder-zinc-650 focus:outline-none focus:border-zinc-700 resize-none text-xs"
               />
 
               <Button
                 onClick={submitCustomPrompt}
-                className="w-full h-14 bg-[#f1a7c5] hover:bg-[#d58ea9] text-black font-display uppercase tracking-widest font-bold rounded-xl btn-press text-xs"
+                className="w-full h-11 bg-zinc-100 hover:bg-zinc-200 text-black font-bold uppercase rounded-xl transition-colors text-[10px] tracking-wider border-0"
               >
                 Submit Daringly
               </Button>
