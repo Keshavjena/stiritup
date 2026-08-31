@@ -21,13 +21,18 @@ import {
   Minus,
   Crown,
   Wine,
-  Sparkles
+  Sparkles,
+  Flame,
+  CheckCircle,
+  HelpCircle,
+  Beer
 } from "lucide-react"
 import { Trophy as TrophyIcon } from "lucide-react"
 import { Switch } from "@/components/ui/switch"
 import { CardsAgainstHumanity } from "./cards-against-humanity"
 import { IndianDrinkingGame } from "./indian-drinking-game"
 import { DramaDol } from "./drama-dol"
+import { BeerChugAnimation } from "./beer-chug-animation"
 import { getGameContent } from "../../lib/game-data/questions"
 import { useSocket } from "@/hooks/useSocket"
 import { motion, AnimatePresence } from "framer-motion"
@@ -36,6 +41,7 @@ interface GameComponentProps {
   roomCode?: string
   gameId: string
   players: string[]
+  myPlayerName?: string
   isHost?: boolean
   onBack: () => void
   darkMode: boolean
@@ -53,6 +59,7 @@ export function GameComponent({
   roomCode,
   gameId,
   players,
+  myPlayerName = "",
   isHost = false,
   onBack,
   darkMode,
@@ -64,7 +71,9 @@ export function GameComponent({
   const [currentPlayer, setCurrentPlayer] = useState(0)
   const [currentContent, setCurrentContent] = useState("")
   const [gameStarted, setGameStarted] = useState(false)
-  const [timerEnabled, setTimerEnabled] = useState(false)
+  const [timerDuration, setTimerDuration] = useState<number>(30)
+  const [timerEnabled, setTimerEnabled] = useState(true)
+  const [autoNextEnabled, setAutoNextEnabled] = useState(true)
   const [timeLeft, setTimeLeft] = useState(30)
   const [timerActive, setTimerActive] = useState(false)
   const [contentIndex, setContentIndex] = useState(0)
@@ -73,12 +82,55 @@ export function GameComponent({
   const [showScoring, setShowScoring] = useState(false)
   const [gameMode, setGameMode] = useState<"standard" | "challenge" | "spicy">("standard")
 
+  const timerDurationRef = useRef(timerDuration)
+  useEffect(() => {
+    timerDurationRef.current = timerDuration
+  }, [timerDuration])
+
+  const changeTimerDuration = (newDuration: number) => {
+    setTimerDuration(newDuration)
+    setTimeLeft(newDuration)
+    setTimerEnabled(true)
+    setTimerActive(true)
+    if (socket && roomCode) {
+      socket.emit("game-action", roomCode, {
+        type: "set-timer-duration",
+        payload: { duration: newDuration }
+      })
+    }
+  }
+
+  const [kmkGender, setKmkGender] = useState<"female" | "male" | "mixed">("female")
+  const [kmkCategory, setKmkCategory] = useState<"all" | "bollywood" | "hollywood" | "popstars" | "adultstars" | "fantasy">("all")
+
+  const changeKMKGender = (gender: "female" | "male" | "mixed") => {
+    setKmkGender(gender)
+    if (socket && roomCode) {
+      socket.emit("game-action", roomCode, {
+        type: "update-kmk-config",
+        payload: { kmkGender: gender, kmkCategory }
+      })
+    }
+  }
+
+  const changeKMKCategory = (category: "all" | "bollywood" | "hollywood" | "popstars" | "adultstars" | "fantasy") => {
+    setKmkCategory(category)
+    if (socket && roomCode) {
+      socket.emit("game-action", roomCode, {
+        type: "update-kmk-config",
+        payload: { kmkGender, kmkCategory: category }
+      })
+    }
+  }
+
   const [aiEnabled, setAiEnabled] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [bottleRotation, setBottleRotation] = useState(0)
   const [isSpinning, setIsSpinning] = useState(false)
   const [spinTargetPlayer, setSpinTargetPlayer] = useState("")
   const [kmkSelections, setKmkSelections] = useState<Record<string, string>>({ kiss: "", marry: "", kill: "" })
+  const [kmkVotes, setKmkVotes] = useState<Record<string, { kiss: string; marry: string; kill: string }>>({})
+  const [todChoice, setTodChoice] = useState<"truth" | "dare" | null>(null)
   const [customDeck, setCustomDeck] = useState<string[]>([])
   const [newCustomPrompt, setNewCustomPrompt] = useState("")
 
@@ -87,6 +139,11 @@ export function GameComponent({
   const [customPromptOpen, setCustomPromptOpen] = useState(false)
   const [customPromptText, setCustomPromptText] = useState("")
   const [anonymousPrompts, setAnonymousPrompts] = useState<string[]>([])
+
+  // Chugging Beer Animation state
+  const [chugModalOpen, setChugModalOpen] = useState(false)
+  const [chugTargetPlayer, setChugTargetPlayer] = useState("")
+  const [chugSipsCount, setChugSipsCount] = useState(1)
 
   const [votes, setVotes] = useState<Record<string, string>>({})
   const [hasVoted, setHasVoted] = useState(false)
@@ -98,6 +155,7 @@ export function GameComponent({
     currentPlayer: string
     votes?: Record<string, string>
     tallies?: Record<string, number>
+    kmkVotes?: Record<string, { kiss: string; marry: string; kill: string }>
   }[]>([])
   const [showSummary, setShowSummary] = useState(false)
 
@@ -105,8 +163,14 @@ export function GameComponent({
   const currentPlayerRef = useRef(currentPlayer)
   const currentContentRef = useRef(currentContent)
   const votesRef = useRef(votes)
+  const kmkVotesRef = useRef(kmkVotes)
   const playersRef = useRef(players)
   const gameIdRef = useRef(gameId)
+  const isHostRef = useRef(isHost)
+
+  useEffect(() => {
+    kmkVotesRef.current = kmkVotes
+  }, [kmkVotes])
 
   useEffect(() => {
     currentPlayerRef.current = currentPlayer
@@ -129,16 +193,30 @@ export function GameComponent({
   }, [gameId])
 
   useEffect(() => {
+    isHostRef.current = isHost
+  }, [isHost])
+
+  // Question loading effect with non-host fallback to prevent "LOADING..." freeze
+  useEffect(() => {
     const fetchQuestions = async () => {
+      setIsLoading(true)
+
+      // If in multiplayer and not host, request state from host instead of generating divergent deck
       if (roomCode && !isHost) {
-        setIsLoading(true)
+        if (socket) {
+          socket.emit("request-game-state", roomCode)
+        }
+        // Give 1.5s for host sync, else fallback
+        setTimeout(() => {
+          setIsLoading(false)
+        }, 1500)
         return
       }
 
-      setIsLoading(true)
       let fetchedQuestions: string[] = []
+      
       try {
-        const res = await fetch(`/api/questions?gameId=${gameId}&mature=${matureContent}&mode=${gameMode}&ai=${aiEnabled}`)
+        const res = await fetch(`/api/questions?gameId=${gameId}&mature=${matureContent}&mode=${gameMode}&ai=${aiEnabled}&kmkGender=${kmkGender}&kmkCategory=${kmkCategory}`)
         if (res.ok) {
           const data = await res.json()
           if (data.questions && data.questions.length > 0) {
@@ -167,7 +245,7 @@ export function GameComponent({
       if (roomCode && isHost && socket && fetchedQuestions.length > 0) {
         socket.emit("game-action", roomCode, {
           type: "sync-questions",
-          payload: { gameContent: fetchedQuestions, currentContent: fetchedQuestions[0] }
+          payload: { gameContent: fetchedQuestions, currentContent: fetchedQuestions[0], contentIndex: 0, currentPlayer: 0 }
         })
       }
     }
@@ -180,20 +258,42 @@ export function GameComponent({
       scores[player] = 0
     })
     setPlayerScores(scores)
-  }, [gameId, matureContent, gameMode, players, aiEnabled, isHost, roomCode, socket])
+  }, [gameId, matureContent, gameMode, players, aiEnabled, kmkGender, kmkCategory, isHost, roomCode, socket])
 
   useEffect(() => {
     if (!socket) return
 
     socket.on("game-action", (action) => {
-      if (action.type === "start-game") {
+      if (action.type === "request-game-state") {
+        if (isHostRef.current && socket && roomCode) {
+          socket.emit("game-action", roomCode, {
+            type: "sync-questions",
+            payload: {
+              gameContent,
+              currentContent: currentContentRef.current,
+              contentIndex,
+              currentPlayer: currentPlayerRef.current
+            }
+          })
+        }
+      } else if (action.type === "update-kmk-config") {
+        if (action.payload.kmkGender) setKmkGender(action.payload.kmkGender)
+        if (action.payload.kmkCategory) setKmkCategory(action.payload.kmkCategory)
+      } else if (action.type === "set-timer-duration") {
+        setTimerDuration(action.payload.duration)
+        setTimeLeft(action.payload.duration)
+        setTimerEnabled(true)
+        setTimerActive(true)
+      } else if (action.type === "start-game") {
         setGameMode(action.payload.gameMode)
         setTimerEnabled(action.payload.timerEnabled)
+        setAutoNextEnabled(action.payload.autoNextEnabled || false)
         setShowScoring(action.payload.showScoring)
         setAiEnabled(action.payload.aiEnabled || false)
         setGameStarted(true)
+        setIsLoading(false)
         if (action.payload.timerEnabled) {
-          setTimeLeft(getTimerDuration(gameIdRef.current))
+          setTimeLeft(timerDurationRef.current)
           setTimerActive(true)
         }
       } else if (action.type === "next-turn") {
@@ -221,36 +321,60 @@ export function GameComponent({
         setVotes({})
         setHasVoted(false)
         setVotingReveal(false)
+        setTodChoice(null)
         setKmkSelections({ kiss: "", marry: "", kill: "" })
+        setKmkVotes({})
         setSpinTargetPlayer("")
         setBottleRotation(0)
-        if (timerEnabled) {
-          setTimeLeft(getTimerDuration(activeGameId))
-          setTimerActive(true)
-        }
+        setIsLoading(false)
+        setTimeLeft(timerDurationRef.current)
+        setTimerActive(true)
       } else if (action.type === "skip-content") {
         setContentIndex(action.payload.contentIndex)
         setCurrentContent(action.payload.currentContent)
+        setTodChoice(null)
         setKmkSelections({ kiss: "", marry: "", kill: "" })
+        setKmkVotes({})
         setSpinTargetPlayer("")
         setBottleRotation(0)
+        setIsLoading(false)
+        setTimeLeft(timerDurationRef.current)
+        setTimerActive(true)
       } else if (action.type === "shuffle-content") {
         setGameContent(action.payload.gameContent)
         setCurrentContent(action.payload.currentContent)
         setContentIndex(0)
+        setTodChoice(null)
         setKmkSelections({ kiss: "", marry: "", kill: "" })
+        setKmkVotes({})
         setSpinTargetPlayer("")
         setBottleRotation(0)
+        setIsLoading(false)
+        setTimeLeft(timerDurationRef.current)
+        setTimerActive(true)
+      } else if (action.type === "kmk-submit") {
+        if (action.payload && action.payload.player && action.payload.selections) {
+          setKmkVotes((prev) => ({
+            ...prev,
+            [action.payload.player]: action.payload.selections
+          }))
+        }
       } else if (action.type === "award-point") {
         setPlayerScores(action.payload.playerScores)
       } else if (action.type === "toggle-timer") {
         setTimerActive(action.payload.timerActive)
-        setTimeLeft(action.payload.timeLeft)
+        if (action.payload.timeLeft !== undefined) {
+          setTimeLeft(action.payload.timeLeft)
+        }
       } else if (action.type === "reset-timer") {
-        setTimeLeft(getTimerDuration(gameIdRef.current))
+        setTimeLeft(timerDurationRef.current)
         setTimerActive(false)
       } else if (action.type === "reveal-votes") {
         setVotingReveal(true)
+      } else if (action.type === "trigger-chug") {
+        setChugTargetPlayer(action.payload.playerName)
+        setChugSipsCount(action.payload.sipsCount || 1)
+        setChugModalOpen(true)
       } else if (action.type === "end-game") {
         if (currentContentRef.current) {
           const prevVotes = votesRef.current
@@ -267,7 +391,8 @@ export function GameComponent({
             question: currentContentRef.current,
             currentPlayer: prevPlayers[currentPlayerRef.current],
             votes: activeGameId === "whos-most-likely" ? { ...prevVotes } : undefined,
-            tallies: activeGameId === "whos-most-likely" ? tallies : undefined
+            tallies: activeGameId === "whos-most-likely" ? tallies : undefined,
+            kmkVotes: activeGameId === "kiss-marry-kill" ? { ...kmkVotesRef.current } : undefined
           }
 
           setGameHistory((prev) => {
@@ -291,7 +416,8 @@ export function GameComponent({
       } else if (action.type === "sync-questions") {
         setGameContent(action.payload.gameContent)
         setCurrentContent(action.payload.currentContent)
-        setContentIndex(0)
+        if (action.payload.contentIndex !== undefined) setContentIndex(action.payload.contentIndex)
+        if (action.payload.currentPlayer !== undefined) setCurrentPlayer(action.payload.currentPlayer)
         setIsLoading(false)
       } else if (action.type === "add-custom-prompt") {
         setCustomDeck(prev => [...prev, action.payload])
@@ -303,7 +429,7 @@ export function GameComponent({
     socket.on("cast-vote", (voteData) => {
       setVotes((prev) => ({
         ...prev,
-        [voteData.voter]: voteData.candidate
+        [voteData.voterName || voteData.voter]: voteData.candidate
       }))
     })
 
@@ -347,6 +473,7 @@ export function GameComponent({
     }
   }, [socket, timerEnabled, contentIndex])
 
+  // Timer & Auto-Next turn interval
   useEffect(() => {
     let interval: NodeJS.Timeout
     if (timerActive && timeLeft > 0) {
@@ -355,7 +482,9 @@ export function GameComponent({
           if (prev <= 1) {
             setTimerActive(false)
             playSound("transition")
-            nextTurn()
+            if (isHostRef.current || !roomCode) {
+              nextTurn()
+            }
             return getTimerDuration(gameIdRef.current)
           }
           return prev - 1
@@ -364,6 +493,47 @@ export function GameComponent({
     }
     return () => clearInterval(interval)
   }, [timerActive, timeLeft, playSound])
+
+  const triggerChugAnimation = (playerName: string, sipsCount: number = 1) => {
+    setChugTargetPlayer(playerName)
+    setChugSipsCount(sipsCount)
+    setChugModalOpen(true)
+    if (socket && roomCode) {
+      socket.emit("game-action", roomCode, {
+        type: "trigger-chug",
+        payload: { playerName, sipsCount }
+      })
+    }
+  }
+
+  const handleChugFinished = () => {
+    setChugModalOpen(false)
+    if (isHostRef.current || !roomCode) {
+      setTimeout(() => {
+        nextTurn()
+      }, 500)
+    }
+  }
+
+  const handleSelfSip = (sipsCount: number = 1) => {
+    const activeUser = myPlayerName || (players && players.length > 0 ? players[currentPlayer % players.length] : "You")
+    updateSips(activeUser, sipsCount)
+    triggerChugAnimation(activeUser, sipsCount)
+  }
+
+  // Keyboard shortcut: Spacebar to toggle Pause/Play
+  useEffect(() => {
+    const handleKeyDown = (e: KeyboardEvent) => {
+      const activeElement = document.activeElement
+      const isInput = activeElement && (activeElement.tagName === "INPUT" || activeElement.tagName === "TEXTAREA")
+      if (e.code === "Space" && !isInput) {
+        e.preventDefault()
+        toggleTimer()
+      }
+    }
+    window.addEventListener("keydown", handleKeyDown)
+    return () => window.removeEventListener("keydown", handleKeyDown)
+  }, [timerActive, timerEnabled])
 
   const startGame = () => {
     playSound("success")
@@ -378,6 +548,7 @@ export function GameComponent({
     }
     
     setGameStarted(true)
+    setIsLoading(false)
     if (timerEnabled) {
       setTimeLeft(getTimerDuration(gameId))
       setTimerActive(true)
@@ -385,12 +556,12 @@ export function GameComponent({
     if (socket && roomCode) {
       socket.emit("game-action", roomCode, {
         type: "start-game",
-        payload: { gameMode, matureContent, timerEnabled, showScoring, aiEnabled }
+        payload: { gameMode, matureContent, timerEnabled, autoNextEnabled, showScoring, aiEnabled }
       })
-      if (gameId === "custom-game" && customDeck.length > 0) {
+      if (activeContent.length > 0) {
         socket.emit("game-action", roomCode, {
           type: "sync-questions",
-          payload: { gameContent: customDeck, currentContent: customDeck[0] }
+          payload: { gameContent: activeContent, currentContent: activeContent[0] }
         })
       }
     }
@@ -435,7 +606,8 @@ export function GameComponent({
       question: currentContent,
       currentPlayer: players[currentPlayer],
       votes: gameId === "whos-most-likely" ? { ...votes } : undefined,
-      tallies: gameId === "whos-most-likely" ? tallies : undefined
+      tallies: gameId === "whos-most-likely" ? tallies : undefined,
+      kmkVotes: gameId === "kiss-marry-kill" ? { ...kmkVotes } : undefined
     }
     setGameHistory((prev) => [...prev, historyItem])
 
@@ -459,7 +631,9 @@ export function GameComponent({
     setVotes({})
     setHasVoted(false)
     setVotingReveal(false)
+    setTodChoice(null)
     setKmkSelections({ kiss: "", marry: "", kill: "" })
+    setKmkVotes({})
     setSpinTargetPlayer("")
     setBottleRotation(0)
 
@@ -471,7 +645,7 @@ export function GameComponent({
     }
 
     if (timerEnabled) {
-      setTimeLeft(getTimerDuration(gameId))
+      setTimeLeft(timerDuration)
       setTimerActive(true)
     }
   }
@@ -492,7 +666,9 @@ export function GameComponent({
     const nextContentStr = gameContent[newIndex]
     setContentIndex(newIndex)
     setCurrentContent(nextContentStr)
+    setTodChoice(null)
     setKmkSelections({ kiss: "", marry: "", kill: "" })
+    setKmkVotes({})
     setSpinTargetPlayer("")
     setBottleRotation(0)
 
@@ -502,6 +678,11 @@ export function GameComponent({
         payload: { contentIndex: newIndex, currentContent: nextContentStr }
       })
     }
+
+    if (timerEnabled) {
+      setTimeLeft(timerDuration)
+      setTimerActive(true)
+    }
   }
 
   const shuffleContent = () => {
@@ -510,7 +691,9 @@ export function GameComponent({
     setGameContent(shuffled)
     setCurrentContent(shuffled[0])
     setContentIndex(0)
+    setTodChoice(null)
     setKmkSelections({ kiss: "", marry: "", kill: "" })
+    setKmkVotes({})
     setSpinTargetPlayer("")
     setBottleRotation(0)
 
@@ -520,28 +703,29 @@ export function GameComponent({
         payload: { gameContent: shuffled, currentContent: shuffled[0] }
       })
     }
+
+    if (timerEnabled) {
+      setTimeLeft(timerDuration)
+      setTimerActive(true)
+    }
   }
 
   const toggleTimer = () => {
     playSound("click")
     const nextActive = !timerActive
     setTimerActive(nextActive)
-    const nextTimeLeft = !nextActive && timerEnabled ? getTimerDuration(gameId) : timeLeft
-    if (!nextActive && timerEnabled) {
-      setTimeLeft(getTimerDuration(gameId))
-    }
 
     if (socket && roomCode) {
       socket.emit("game-action", roomCode, {
         type: "toggle-timer",
-        payload: { timerActive: nextActive, timeLeft: nextTimeLeft }
+        payload: { timerActive: nextActive, timeLeft }
       })
     }
   }
 
   const resetTimer = () => {
     playSound("click")
-    setTimeLeft(getTimerDuration(gameId))
+    setTimeLeft(timerDuration)
     setTimerActive(false)
 
     if (socket && roomCode) {
@@ -584,9 +768,14 @@ export function GameComponent({
   }
 
   const getKMKOptions = () => {
-    const kmkMatch = currentContent.match(/Choose between:?\s*(.+?),\s*(.+?),\s*and\s*(.+?)\s*for Kiss/i) || currentContent.match(/Choose between:?\s*(.+?),\s*(.+?),\s*and\s*(.+?)\./i)
+    const kmkMatch = currentContent.match(/Choose between:?\s*(.+?),\s*(.+?),\s*and\s*(.+?)\s*for Kiss/i) || 
+                     currentContent.match(/Choose between:?\s*(.+?),\s*(.+?),\s*and\s*(.+?)\./i) ||
+                     currentContent.match(/Choose between:?\s*(.+?),\s*(.+?),\s*and\s*(.+?)/i)
     if (kmkMatch) {
-      return [kmkMatch[1].trim(), kmkMatch[2].trim(), kmkMatch[3].trim()]
+      const clean1 = kmkMatch[1].replace(/\s*-.*$/, '').replace(/for Kiss.*$/i, '').replace(/\..*$/, '').trim()
+      const clean2 = kmkMatch[2].replace(/\s*-.*$/, '').replace(/for Kiss.*$/i, '').replace(/\..*$/, '').trim()
+      const clean3 = kmkMatch[3].replace(/\s*-.*$/, '').replace(/for Kiss.*$/i, '').replace(/\..*$/, '').trim()
+      return [clean1, clean2, clean3]
     }
     return null
   }
@@ -602,6 +791,27 @@ export function GameComponent({
       updated[role] = option
       return updated
     })
+  }
+
+  const submitKMKChoices = () => {
+    if (!kmkSelections.kiss || !kmkSelections.marry || !kmkSelections.kill) return
+    playSound("success")
+    const activeUser = myPlayerName || players[currentPlayer] || "Player"
+    const selectionsObj = {
+      kiss: kmkSelections.kiss || "",
+      marry: kmkSelections.marry || "",
+      kill: kmkSelections.kill || ""
+    }
+    setKmkVotes(prev => ({
+      ...prev,
+      [activeUser]: selectionsObj
+    }))
+    if (socket && roomCode) {
+      socket.emit("game-action", roomCode, {
+        type: "kmk-submit",
+        payload: { player: activeUser, selections: selectionsObj }
+      })
+    }
   }
 
   const awardPoint = (playerName: string) => {
@@ -623,8 +833,14 @@ export function GameComponent({
   const castVote = (candidate: string) => {
     if (hasVoted) return
     setHasVoted(true)
+    const voterName = players[currentPlayer] || "Player"
     if (socket && roomCode) {
-      socket.emit("cast-vote", roomCode, { voter: socket.id, candidate })
+      socket.emit("cast-vote", roomCode, { voter: socket.id, voterName, candidate })
+    } else {
+      setVotes((prev) => ({
+        ...prev,
+        [voterName]: candidate
+      }))
     }
   }
 
@@ -660,7 +876,8 @@ export function GameComponent({
         question: currentContent,
         currentPlayer: players[currentPlayer],
         votes: gameId === "whos-most-likely" ? { ...votes } : undefined,
-        tallies: gameId === "whos-most-likely" ? tallies : undefined
+        tallies: gameId === "whos-most-likely" ? tallies : undefined,
+        kmkVotes: gameId === "kiss-marry-kill" ? { ...kmkVotes } : undefined
       }
 
       setGameHistory((prev) => {
@@ -700,7 +917,6 @@ export function GameComponent({
     if (socket && roomCode) {
       socket.emit("send-reaction", roomCode, newReact)
     } else {
-      // Local fallback for local play
       const id = reactionId
       const newReaction = {
         id,
@@ -734,14 +950,25 @@ export function GameComponent({
   const SpecialGameComponent = specialGameComponents[gameId]
   if (SpecialGameComponent) {
     return (
-      <SpecialGameComponent
-        players={players}
-        onBack={onBack}
-        darkMode={darkMode}
-        soundEnabled={soundEnabled}
-        playSound={playSound}
-        matureContent={matureContent}
-      />
+      <>
+        <SpecialGameComponent
+          roomCode={roomCode}
+          players={players}
+          isHost={isHost}
+          onBack={onBack}
+          darkMode={darkMode}
+          soundEnabled={soundEnabled}
+          playSound={playSound}
+          matureContent={matureContent}
+          onTriggerChug={(player: string, count: number) => triggerChugAnimation(player, count)}
+        />
+        <BeerChugAnimation
+          isOpen={chugModalOpen}
+          playerName={chugTargetPlayer}
+          sipsCount={chugSipsCount}
+          onClose={() => setChugModalOpen(false)}
+        />
+      </>
     )
   }
 
@@ -802,7 +1029,7 @@ export function GameComponent({
                       className="flex-1 bg-zinc-900 border border-zinc-800 rounded-xl px-4 h-10 text-xs text-white placeholder-zinc-650 focus:outline-none focus:border-zinc-700 bg-transparent"
                       onKeyDown={(e) => {
                         if (e.key === "Enter") {
-                          handleAddCustomPrompt();
+                          handleAddCustomPrompt()
                         }
                       }}
                     />
@@ -847,11 +1074,24 @@ export function GameComponent({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <Timer className="w-4 h-4 text-zinc-500" />
-                    <span className="text-sm font-bold uppercase tracking-wider text-zinc-300">Enable Timer (30s per turn)</span>
+                    <span className="text-sm font-bold uppercase tracking-wider text-zinc-300">Enable Turn Timer</span>
                   </div>
                   <Switch
                     checked={timerEnabled}
                     onCheckedChange={setTimerEnabled}
+                    disabled={!isHost}
+                    className="data-[state=checked]:bg-zinc-100"
+                  />
+                </div>
+
+                <div className="flex items-center justify-between">
+                  <div className="flex items-center space-x-2">
+                    <Play className="w-4 h-4 text-zinc-500" />
+                    <span className="text-sm font-bold uppercase tracking-wider text-zinc-300">Auto-Next Turn on Expiry</span>
+                  </div>
+                  <Switch
+                    checked={autoNextEnabled}
+                    onCheckedChange={setAutoNextEnabled}
                     disabled={!isHost}
                     className="data-[state=checked]:bg-zinc-100"
                   />
@@ -873,7 +1113,7 @@ export function GameComponent({
                 <div className="flex items-center justify-between">
                   <div className="flex items-center space-x-2">
                     <Sparkles className="w-4 h-4 text-zinc-500" />
-                    <span className="text-sm font-bold uppercase tracking-wider text-zinc-300">Enable Groq AI Questions</span>
+                    <span className="text-sm font-bold uppercase tracking-wider text-zinc-300">Enable AI Question Generator</span>
                   </div>
                   <Switch
                     checked={aiEnabled}
@@ -923,11 +1163,11 @@ export function GameComponent({
               <div className="text-zinc-400 leading-relaxed text-xs font-semibold">{getGameRules(gameId)}</div>
             </div>
 
-            {isHost ? (
+            {isHost || !roomCode ? (
               <Button
                 onClick={startGame}
                 size="lg"
-                className="bg-zinc-100 hover:bg-zinc-200 text-black rounded-xl h-12 px-8 font-bold uppercase tracking-wider text-xs w-full max-w-sm inline-flex items-center justify-center border-0 transition-colors"
+                className="bg-zinc-100 hover:bg-zinc-200 text-black rounded-xl h-12 px-8 font-bold uppercase tracking-wider text-xs w-full max-w-sm inline-flex items-center justify-center border-0 transition-colors shadow-lg"
               >
                 <Play className="w-4 h-4 mr-1.5 fill-black" />
                 Start Game!
@@ -1019,7 +1259,6 @@ export function GameComponent({
                     {gameHistory.map((item, index) => {
                       return (
                         <div key={index} className="relative">
-                          {/* Timeline indicator node */}
                           <div className="absolute -left-[24.5px] top-1.5 w-2.5 h-2.5 rounded-full bg-zinc-700" />
                           
                           <div className="flex flex-col gap-1.5">
@@ -1032,7 +1271,6 @@ export function GameComponent({
                               {item.question}
                             </p>
 
-                            {/* Render vote results breakdown if whos-most-likely */}
                             {item.tallies && (
                               <div className="mt-2 bg-zinc-900/50 border border-zinc-800 rounded-lg p-2.5 space-y-1.5">
                                 <span className="text-[8px] font-bold uppercase tracking-wider text-zinc-500 block">Voting Breakdown</span>
@@ -1047,6 +1285,28 @@ export function GameComponent({
                                 })}
                               </div>
                             )}
+
+                            {item.kmkVotes && Object.keys(item.kmkVotes).length > 0 && (
+                              <div className="mt-2.5 bg-zinc-950/70 border border-zinc-800 rounded-xl p-3 space-y-2">
+                                <span className="text-[9px] font-extrabold uppercase tracking-wider text-amber-400 block border-b border-zinc-850 pb-1">
+                                  💋💍🔪 Kiss Marry Kill Selections
+                                </span>
+                                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2">
+                                  {Object.entries(item.kmkVotes).map(([player, pVote]) => (
+                                    <div key={player} className="p-2 bg-zinc-900/60 border border-zinc-850 rounded-lg text-[10px] space-y-1">
+                                      <span className="font-extrabold text-white uppercase tracking-wider block border-b border-zinc-800 pb-0.5">
+                                        {player}
+                                      </span>
+                                      <div className="text-[9px] space-y-0.5 pt-0.5">
+                                        <div><span className="text-pink-400 font-bold">💋 Kiss:</span> <span className="text-zinc-200 font-semibold">{pVote.kiss || "—"}</span></div>
+                                        <div><span className="text-amber-400 font-bold">💍 Marry:</span> <span className="text-zinc-200 font-semibold">{pVote.marry || "—"}</span></div>
+                                        <div><span className="text-red-400 font-bold">🔪 Kill:</span> <span className="text-zinc-200 font-semibold">{pVote.kill || "—"}</span></div>
+                                      </div>
+                                    </div>
+                                  ))}
+                                </div>
+                              </div>
+                            )}
                           </div>
                         </div>
                       )
@@ -1057,7 +1317,6 @@ export function GameComponent({
             </div>
           </div>
 
-          {/* Action button */}
           <div className="text-center mt-6">
             <Button
               onClick={onBack}
@@ -1072,24 +1331,38 @@ export function GameComponent({
     )
   }
 
+  // Determine active dynamic actions
+  const isTurnPlayer = players[currentPlayer] === players[0] || isHost || !roomCode
+
   return (
     <div className="min-h-screen bg-neutral-950 text-zinc-100 font-sans selection:bg-zinc-800 selection:text-white flex flex-col justify-between py-6">
       
       {/* Floating Reactions Overlay */}
       <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
-        {reactions.map((r) => (
-          <motion.div
-            key={r.id}
-            initial={{ y: "100vh", opacity: 1, scale: 0.8 }}
-            animate={{ y: "-10vh", opacity: 0, scale: 1.2 }}
-            transition={{ duration: 3, ease: "easeOut" }}
-            className="absolute text-5xl"
-            style={{ left: `${r.x}%`, bottom: "10px" }}
-          >
-            {r.emoji}
-          </motion.div>
-        ))}
+        <AnimatePresence>
+          {reactions.map((r) => (
+            <motion.div
+              key={r.id}
+              initial={{ y: 0, opacity: 1, scale: 0.6 }}
+              animate={{ y: -700, opacity: 0, scale: 1.5 }}
+              exit={{ opacity: 0 }}
+              transition={{ duration: 2.2, ease: "easeOut" }}
+              className="absolute text-5xl select-none filter drop-shadow-lg"
+              style={{ left: `${r.x}%`, bottom: "70px" }}
+            >
+              {r.emoji}
+            </motion.div>
+          ))}
+        </AnimatePresence>
       </div>
+
+      {/* Beer Chug Animation Modal */}
+      <BeerChugAnimation
+        isOpen={chugModalOpen}
+        playerName={chugTargetPlayer}
+        sipsCount={chugSipsCount}
+        onClose={handleChugFinished}
+      />
 
       <div className="container mx-auto px-6 relative z-10 flex-1 flex flex-col justify-between max-w-4xl w-full">
         {/* Header */}
@@ -1105,13 +1378,34 @@ export function GameComponent({
 
           <div className="text-center">
             <h1 className="text-lg font-bold uppercase tracking-tight text-white leading-none">{getGameName(gameId)}</h1>
-            <p className="text-xs text-zinc-450 uppercase tracking-wider font-semibold mt-1">{players[currentPlayer]}'s turn</p>
+            <p className="text-xs text-zinc-450 uppercase tracking-wider font-semibold mt-1">{players[currentPlayer]}'s Turn</p>
             {gameMode === "spicy" && (
               <Badge className="bg-red-950/40 text-red-400 border border-red-900/30 font-bold uppercase text-[8px] px-2 py-0.5 rounded-md mt-1.5">Spicy Mode</Badge>
             )}
           </div>
 
-          <div className="flex items-center gap-3">
+          <div className="flex items-center gap-2">
+            <Button
+              variant="outline"
+              onClick={toggleTimer}
+              className={`rounded-lg border h-8 px-3 text-[9px] font-bold uppercase tracking-wider transition-colors ${
+                timerActive
+                  ? "bg-amber-500/10 border-amber-500/40 text-amber-300 hover:bg-amber-500/20"
+                  : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white"
+              }`}
+            >
+              {timerActive ? (
+                <>
+                  <Pause className="w-3.5 h-3.5 mr-1 text-amber-400 fill-amber-400" />
+                  <span>Auto-Flow ({timeLeft}s)</span>
+                </>
+              ) : (
+                <>
+                  <Play className="w-3.5 h-3.5 mr-1 text-zinc-400 fill-zinc-400" />
+                  <span>Paused [Space]</span>
+                </>
+              )}
+            </Button>
             <Button
               variant="outline"
               onClick={() => setShowLeaderboard(true)}
@@ -1126,85 +1420,309 @@ export function GameComponent({
         <main className="flex-1 flex flex-col justify-center gap-5 w-full">
           
           {/* Active Player banner */}
-          <div className="text-center mb-1">
+          <div className="text-center mb-1 flex items-center justify-center gap-2">
             <Badge className="bg-zinc-900 border border-zinc-800 text-zinc-300 text-xs px-4 py-1.5 rounded-xl uppercase tracking-wider font-bold">
               {players[currentPlayer]}'s Turn
             </Badge>
+            {!isHost && roomCode && (
+              <span className="text-[9px] text-zinc-500 font-bold uppercase tracking-widest bg-zinc-900/50 border border-zinc-800 px-2.5 py-1 rounded-lg">
+                Host Controlling
+              </span>
+            )}
           </div>
 
-          {/* Timer (optional) */}
+          {/* Timer with Per-Question Speed Selector */}
           {timerEnabled && (
-            <div className="bg-zinc-900/30 border border-zinc-800 rounded-xl p-4 max-w-sm mx-auto w-full mb-1">
+            <div className="bg-zinc-900/30 border border-zinc-800 rounded-xl p-4 max-w-sm mx-auto w-full mb-1 shadow-lg">
               <div className="flex items-center justify-between mb-2">
-                <span className="text-[9px] font-bold uppercase tracking-wider text-zinc-500">Time Remaining</span>
-                <div className="flex items-center space-x-1">
-                  <Button variant="ghost" size="icon" onClick={toggleTimer} className="text-zinc-400 hover:text-white w-6 h-6 p-0 hover:bg-zinc-800">
-                    {timerActive ? <Pause className="w-3.5 h-3.5" /> : <Play className="w-3.5 h-3.5" />}
-                  </Button>
-                  <Button variant="ghost" size="icon" onClick={resetTimer} className="text-zinc-400 hover:text-white w-6 h-6 p-0 hover:bg-zinc-800">
-                    <RotateCcw className="w-3.5 h-3.5" />
-                  </Button>
+                <span className="text-[9px] font-bold uppercase tracking-wider text-zinc-500 flex items-center gap-1">
+                  <Timer className="w-3.5 h-3.5 text-amber-400" /> Per-Question Timer
+                </span>
+                <div className="flex gap-1">
+                  {[15, 30, 45, 60].map((secs) => (
+                    <button
+                      key={secs}
+                      onClick={() => changeTimerDuration(secs)}
+                      className={`px-2 py-0.5 rounded text-[8px] font-bold uppercase transition-colors ${
+                        timerDuration === secs
+                          ? "bg-amber-400 text-black font-extrabold"
+                          : "bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-zinc-200"
+                      }`}
+                    >
+                      {secs}s
+                    </button>
+                  ))}
                 </div>
               </div>
               <Progress
-                value={(timeLeft / getTimerDuration(gameId)) * 100}
+                value={(timeLeft / timerDuration) * 100}
                 className="h-2 bg-zinc-900"
               />
-              <div className="text-center mt-1.5 font-mono font-bold text-xl text-zinc-300">{timeLeft}s</div>
+              <div className="flex justify-between items-center mt-2 text-xs font-mono font-bold text-zinc-400">
+                <span>0s</span>
+                <span className="text-amber-400 text-base font-extrabold">{timeLeft}s remaining</span>
+                <span>{timerDuration}s</span>
+              </div>
             </div>
           )}
 
-          {/* Game Question Card */}
-          <div className="bg-zinc-900/20 border border-zinc-800 rounded-2xl p-6 sm:p-10 min-h-[220px] flex flex-col items-center justify-center text-center shadow-xl relative max-w-3xl mx-auto w-full">
+          {/* Kiss Marry Kill Customizer Bar */}
+          {gameId === "kiss-marry-kill" && (
+            <div className="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-3.5 max-w-3xl mx-auto w-full mb-1 space-y-2.5 shadow-xl">
+              <div className="flex flex-col sm:flex-row items-center justify-between gap-2 border-b border-zinc-800/80 pb-2">
+                <span className="text-[10px] font-extrabold uppercase tracking-widest text-amber-400 flex items-center gap-1.5">
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Kiss Marry Kill Customizer
+                </span>
+                
+                {/* AI Generator Toggle */}
+                <button
+                  onClick={() => setAiEnabled(!aiEnabled)}
+                  className={`px-3 py-1 rounded-xl text-[9px] font-extrabold uppercase tracking-wider transition-colors border ${
+                    aiEnabled
+                      ? "bg-purple-500/20 border-purple-500/50 text-purple-300"
+                      : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200"
+                  }`}
+                >
+                  {aiEnabled ? "🤖 Groq AI Options: ON" : "📚 Local Database: ON"}
+                </button>
+              </div>
+
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {/* Gender Preference Filter */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-[8px] font-bold uppercase tracking-wider text-zinc-500">Gender Pool:</label>
+                  <div className="flex gap-1">
+                    {[
+                      { id: "female", label: "👩 Female Stars" },
+                      { id: "male", label: "👨 Male Stars" },
+                      { id: "mixed", label: "🔀 Mixed" }
+                    ].map((g) => (
+                      <button
+                        key={g.id}
+                        onClick={() => changeKMKGender(g.id as any)}
+                        className={`flex-1 py-1 px-1.5 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-colors ${
+                          kmkGender === g.id
+                            ? "bg-amber-400 text-black font-extrabold shadow-sm"
+                            : "bg-zinc-900 border border-zinc-800 text-zinc-400 hover:bg-zinc-850 hover:text-zinc-200"
+                        }`}
+                      >
+                        {g.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Category / Genre Filter */}
+                <div className="flex flex-col gap-1">
+                  <label className="text-[8px] font-bold uppercase tracking-wider text-zinc-500">Industry / Genre:</label>
+                  <div className="flex flex-wrap gap-1">
+                    {[
+                      { id: "all", label: "🌟 All" },
+                      { id: "bollywood", label: "🎬 Bollywood" },
+                      { id: "hollywood", label: "📽️ Hollywood" },
+                      { id: "popstars", label: "🎵 Popstars" },
+                      { id: "adultstars", label: "🌶️ Adult Stars" },
+                      { id: "fantasy", label: "⚔️ Fantasy" }
+                    ].map((c) => (
+                      <button
+                        key={c.id}
+                        onClick={() => changeKMKCategory(c.id as any)}
+                        className={`py-0.5 px-2 rounded-lg text-[8px] font-bold uppercase transition-colors ${
+                          kmkCategory === c.id
+                            ? "bg-zinc-100 text-black font-extrabold"
+                            : "bg-zinc-900 border border-zinc-800 text-zinc-400 hover:bg-zinc-850 hover:text-zinc-200"
+                        }`}
+                      >
+                        {c.label}
+                      </button>
+                    ))}
+                  </div>
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* Game Question Card - ALWAYS SYNCHRONIZED FOR ALL PLAYERS */}
+          <div className="bg-zinc-900/20 border border-zinc-800 rounded-2xl p-6 sm:p-10 min-h-[240px] flex flex-col items-center justify-center text-center shadow-xl relative max-w-3xl mx-auto w-full overflow-hidden">
             {isLoading ? (
               <div className="flex flex-col items-center gap-2">
-                <span className="text-xs font-bold uppercase tracking-widest text-zinc-500 animate-pulse">Loading...</span>
+                <span className="text-xs font-bold uppercase tracking-widest text-zinc-400 animate-pulse">Loading Question...</span>
               </div>
             ) : (
               <>
-                <div className="text-lg sm:text-xl md:text-2xl font-bold text-white tracking-tight uppercase max-w-2xl leading-normal">
-                  {currentContent}
-                </div>
+                <AnimatePresence mode="wait">
+                  <motion.div
+                    key={currentContent}
+                    initial={{ opacity: 0, scale: 0.94, y: 15 }}
+                    animate={{ opacity: 1, scale: 1, y: 0 }}
+                    exit={{ opacity: 0, scale: 0.94, y: -15 }}
+                    transition={{ duration: 0.3 }}
+                    className="w-full flex flex-col items-center justify-center"
+                  >
+                    <motion.div
+                      initial={{ scale: 0.8, opacity: 0 }}
+                      animate={{ scale: 1, opacity: 1 }}
+                      transition={{ delay: 0.05, duration: 0.2 }}
+                      className="mb-4 inline-flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/30 text-amber-300 font-extrabold text-[10px] uppercase px-3.5 py-1 rounded-full tracking-widest shadow-sm"
+                    >
+                      <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                      <span>Question #{contentIndex + 1}</span>
+                    </motion.div>
+
+                    <div className="text-lg sm:text-xl md:text-2xl font-black text-white tracking-tight uppercase max-w-2xl leading-relaxed">
+                      {currentContent || "Get ready for the next round!"}
+                    </div>
+                  </motion.div>
+                </AnimatePresence>
+
+                {/* Interactive Truth or Dare choice step */}
+                {gameId === "truth-or-dare" && (
+                  <div className="mt-6 flex gap-3">
+                    <Button
+                      onClick={() => setTodChoice("truth")}
+                      className={`h-10 px-6 rounded-xl font-bold uppercase text-xs tracking-wider transition-colors ${
+                        todChoice === "truth"
+                          ? "bg-emerald-400 text-black"
+                          : "bg-zinc-900 border border-zinc-800 text-zinc-300 hover:bg-zinc-850"
+                      }`}
+                    >
+                      😇 Truth Chosen
+                    </Button>
+                    <Button
+                      onClick={() => setTodChoice("dare")}
+                      className={`h-10 px-6 rounded-xl font-bold uppercase text-xs tracking-wider transition-colors ${
+                        todChoice === "dare"
+                          ? "bg-red-500 text-white"
+                          : "bg-zinc-900 border border-zinc-800 text-zinc-300 hover:bg-zinc-850"
+                      }`}
+                    >
+                      😈 Dare Chosen
+                    </Button>
+                  </div>
+                )}
                 
-                {/* Interactive Kiss Marry Kill */}
+                {/* Interactive Kiss Marry Kill with Synced Multiplayer Reveal */}
                 {(() => {
                   const kmkOptionsList = getKMKOptions()
                   if (gameId === "kiss-marry-kill" && kmkOptionsList) {
                     const [o1, o2, o3] = kmkOptionsList
+                    const myUser = myPlayerName || players[currentPlayer] || "Player"
+                    const hasSubmitted = !!kmkVotes[myUser]
+                    const isAllComplete = kmkSelections.kiss && kmkSelections.marry && kmkSelections.kill
+
                     return (
-                      <div className="mt-6 border-t border-zinc-900 pt-5 w-full max-w-md mx-auto space-y-3">
-                        <h4 className="text-[10px] font-bold uppercase tracking-wider mb-2 text-zinc-500">
-                          Assign choices
-                        </h4>
-                        <div className="space-y-2">
-                          {[o1, o2, o3].map((opt) => {
-                            const currentRole = Object.keys(kmkSelections).find(k => kmkSelections[k] === opt)
-                            return (
-                              <div key={opt} className="p-2.5 bg-zinc-900/40 border border-zinc-800 rounded-xl flex flex-col sm:flex-row justify-between items-center gap-2">
-                                <span className="font-bold text-[11px] text-left uppercase tracking-wider text-zinc-300 flex-1">{opt}</span>
-                                <div className="flex gap-1.5">
-                                  {(['kiss', 'marry', 'kill'] as const).map((role) => {
-                                    const labels = { kiss: "Kiss", marry: "Marry", kill: "Kill" }
-                                    const isSelected = kmkSelections[role] === opt
-                                    return (
-                                      <Button
-                                        key={role}
-                                        size="sm"
-                                        onClick={() => selectKMK(opt, role)}
-                                        className={`h-8 px-2.5 rounded-lg text-[9px] font-bold uppercase tracking-wider transition-colors ${
-                                          isSelected 
-                                            ? "bg-zinc-100 text-black border-transparent" 
-                                            : "border border-zinc-800 bg-transparent text-zinc-500 hover:bg-zinc-900 hover:text-zinc-300"
-                                        }`}
-                                      >
-                                        {labels[role]}
-                                      </Button>
-                                    )
-                                  })}
+                      <div className="mt-6 border-t border-zinc-900 pt-5 w-full max-w-lg mx-auto space-y-4">
+                        {/* Option Selection Panel */}
+                        <div className="bg-zinc-900/30 border border-zinc-800/80 rounded-2xl p-4 space-y-3">
+                          <h4 className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 flex items-center justify-between">
+                            <span>Assign Your Choices ({myUser})</span>
+                            {hasSubmitted && (
+                              <span className="text-emerald-400 font-extrabold text-[9px] bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                                ✓ Submitted
+                              </span>
+                            )}
+                          </h4>
+
+                          <div className="space-y-2">
+                            {[o1, o2, o3].map((opt) => {
+                              return (
+                                <div key={opt} className="p-2.5 bg-zinc-950/60 border border-zinc-800 rounded-xl flex flex-col sm:flex-row justify-between items-center gap-2">
+                                  <span className="font-extrabold text-xs text-left uppercase tracking-wider text-zinc-200 flex-1">{opt}</span>
+                                  <div className="flex gap-1.5">
+                                    {(['kiss', 'marry', 'kill'] as const).map((role) => {
+                                      const labels = { kiss: "💋 Kiss", marry: "💍 Marry", kill: "🔪 Kill" }
+                                      const isSelected = kmkSelections[role] === opt
+                                      return (
+                                        <Button
+                                          key={role}
+                                          size="sm"
+                                          onClick={() => selectKMK(opt, role)}
+                                          className={`h-8 px-2.5 rounded-lg text-[9px] font-extrabold uppercase tracking-wider transition-all ${
+                                            isSelected 
+                                              ? role === "kiss" ? "bg-pink-500 text-white shadow-md" : role === "marry" ? "bg-amber-400 text-black shadow-md" : "bg-red-600 text-white shadow-md"
+                                              : "border border-zinc-800 bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+                                          }`}
+                                        >
+                                          {labels[role]}
+                                        </Button>
+                                      )
+                                    })}
+                                  </div>
                                 </div>
-                              </div>
-                            )
-                          })}
+                              )
+                            })}
+                          </div>
+
+                          <Button
+                            onClick={submitKMKChoices}
+                            disabled={!isAllComplete}
+                            className={`w-full h-10 text-xs font-black uppercase tracking-wider rounded-xl transition-all border-0 shadow-lg ${
+                              hasSubmitted
+                                ? "bg-emerald-500 hover:bg-emerald-400 text-black"
+                                : isAllComplete
+                                ? "bg-amber-400 hover:bg-amber-300 text-black"
+                                : "bg-zinc-800 text-zinc-500 cursor-not-allowed"
+                            }`}
+                          >
+                            {hasSubmitted ? "✓ Update My Choices" : "Submit Choices 💋 💍 🔪"}
+                          </Button>
+                        </div>
+
+                        {/* Live Room Reveal Grid */}
+                        <div className="bg-zinc-950/80 border border-zinc-800 rounded-2xl p-4 text-left space-y-3 shadow-2xl">
+                          <h4 className="text-[10px] font-black uppercase tracking-widest text-amber-400 flex items-center justify-between border-b border-zinc-850 pb-2">
+                            <span>Live Room Reveal ({Object.keys(kmkVotes).length}/{players.length} Submitted)</span>
+                            <span className="text-[8px] text-zinc-500 font-mono">REVEALED IN REAL-TIME</span>
+                          </h4>
+
+                          <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5">
+                            {players.map((p) => {
+                              const pVote = kmkVotes[p]
+                              const isMe = myPlayerName ? p.toLowerCase() === myPlayerName.toLowerCase() : false
+
+                              return (
+                                <div key={p} className={`p-3 rounded-xl border text-xs space-y-1.5 transition-colors ${
+                                  isMe ? "bg-amber-500/10 border-amber-500/40" : "bg-zinc-900/50 border-zinc-800"
+                                }`}>
+                                  <div className="flex justify-between items-center">
+                                    <span className="font-extrabold uppercase text-[10px] text-white tracking-wider">
+                                      {p}{isMe ? " (You)" : ""}
+                                    </span>
+                                    {pVote ? (
+                                      <span className="text-[8px] font-extrabold uppercase bg-emerald-500/20 text-emerald-400 px-1.5 py-0.5 rounded-md border border-emerald-500/30">
+                                        Submitted
+                                      </span>
+                                    ) : (
+                                      <span className="text-[8px] font-bold uppercase text-zinc-500 italic">
+                                        Selecting...
+                                      </span>
+                                    )}
+                                  </div>
+
+                                  {pVote ? (
+                                    <div className="space-y-1 text-[10px] pt-1">
+                                      <div className="flex items-center gap-1.5">
+                                        <span className="text-pink-400 font-bold">💋 Kiss:</span>
+                                        <span className="font-semibold text-zinc-200 truncate">{pVote.kiss || "—"}</span>
+                                      </div>
+                                      <div className="flex items-center gap-1.5">
+                                        <span className="text-amber-400 font-bold">💍 Marry:</span>
+                                        <span className="font-semibold text-zinc-200 truncate">{pVote.marry || "—"}</span>
+                                      </div>
+                                      <div className="flex items-center gap-1.5">
+                                        <span className="text-red-400 font-bold">🔪 Kill:</span>
+                                        <span className="font-semibold text-zinc-200 truncate">{pVote.kill || "—"}</span>
+                                      </div>
+                                    </div>
+                                  ) : (
+                                    <div className="text-[9px] text-zinc-600 italic py-2 text-center">
+                                      Waiting for selections...
+                                    </div>
+                                  )}
+                                </div>
+                              )
+                            })}
+                          </div>
                         </div>
                       </div>
                     )
@@ -1220,7 +1738,7 @@ export function GameComponent({
                         animate={{ rotate: bottleRotation }}
                         transition={{ duration: 3, ease: "easeOut" }}
                         className="w-12 h-12 flex items-center justify-center cursor-pointer select-none z-10"
-                        onClick={spinBottle}
+                        onClick={() => (isHost || !roomCode) && spinBottle()}
                       >
                         <span className="text-5xl select-none filter drop-shadow-md">🍾</span>
                       </motion.div>
@@ -1253,13 +1771,15 @@ export function GameComponent({
                       })}
                     </div>
                     
-                    <Button
-                      onClick={spinBottle}
-                      disabled={isSpinning}
-                      className="mt-3 bg-zinc-100 hover:bg-zinc-200 text-black font-bold uppercase rounded-lg px-4 h-8 text-[9px] tracking-wider border-0 transition-colors"
-                    >
-                      {isSpinning ? "Spinning..." : "Tap Bottle to Spin!"}
-                    </Button>
+                    {(isHost || !roomCode) && (
+                      <Button
+                        onClick={spinBottle}
+                        disabled={isSpinning}
+                        className="mt-3 bg-zinc-100 hover:bg-zinc-200 text-black font-bold uppercase rounded-lg px-4 h-8 text-[9px] tracking-wider border-0 transition-colors"
+                      >
+                        {isSpinning ? "Spinning..." : "Tap Bottle to Spin!"}
+                      </Button>
+                    )}
                     
                     {spinTargetPlayer && (
                       <motion.div
@@ -1267,8 +1787,8 @@ export function GameComponent({
                         animate={{ opacity: 1, y: 0 }}
                         className="mt-2 text-center"
                       >
-                        <p className="font-bold text-[10px] uppercase text-zinc-400">
-                          Points to {spinTargetPlayer}!
+                        <p className="font-bold text-[10px] uppercase text-amber-400">
+                          Bottle pointed to {spinTargetPlayer}! Drink or Dare!
                         </p>
                       </motion.div>
                     )}
@@ -1285,16 +1805,16 @@ export function GameComponent({
                     {!votingReveal ? (
                       <div className="grid grid-cols-2 gap-2">
                         {players.map((player) => {
-                          const voterSocketId = socket?.id || ""
-                          const hasVotedForThis = votes[voterSocketId] === player
+                          const activeVoterName = players[currentPlayer] || "Player"
+                          const hasVotedForThis = votes[activeVoterName] === player || Object.values(votes).includes(player)
                           return (
                             <Button
                               key={player}
                               onClick={() => castVote(player)}
                               disabled={hasVoted}
                               className={`h-9 rounded-lg border font-bold uppercase tracking-wider text-[10px] transition-colors ${
-                                hasVotedForThis 
-                                  ? "bg-zinc-100 text-black border-transparent" 
+                                hasVoted 
+                                  ? "border-zinc-800 bg-zinc-900/40 text-zinc-400 cursor-not-allowed" 
                                   : "border-zinc-800 bg-zinc-900/10 hover:border-zinc-700 text-zinc-400 hover:text-zinc-200"
                               }`}
                             >
@@ -1312,11 +1832,13 @@ export function GameComponent({
                             const count = tallies[player] || 0
                             const isWinner = count > 0 && count === maxVotes
                             return (
-                              <div key={player} className="flex justify-between items-center p-2 bg-zinc-900/50 border border-zinc-800 rounded-xl">
-                                <span className="font-bold uppercase text-[10px] tracking-wider flex items-center gap-1.5 text-zinc-300">
-                                  {player}
+                              <div key={player} className={`flex justify-between items-center p-2.5 border rounded-xl ${
+                                isWinner ? "bg-amber-500/10 border-amber-500/40 text-amber-300" : "bg-zinc-900/50 border-zinc-800 text-zinc-300"
+                              }`}>
+                                <span className="font-bold uppercase text-[10px] tracking-wider flex items-center gap-1.5">
+                                  {player} {isWinner && "👑"}
                                 </span>
-                                <span className="font-bold text-zinc-400 text-xs">{count} {count === 1 ? 'vote' : 'votes'}</span>
+                                <span className="font-bold text-xs">{count} {count === 1 ? 'vote' : 'votes'}</span>
                               </div>
                             )
                           })
@@ -1324,11 +1846,11 @@ export function GameComponent({
                       </div>
                     )}
 
-                    {isHost && !votingReveal && (
+                    {(isHost || !roomCode) && !votingReveal && (
                       <Button
                         onClick={revealVotes}
                         disabled={Object.keys(votes).length === 0}
-                        className="w-full h-10 mt-4 bg-zinc-100 hover:bg-zinc-200 text-black font-bold uppercase rounded-lg text-[10px] tracking-wider border-0 transition-colors"
+                        className="w-full h-10 mt-4 bg-zinc-100 hover:bg-zinc-200 text-black font-bold uppercase rounded-lg text-[10px] tracking-wider border-0 transition-colors shadow-md"
                       >
                         Reveal Votes ({Object.keys(votes).length} Cast)
                       </Button>
@@ -1339,68 +1861,148 @@ export function GameComponent({
             )}
           </div>
 
-          {/* Quick Sip Tracker / Drink Logger directly under question card */}
+          {/* Quick Sip Tracker / Drink Logger (View-Only Badges + Chug Trigger) */}
           {matureContent && (
-            <div className="bg-zinc-900/20 border border-zinc-800 rounded-2xl p-5 max-w-3xl mx-auto w-full mt-1 text-center">
-              <h4 className="text-[10px] font-bold uppercase tracking-wider mb-3 text-zinc-500 flex items-center justify-center gap-1">
-                Log Sips For This Round
+            <div className="bg-zinc-900/20 border border-zinc-800 rounded-2xl p-4 max-w-3xl mx-auto w-full mt-1 text-center">
+              <h4 className="text-[9px] font-bold uppercase tracking-wider mb-2.5 text-zinc-500 flex items-center justify-center gap-1.5">
+                <Beer className="w-3.5 h-3.5 text-amber-400" /> Sips Logged This Match
               </h4>
-              <div className="flex flex-wrap justify-center gap-1.5">
+              <div className="flex flex-wrap justify-center gap-2">
                 {players.map((player) => {
                   const count = sips[player] || 0
+                  const isMe = myPlayerName ? player.toLowerCase() === myPlayerName.toLowerCase() : false
                   return (
-                    <Button
-                      key={player}
-                      onClick={() => updateSips(player, 1)}
-                      variant="outline"
-                      className="rounded-lg border-zinc-800 bg-zinc-900/10 hover:border-zinc-700 text-zinc-400 flex items-center gap-2 h-8 px-2.5 text-[9px] font-bold uppercase tracking-wider"
-                    >
-                      <span>{player}</span>
-                      <span className="bg-zinc-850 border border-zinc-700 text-zinc-300 text-[9px] font-bold px-1.5 py-0.5 rounded-md">
-                        {count}
+                    <div key={player} className={`flex items-center gap-1.5 border rounded-xl px-3 py-1.5 transition-colors ${
+                      isMe ? "bg-amber-500/10 border-amber-500/40" : "bg-zinc-900/50 border-zinc-800"
+                    }`}>
+                      <span className="text-zinc-200 text-[10px] font-bold uppercase tracking-wider">{player}{isMe ? " (You)" : ""}</span>
+                      <span className="bg-zinc-800 border border-zinc-750 text-amber-400 font-mono text-[11px] font-bold px-2 py-0.5 rounded-lg">
+                        {count} {count === 1 ? 'sip' : 'sips'}
                       </span>
-                    </Button>
+                      <Button
+                        onClick={() => triggerChugAnimation(player, 1)}
+                        variant="ghost"
+                        size="sm"
+                        className="h-6 px-1 text-zinc-400 hover:text-amber-400 hover:bg-amber-400/10 rounded-md p-0"
+                        title={`Trigger Chug Animation for ${player}`}
+                      >
+                        <Beer className="w-3.5 h-3.5" />
+                      </Button>
+                    </div>
                   )
                 })}
               </div>
             </div>
           )}
 
-          {/* Game Controls */}
-          <div className="flex flex-col sm:flex-row gap-2.5 max-w-xl mx-auto w-full mt-3">
-            <Button
-              onClick={skipContent}
-              variant="outline"
-              size="lg"
-              className="h-11 text-xs border-zinc-800 text-zinc-400 hover:bg-zinc-900 hover:text-white rounded-xl font-bold uppercase tracking-wider flex-1 transition-colors"
-            >
-              <SkipForward className="w-4 h-4 mr-1.5" />
-              Skip
-            </Button>
+          {/* Dynamic Action Controls Bar based on active Game Mode */}
+          <div className="max-w-xl mx-auto w-full mt-3 space-y-2">
+            
+            {/* Dynamic Game-Specific Action Buttons */}
+            {gameId === "never-have-i-ever" && (
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => handleSelfSip(1)}
+                  className="flex-1 h-11 bg-amber-500 hover:bg-amber-400 text-black font-extrabold uppercase text-xs rounded-xl border-0 shadow-md"
+                >
+                  <Beer className="w-4 h-4 mr-1.5" />
+                  I've Done This! (Chug 🍺)
+                </Button>
+                <Button
+                  onClick={() => isHost && nextTurn()}
+                  disabled={!isHost && !!roomCode}
+                  className="flex-1 h-11 bg-zinc-800 hover:bg-zinc-700 text-white font-bold uppercase text-xs rounded-xl border border-zinc-700"
+                >
+                  I'm Safe 😇
+                </Button>
+              </div>
+            )}
 
-            <Button
-              onClick={nextTurn}
-              size="lg"
-              className="h-11 text-xs bg-zinc-100 hover:bg-zinc-200 text-black rounded-xl font-bold uppercase tracking-wider flex-1 transition-colors"
-            >
-              <Play className="w-4 h-4 mr-1.5 fill-black" />
-              Next Turn
-            </Button>
+            {gameId === "drink-if" && (
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => handleSelfSip(1)}
+                  className="flex-1 h-11 bg-amber-500 hover:bg-amber-400 text-black font-extrabold uppercase text-xs rounded-xl border-0 shadow-md"
+                >
+                  <Beer className="w-4 h-4 mr-1.5" />
+                  Applies to Me! (Take Sip 🍺)
+                </Button>
+              </div>
+            )}
 
-            <Button
-              onClick={shuffleContent}
-              variant="outline"
-              size="lg"
-              className="h-11 text-xs border-zinc-800 text-zinc-400 hover:bg-zinc-900 hover:text-white rounded-xl font-bold uppercase tracking-wider flex-1 transition-colors"
-            >
-              <Shuffle className="w-4 h-4 mr-1.5" />
-              Shuffle
-            </Button>
+            {gameId === "strip-or-sip" && (
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => handleSelfSip(2)}
+                  className="flex-1 h-11 bg-amber-500 hover:bg-amber-400 text-black font-extrabold uppercase text-xs rounded-xl border-0 shadow-md"
+                >
+                  <Beer className="w-4 h-4 mr-1.5" />
+                  Sip / Chug Penalty 🍺
+                </Button>
+                <Button
+                  onClick={() => isHost && nextTurn()}
+                  disabled={!isHost && !!roomCode}
+                  className="flex-1 h-11 bg-red-950/60 border border-red-900/50 hover:bg-red-900/80 text-red-300 font-bold uppercase text-xs rounded-xl"
+                >
+                  Strip Item 👕
+                </Button>
+              </div>
+            )}
+
+            {gameId === "rapid-fire" && (
+              <div className="flex gap-2">
+                <Button
+                  onClick={() => {
+                    awardPoint(myPlayerName || players[currentPlayer])
+                    if (isHost || !roomCode) nextTurn()
+                  }}
+                  className="flex-1 h-11 bg-emerald-500 hover:bg-emerald-400 text-black font-extrabold uppercase text-xs rounded-xl border-0 shadow-md"
+                >
+                  <CheckCircle className="w-4 h-4 mr-1.5" />
+                  Answered! (+1 Point)
+                </Button>
+              </div>
+            )}
+
+            {/* Standard Navigation Controls (Host Controlled) */}
+            <div className="flex flex-col sm:flex-row gap-2.5 w-full">
+              <Button
+                onClick={skipContent}
+                disabled={!isHost && !!roomCode}
+                variant="outline"
+                size="lg"
+                className="h-11 text-xs border-zinc-800 text-zinc-400 hover:bg-zinc-900 hover:text-white rounded-xl font-bold uppercase tracking-wider flex-1 transition-colors disabled:opacity-50"
+              >
+                <SkipForward className="w-4 h-4 mr-1.5" />
+                Skip
+              </Button>
+
+              <Button
+                onClick={nextTurn}
+                disabled={!isHost && !!roomCode}
+                size="lg"
+                className="h-11 text-xs bg-zinc-100 hover:bg-zinc-200 text-black rounded-xl font-bold uppercase tracking-wider flex-1 transition-colors disabled:opacity-50 shadow-md"
+              >
+                <Play className="w-4 h-4 mr-1.5 fill-black" />
+                Next Turn
+              </Button>
+
+              <Button
+                onClick={shuffleContent}
+                disabled={!isHost && !!roomCode}
+                variant="outline"
+                size="lg"
+                className="h-11 text-xs border-zinc-800 text-zinc-400 hover:bg-zinc-900 hover:text-white rounded-xl font-bold uppercase tracking-wider flex-1 transition-colors disabled:opacity-50"
+              >
+                <Shuffle className="w-4 h-4 mr-1.5" />
+                Shuffle
+              </Button>
+            </div>
           </div>
         </main>
 
         {/* Footer Player Badges row */}
-        <footer className="mt-6 border-t border-zinc-900 pt-4">
+        <footer className="mt-6 border-t border-zinc-900 pt-4 pb-12 sm:pb-4">
           <div className="flex flex-wrap justify-center gap-2">
             {players.map((player, index) => (
               <Badge
@@ -1419,14 +2021,15 @@ export function GameComponent({
         </footer>
       </div>
 
-      {/* Floating Reactions Tray - Sleek Dark Minimalist */}
-      <div className="fixed right-4 bottom-20 flex flex-col gap-2 z-40 bg-zinc-900/60 backdrop-blur-md border border-zinc-800 rounded-full p-2 shadow-xl">
+      {/* Floating Quick Reactions Tray - Bottom-Center Horizontal Bar */}
+      <div className="fixed bottom-3 left-1/2 -translate-x-1/2 z-40 bg-neutral-950/90 backdrop-blur-xl border border-zinc-800/80 rounded-full px-4 py-1.5 flex items-center gap-3 shadow-2xl">
+        <span className="text-[8px] font-extrabold uppercase tracking-widest text-zinc-500 hidden sm:inline">Reactions:</span>
         {["🔥", "😂", "🍺", "😈", "💀"].map((emoji) => (
           <Button
             key={emoji}
             variant="ghost"
             onClick={() => triggerReaction(emoji)}
-            className="w-10 h-10 rounded-full hover:bg-zinc-850 text-xl p-0 flex items-center justify-center bg-transparent border-0 transition-colors"
+            className="w-8 h-8 rounded-full hover:bg-zinc-800 text-lg p-0 flex items-center justify-center bg-transparent border-0 transition-transform active:scale-125"
           >
             {emoji}
           </Button>
@@ -1437,7 +2040,6 @@ export function GameComponent({
       <AnimatePresence>
         {showLeaderboard && (
           <>
-            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 0.4 }}
@@ -1445,7 +2047,6 @@ export function GameComponent({
               onClick={() => setShowLeaderboard(false)}
               className="fixed inset-0 bg-black z-40"
             />
-            {/* Drawer */}
             <motion.div
               initial={{ x: "100%" }}
               animate={{ x: 0 }}
@@ -1461,7 +2062,7 @@ export function GameComponent({
               </div>
 
               <div className="space-y-4 flex-1 overflow-y-auto pr-1">
-                {players.map((player, index) => (
+                {players.map((player) => (
                   <div key={player} className="flex flex-col gap-2.5 p-3.5 bg-zinc-900/40 border border-zinc-800 rounded-xl">
                     <div className="flex justify-between items-center">
                       <span className="font-bold uppercase text-xs tracking-wider flex items-center gap-1.5 text-zinc-300">
@@ -1498,7 +2099,6 @@ export function GameComponent({
                 ))}
               </div>
 
-              {/* Reactions panel in Sidebar */}
               <div className="mt-4 border-t border-zinc-900 pt-3.5 mb-2">
                 <h4 className="text-[9px] font-bold uppercase tracking-wider mb-2 text-zinc-500">Quick Reactions</h4>
                 <div className="flex justify-between">
@@ -1515,7 +2115,6 @@ export function GameComponent({
                 </div>
               </div>
 
-              {/* Submit Dares button */}
               <Button
                 onClick={() => {
                   setShowLeaderboard(false)
@@ -1534,7 +2133,6 @@ export function GameComponent({
       <AnimatePresence>
         {customPromptOpen && (
           <>
-            {/* Backdrop */}
             <motion.div
               initial={{ opacity: 0 }}
               animate={{ opacity: 0.4 }}
@@ -1542,7 +2140,6 @@ export function GameComponent({
               onClick={() => setCustomPromptOpen(false)}
               className="fixed inset-0 bg-black z-40"
             />
-            {/* Input Modal */}
             <motion.div
               initial={{ scale: 0.95, opacity: 0 }}
               animate={{ scale: 1, opacity: 1 }}
@@ -1557,7 +2154,7 @@ export function GameComponent({
               </div>
               
               <p className="text-xs text-zinc-500 font-semibold leading-relaxed">
-                Type in an anonymous truth, dare, or scenario. It will be randomly shuffled into the deck to surprise players!
+                Type in an anonymous truth, dare, or scenario. It will be randomly shuffled into the deck!
               </p>
 
               <textarea
@@ -1628,5 +2225,3 @@ function getGameRules(gameId: string): string {
 
   return rules[gameId] || "Get ready for an amazing party game experience!"
 }
-
-

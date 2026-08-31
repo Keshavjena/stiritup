@@ -100,6 +100,10 @@ app.prepare().then(() => {
       io.to(roomCode).emit("select-game", gameId);
     });
 
+    socket.on("request-game-state", (roomCode) => {
+      socket.to(roomCode).emit("request-game-state");
+    });
+
     socket.on("disconnect", () => {
       console.log("Client disconnected:", socket.id);
       // Clean up player from all rooms they were in

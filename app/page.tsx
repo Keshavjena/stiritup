@@ -105,6 +105,20 @@ export default function Home() {
     return true
   })
 
+  const [hasConsented18, setHasConsented18] = useState<boolean>(true)
+
+  useEffect(() => {
+    const consent = localStorage.getItem("stir_18_consent")
+    if (!consent) {
+      setHasConsented18(false)
+    }
+  }, [])
+
+  const handleConsent18 = () => {
+    localStorage.setItem("stir_18_consent", "true")
+    setHasConsented18(true)
+  }
+
   if (currentView === "room") {
     return (
       <GameRoom
@@ -129,6 +143,7 @@ export default function Home() {
         roomCode={roomCode}
         gameId={selectedGame || "never-have-i-ever"}
         players={players}
+        myPlayerName={playerName}
         isHost={isHost}
         onBack={() => {
           socket?.emit("leave-room", roomCode)
@@ -322,6 +337,44 @@ export default function Home() {
       <footer className="relative z-10 text-center py-4 border-t border-zinc-900 bg-neutral-950">
         <p className="text-[9px] text-zinc-600 uppercase tracking-widest font-bold">Stir It Up Party Engine © 2026</p>
       </footer>
+
+      {/* 18+ Age & Consent Verification Modal */}
+      <AnimatePresence>
+        {!hasConsented18 && (
+          <motion.div
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            className="fixed inset-0 z-50 bg-black/90 backdrop-blur-md flex items-center justify-center p-4"
+          >
+            <motion.div
+              initial={{ scale: 0.9, y: 20 }}
+              animate={{ scale: 1, y: 0 }}
+              exit={{ scale: 0.9, y: 20 }}
+              className="bg-zinc-950 border border-zinc-800 p-8 rounded-3xl max-w-md w-full text-center shadow-2xl relative overflow-hidden"
+            >
+              <div className="w-16 h-16 bg-red-950/40 border border-red-800/40 text-red-400 rounded-full flex items-center justify-center mx-auto mb-4 text-2xl font-black">
+                18+
+              </div>
+              <h2 className="text-xl font-bold uppercase tracking-tight mb-2 text-white">
+                Age & Consent Verification
+              </h2>
+              <p className="text-xs text-zinc-400 mb-6 leading-relaxed">
+                Stir It Up contains adult party games, spicy dares, and drinking challenges. 
+                By entering, you confirm you are <strong className="text-amber-400">at least 18 years old</strong> and consent to viewing 18+ content. Please drink and playN0N-RESPONSIBLY (know your limits)!
+              </p>
+              <div className="space-y-3">
+                <Button
+                  onClick={handleConsent18}
+                  className="w-full h-12 bg-amber-500 hover:bg-amber-400 text-black font-extrabold uppercase tracking-wider text-xs rounded-xl border-0 shadow-lg shadow-amber-500/20 transition-all"
+                >
+                  I am 18+ & I Agree 🍻
+                </Button>
+              </div>
+            </motion.div>
+          </motion.div>
+        )}
+      </AnimatePresence>
     </div>
   )
 }

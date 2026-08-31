@@ -7,6 +7,15 @@ const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
 const spaceGrotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-space" })
 const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair" })
 
+export const viewport = {
+  width: "device-width",
+  initialScale: 1,
+  themeColor: [
+    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
+    { media: "(prefers-color-scheme: dark)", color: "#111827" },
+  ],
+}
+
 export const metadata: Metadata = {
   title: "Stir the Game - Ultimate Party Games Platform",
   description: "The ultimate party game collection for unforgettable nights. No filters. No judgment. Just fun.",
@@ -23,12 +32,7 @@ export const metadata: Metadata = {
     title: "Stir the Game - Ultimate Party Games Platform",
     description: "The ultimate party game collection for unforgettable nights. No filters. No judgment. Just fun.",
   },
-  viewport: "width=device-width, initial-scale=1",
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#111827" },
-  ],
-    generator: 'v0.app'
+  generator: 'v0.app'
 }
 
 export default function RootLayout({

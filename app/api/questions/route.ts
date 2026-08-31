@@ -1,46 +1,46 @@
 import { NextRequest, NextResponse } from "next/server";
-import fs from "node:fs";
-import path from "node:path";
+import questionsDb from "@/lib/game-data/questions-db.json";
+import { getGameContent } from "@/lib/game-data/questions";
+import { generateKMKQuestions, KMKGender, KMKCategory } from "@/lib/game-data/kmk-generator";
 
-// Path to the generated database
-const dbPath = path.join(process.cwd(), "lib", "game-data", "questions-db.json");
+export const dynamic = "force-dynamic";
 
 export async function GET(req: NextRequest) {
   try {
     const { searchParams } = new URL(req.url);
     const gameId = searchParams.get("gameId") || "never-have-i-ever";
     const mature = searchParams.get("mature") === "true";
-    const mode = searchParams.get("mode") || "standard"; // standard, challenge, spicy
+    const mode = (searchParams.get("mode") || "standard") as "standard" | "challenge" | "spicy";
     const useAI = searchParams.get("ai") === "true";
+    const kmkGender = (searchParams.get("kmkGender") || "female") as KMKGender;
+    const kmkCategory = (searchParams.get("kmkCategory") || "all") as KMKCategory;
 
     // Load static database
-    let db: any = {};
-    if (fs.existsSync(dbPath)) {
-      const data = fs.readFileSync(dbPath, "utf-8");
-      db = JSON.parse(data);
-    }
-
-    // Get static questions
     let questions: string[] = [];
-    if (db[gameId]) {
-      // If mature is false, only use standard questions
-      // If mature is true, fetch the requested mode
-      const selectedMode = mature ? mode : "standard";
-      questions = db[gameId][selectedMode] || db[gameId].standard || [];
+
+    if (gameId === "kiss-marry-kill") {
+      questions = generateKMKQuestions(kmkGender, kmkCategory, 50);
+    } else {
+      const db = questionsDb as Record<string, Record<string, string[]>>;
+      if (db[gameId]) {
+        const selectedMode = mature ? mode : "standard";
+        questions = db[gameId][selectedMode] || db[gameId].standard || [];
+      }
+      if (questions.length === 0) {
+        questions = getGameContent(gameId, mature, mode);
+      }
     }
 
     // Call Groq API if AI is requested and we have the API key
     const apiKey = process.env.GROQ_API_KEY;
     if (useAI && apiKey) {
       try {
-        const aiQuestions = await generateQuestionsWithAI(apiKey, gameId, mode, mature);
+        const aiQuestions = await generateQuestionsWithAI(apiKey, gameId, mode, mature, kmkGender, kmkCategory);
         if (aiQuestions && aiQuestions.length > 0) {
-          // Merge AI questions at the front to prioritize fresh questions
           questions = [...aiQuestions, ...questions];
         }
       } catch (aiError) {
         console.error("Failed to generate questions using Groq API:", aiError);
-        // Fallback to static list (do nothing since questions is already populated)
       }
     }
 
@@ -70,8 +70,14 @@ export async function GET(req: NextRequest) {
 }
 
 // Function to call Groq API
-async function generateQuestionsWithAI(apiKey: string, gameId: string, mode: string, mature: boolean): Promise<string[]> {
-  // Define themes based on mode
+async function generateQuestionsWithAI(
+  apiKey: string,
+  gameId: string,
+  mode: string,
+  mature: boolean,
+  kmkGender: KMKGender = "female",
+  kmkCategory: KMKCategory = "all"
+): Promise<string[]> {
   let themes = "fun, lighthearted, social, secrets, embarrassing moments, funny habits";
   if (mature) {
     if (mode === "challenge") {
@@ -81,7 +87,6 @@ async function generateQuestionsWithAI(apiKey: string, gameId: string, mode: str
     }
   }
 
-  // Define format instructions based on gameId
   let formatGuide = "";
   switch (gameId) {
     case "never-have-i-ever":
@@ -109,7 +114,9 @@ async function generateQuestionsWithAI(apiKey: string, gameId: string, mode: str
       formatGuide = "Generate whispered, comparison questions about the players in the room, e.g. 'Who in this room is [trait]?' or 'Who has [trait]?'";
       break;
     case "kiss-marry-kill":
-      formatGuide = "Each question must present three options to choose from, formatted as 'Choose between: [Option A], [Option B], and [Option C] for Kiss, Marry, and Kill.' Select funny, famous, or archetypal choices.";
+      const genderDesc = kmkGender === "female" ? "famous female actresses, pop stars, models, or adult stars" : kmkGender === "male" ? "famous male actors, musicians, or celebrities" : "a mix of famous male and female celebrities";
+      const catDesc = kmkCategory === "bollywood" ? "strictly Bollywood / Indian cinema stars" : kmkCategory === "hollywood" ? "Hollywood A-listers" : kmkCategory === "popstars" ? "global pop stars and musicians" : kmkCategory === "adultstars" ? "famous adult movie stars and models" : kmkCategory === "fantasy" ? "popular anime and fantasy characters" : "popular global and Indian celebrities";
+      formatGuide = `Each question MUST select 3 distinct famous figures from ${catDesc} (${genderDesc}), formatted as 'Choose between: [Option A], [Option B], and [Option C] for Kiss, Marry, and Kill.'`;
       break;
     case "rapid-fire":
       formatGuide = "Generate rapid comparison options formatted as '[Option A] or [Option B]? Answer in 1 second.'";
