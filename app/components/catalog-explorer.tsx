@@ -359,8 +359,8 @@ export function CatalogExplorer({ isOpen, onClose }: CatalogExplorerProps) {
         {/* Header */}
         <div className="flex items-center justify-between px-3 sm:px-6 py-3 sm:py-4 border-b border-zinc-900 bg-zinc-950/60 pt-safe">
           <div className="flex items-center gap-2 sm:gap-3 min-w-0">
-            <div className="p-2 bg-zinc-900 border border-zinc-800 rounded-xl flex-shrink-0">
-              <Users className="w-4 h-4 sm:w-5 sm:h-5 text-zinc-200" />
+            <div className="p-1.5 bg-zinc-900 border border-zinc-800 rounded-xl flex-shrink-0 flex items-center justify-center">
+              <img src="/StirItUp.png" alt="Stir It Up" className="w-6 h-6 object-contain" />
             </div>
             <div className="min-w-0">
               <h2 className="text-sm sm:text-lg font-extrabold uppercase tracking-tight text-white flex items-center gap-1.5 truncate">

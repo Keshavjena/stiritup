@@ -93,11 +93,11 @@ export function PwaInstallPrompt() {
       >
         <div className="flex items-start gap-3">
           {/* App Icon */}
-          <div className="w-11 h-11 rounded-xl bg-gradient-to-br from-amber-500 via-orange-500 to-red-600 p-0.5 shadow-md flex-shrink-0">
+          <div className="w-11 h-11 rounded-xl bg-zinc-900 border border-amber-500/40 p-1 shadow-md flex-shrink-0 flex items-center justify-center">
             <img
-              src="/icon-192.png"
+              src="/StirItUp.png"
               alt="Stir It Up"
-              className="w-full h-full object-cover rounded-[10px]"
+              className="w-full h-full object-contain"
             />
           </div>
 

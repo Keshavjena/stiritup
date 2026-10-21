@@ -32,25 +32,25 @@ export const metadata: Metadata = {
   },
   icons: {
     icon: [
-      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
-      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+      { url: "/StirItUp.png", sizes: "any", type: "image/png" },
     ],
     apple: [
-      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+      { url: "/StirItUp.png", sizes: "any", type: "image/png" },
     ],
+    shortcut: ["/StirItUp.png"],
   },
   openGraph: {
     title: "Stir It Up - Ultimate Party Games Platform",
     description: "The ultimate interactive party game collection for unforgettable nights. No filters. No judgment. Just fun.",
     type: "website",
     url: "https://stirthegame.com",
-    images: [{ url: "/icon-512.png", width: 512, height: 512, alt: "Stir It Up Party Engine" }],
+    images: [{ url: "/StirItUp.png", width: 1024, height: 1024, alt: "Stir It Up Party Engine" }],
   },
   twitter: {
     card: "summary_large_image",
     title: "Stir It Up - Ultimate Party Games Platform",
     description: "The ultimate interactive party game collection for unforgettable nights. No filters. No judgment. Just fun.",
-    images: ["/icon-512.png"],
+    images: ["/StirItUp.png"],
   },
 }
 

@@ -93,9 +93,12 @@ export function GameRoom({
     <div className="min-h-screen bg-neutral-950 text-zinc-100 font-sans selection:bg-zinc-800 selection:text-white overflow-x-hidden relative flex flex-col justify-between pb-24 lg:pb-0">
       
       <header className="relative z-10 py-3 px-3 sm:px-6 border-b border-zinc-900 bg-neutral-950/80 backdrop-blur-sm flex justify-between items-center pt-safe">
-        <Button variant="ghost" onClick={onLeaveRoom} className="rounded-lg border border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-900 h-8 px-2.5 sm:px-3 text-[9px] uppercase tracking-wider">
-          <ArrowLeft className="w-4 h-4 mr-1.5" /> Leave
-        </Button>
+        <div className="flex items-center gap-3">
+          <Button variant="ghost" onClick={onLeaveRoom} className="rounded-lg border border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-900 h-8 px-2.5 sm:px-3 text-[9px] uppercase tracking-wider">
+            <ArrowLeft className="w-4 h-4 mr-1.5" /> Leave
+          </Button>
+          <img src="/StirItUp.png" alt="Stir It Up" className="h-6 w-auto object-contain hidden xs:inline-block" />
+        </div>
         <span className="text-[10px] font-mono tracking-widest text-zinc-500 uppercase">
           PARTY LOBBY • {players.length} {players.length === 1 ? "PLAYER" : "PLAYERS"}
         </span>

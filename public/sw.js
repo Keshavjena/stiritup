@@ -3,15 +3,8 @@ const CACHE_NAME = 'stiritup-cache-v1';
 const STATIC_ASSETS = [
   '/',
   '/manifest.json',
-  '/icon-192.png',
-  '/icon-512.png',
-  '/icon-maskable-192.png',
-  '/icon-maskable-512.png',
-  '/apple-touch-icon.png',
-  '/favicon-32x32.png',
-  '/favicon-16x16.png',
-  '/placeholder-user.jpg',
-  '/app-icon.svg'
+  '/StirItUp.png',
+  '/placeholder-user.jpg'
 ];
 
 self.addEventListener('install', (event) => {

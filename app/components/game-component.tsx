@@ -32,6 +32,7 @@ import { Switch } from "@/components/ui/switch"
 import { CardsAgainstHumanity } from "./cards-against-humanity"
 import { IndianDrinkingGame } from "./indian-drinking-game"
 import { DramaDol } from "./drama-dol"
+import { DraftArenaGame } from "./draft-arena/draft-arena-game"
 import { BeerChugAnimation } from "./beer-chug-animation"
 import { getGameContent } from "../../lib/game-data/questions"
 import { useSocket } from "@/hooks/useSocket"
@@ -1162,6 +1163,7 @@ export function GameComponent({
     "cards-against-humanity": CardsAgainstHumanity,
     "indian-drinking-game": IndianDrinkingGame,
     "drama-dol": DramaDol,
+    "draft-arena": DraftArenaGame,
   }
 
   const SpecialGameComponent = specialGameComponents[gameId]
@@ -1171,6 +1173,7 @@ export function GameComponent({
         <SpecialGameComponent
           roomCode={roomCode}
           players={players}
+          myPlayerName={myPlayerName}
           isHost={isHost}
           onBack={onBack}
           darkMode={darkMode}
@@ -2618,6 +2621,7 @@ function getGameName(gameId: string): string {
     "indian-drinking-game": "Ultimate Indian Drinking Game",
     "drama-dol": "Drama-Dol Act or Get Sloshed",
     "cards-against-humanity": "Cards Against Humanity",
+    "draft-arena": "Draft Arena - Auction Engine",
     "custom-game": "Custom Game",
   }
   return names[gameId] || "Party Game"
@@ -2625,6 +2629,8 @@ function getGameName(gameId: string): string {
 
 function getGameRules(gameId: string): string {
   const rules: Record<string, string> = {
+    "draft-arena":
+      "Compete in live auction bidding! Nominate items, manage franchise salary caps, and build the ultimate squad.",
     "never-have-i-ever":
       "Players take turns saying something they've never done. Anyone who HAS done it must drink or take a penalty!",
     "truth-or-dare": "Choose truth to answer a question honestly, or dare to complete a challenge. No backing down!",

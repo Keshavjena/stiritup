@@ -240,7 +240,8 @@ export default function Home() {
     <div className="min-h-screen bg-neutral-950 text-zinc-100 font-sans selection:bg-zinc-800 selection:text-white overflow-x-hidden relative flex flex-col justify-between">
       
       <header className="relative z-10 flex justify-between items-center py-3 sm:py-4 px-3 sm:px-6 border-b border-zinc-900 bg-neutral-950/80 backdrop-blur-sm pt-safe">
-        <div className="flex items-center gap-2">
+        <div className="flex items-center gap-2.5">
+          <img src="/StirItUp.png" alt="Stir It Up" className="h-8 w-auto object-contain" />
           <h1 className="text-base sm:text-lg font-bold tracking-tight uppercase text-white truncate">
             Stir It Up
           </h1>
@@ -273,6 +274,10 @@ export default function Home() {
             animate={{ opacity: 1, y: 0 }} 
             transition={{ duration: 0.6 }}
           >
+            <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-900/80 border border-zinc-800 mb-4 backdrop-blur-sm">
+              <img src="/StirItUp.png" alt="Stir It Up" className="w-5 h-5 object-contain" />
+              <span className="text-[10px] font-black uppercase tracking-widest text-amber-400">Official Party Engine</span>
+            </div>
             <h2 className="text-3xl xs:text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight uppercase mb-3 sm:mb-4 text-white leading-none">
               Stir up the vibe. <br/>
               Share the soul.
