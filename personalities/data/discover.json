@@ -1,0 +1,1372 @@
+{
+ "actor": [
+  [
+   "Q33999",
+   "actor",
+   "person who acts in a dramatic or comic production and works in film, t"
+  ],
+  [
+   "Q10798782",
+   "television actor",
+   "actor who performs on television"
+  ],
+  [
+   "Q4677715",
+   "Actor",
+   "album by St. Vincent"
+  ]
+ ],
+ "film actor": [
+  [
+   "Q10800557",
+   "film actor",
+   "actor who appears in films"
+  ],
+  [
+   "Q43394989",
+   "faaam",
+   ""
+  ],
+  [
+   "Q12900397",
+   "Film actors index (A-E)",
+   "Wikimedia list article"
+  ]
+ ],
+ "television actor": [
+  [
+   "Q10798782",
+   "television actor",
+   "actor who performs on television"
+  ],
+  [
+   "Q17656180",
+   "Television actors acknowledged by SAG Awards nominations",
+   "Wikinews article"
+  ]
+ ],
+ "stage actor": [
+  [
+   "Q2259451",
+   "stage actor",
+   "actor who performs live before an in-person audience"
+  ]
+ ],
+ "voice actor": [
+  [
+   "Q2405480",
+   "voice actor",
+   "person who provides voice-overs for a character in films, animation, v"
+  ],
+  [
+   "Q96191913",
+   "acts only as voice actor",
+   "to use with P2241 (reason for deprecated rank) as a qualifier to P161 "
+  ],
+  [
+   "Q11429564",
+   "voice actor training center",
+   "type of vocational school, especially in eastern Asia"
+  ]
+ ],
+ "singer": [
+  [
+   "Q1260201",
+   "Singer",
+   "family name"
+  ],
+  [
+   "Q177220",
+   "singer",
+   "person singing for a listening audience"
+  ],
+  [
+   "Q64091",
+   "Rolf Singer",
+   "German mycologist (1906–1994)"
+  ]
+ ],
+ "songwriter": [
+  [
+   "Q753110",
+   "songwriter",
+   "person who writes the words or music to songs"
+  ],
+  [
+   "Q3281808",
+   "Songwriter",
+   "1984 film by Alan Rudolph"
+  ],
+  [
+   "Q60618023",
+   "songwriting alias",
+   "pseudonym used instead of a songwriter's true name"
+  ]
+ ],
+ "rapper": [
+  [
+   "Q2252262",
+   "rapper",
+   "artist who speaks rhymes in a rhythm over music"
+  ],
+  [
+   "Q110934127",
+   "Rapper",
+   "family name"
+  ],
+  [
+   "Q100493654",
+   "hip-hop musician",
+   "musician that plays hip-hop music"
+  ]
+ ],
+ "musician": [
+  [
+   "Q639669",
+   "musician",
+   "person who composes, conducts or performs music"
+  ],
+  [
+   "Q6942591",
+   "Musician",
+   "video game for the Philips Videopac"
+  ],
+  [
+   "Q122387126",
+   "Musician",
+   "2018 video game"
+  ]
+ ],
+ "record producer": [
+  [
+   "Q183945",
+   "record producer",
+   "individual who oversees and manages the recording of an artist's music"
+  ],
+  [
+   "Q137774990",
+   "Record Producers’ Best Practices For Artistic Direction—From Light Coaching To Deeper Collaboration With Musicians",
+   "scientific article published in December 2013"
+  ]
+ ],
+ "disc jockey": [
+  [
+   "Q130857",
+   "disc jockey",
+   "person who plays recorded music for an audience"
+  ],
+  [
+   "Q3922505",
+   "DJ producer",
+   "person producing music via an electronic instrumentation and computers"
+  ],
+  [
+   "Q123501531",
+   "Telmo Trenor",
+   "Dj"
+  ]
+ ],
+ "model": [
+  [
+   "Q4610556",
+   "model",
+   "person employed to display, advertise and promote products, or to serv"
+  ],
+  [
+   "Q486902",
+   "mathematical model",
+   "description of a system using mathematical concepts and language"
+  ],
+  [
+   "Q1122506",
+   "computational model",
+   "mathematical model of a complex system, e.g. weather"
+  ]
+ ],
+ "fashion model": [
+  [
+   "Q3357567",
+   "fashion model",
+   "modelling profession"
+  ],
+  [
+   "Q4610556",
+   "model",
+   "person employed to display, advertise and promote products, or to serv"
+  ],
+  [
+   "Q63891780",
+   "Fashion model",
+   "musical character in the musical Originale by Karlheinz Stockhausen"
+  ]
+ ],
+ "glamour model": [
+  [
+   "Q3286043",
+   "erotic photography model",
+   "model who poses nude for erotic or sensual photos"
+  ],
+  [
+   "Q90404711",
+   "pornographic actor or erotic model database",
+   "pornographic actor or glamour model database accessible through intern"
+  ],
+  [
+   "Q54207590",
+   "Glamour modelling and the marketing of self-sexualization",
+   "article by Maddy Coy & Maria Garner published November 2010 in Interna"
+  ]
+ ],
+ "adult model": [
+  [
+   "Q488111",
+   "pornographic film actor",
+   "person who performs sex acts in pornographic films"
+  ],
+  [
+   "Q3286043",
+   "erotic photography model",
+   "model who poses nude for erotic or sensual photos"
+  ],
+  [
+   "Q60459401",
+   "Adult models of anxiety and their application to children and adolescents",
+   "scientific article"
+  ]
+ ],
+ "pornographic actor": [
+  [
+   "Q488111",
+   "pornographic film actor",
+   "person who performs sex acts in pornographic films"
+  ],
+  [
+   "Q90404711",
+   "pornographic actor or erotic model database",
+   "pornographic actor or glamour model database accessible through intern"
+  ],
+  [
+   "Q2774274",
+   "list of male performers in gay porn films",
+   "Wikimedia list article"
+  ]
+ ],
+ "cricketer": [
+  [
+   "Q12299841",
+   "cricketer",
+   "individual who takes part in cricket matches"
+  ],
+  [
+   "Q20446018",
+   "Cricketer",
+   "painting by Fred Williams"
+  ],
+  [
+   "Q66377209",
+   "Vaibhav Davne",
+   "Vaibhav Davne Playing India Match"
+  ]
+ ],
+ "football player": [
+  [
+   "Q937857",
+   "association football player",
+   "person who plays association football (soccer)"
+  ],
+  [
+   "Q19204627",
+   "American football player",
+   "athlete who plays American football"
+  ],
+  [
+   "Q14128148",
+   "gridiron football player",
+   "player of American football, Canadian football or other gridiron footb"
+  ]
+ ],
+ "basketball player": [
+  [
+   "Q3665646",
+   "basketball player",
+   "person who plays in basketball"
+  ],
+  [
+   "Q42571251",
+   "Basketball Player",
+   "character from 2014 film 'Zapped'"
+  ],
+  [
+   "Q97142647",
+   "Basketbalista",
+   "1985 bronze statue by František Mrázek, situated in front of the sport"
+  ]
+ ],
+ "tennis player": [
+  [
+   "Q10833314",
+   "tennis player",
+   "sportsperson who plays tennis"
+  ],
+  [
+   "Q106767186",
+   "Tennis Player",
+   "painting by James Edward Davis"
+  ],
+  [
+   "Q106776580",
+   "Tennis Player",
+   "painting by James Edward Davis (Princeton y1968-146)"
+  ]
+ ],
+ "boxer": [
+  [
+   "Q11338576",
+   "boxer",
+   "sportsperson taking part in boxing competitions"
+  ],
+  [
+   "Q37496393",
+   "Boxer",
+   "family name"
+  ],
+  [
+   "Q2467268",
+   "Boxer",
+   "2007 studio album by The National"
+  ]
+ ],
+ "racing driver": [
+  [
+   "Q10349745",
+   "racing automobile driver",
+   "occupation driving an automobile in competition"
+  ],
+  [
+   "Q378622",
+   "racing driver",
+   "occupation driving a vehicle in competition"
+  ]
+ ],
+ "athlete": [
+  [
+   "Q2066131",
+   "athlete",
+   "person who participates regularly in a sport"
+  ],
+  [
+   "Q11513337",
+   "athletics competitor",
+   "sportsperson that competes in athletics (track and field, running, wal"
+  ],
+  [
+   "Q58840094",
+   "sportsperson who competes in this club or team",
+   "Wikidata metaclass"
+  ]
+ ],
+ "swimmer": [
+  [
+   "Q10843402",
+   "swimmer",
+   "sportsperson taking part in swimming competitions"
+  ],
+  [
+   "Q37574119",
+   "Swimmer",
+   "family name"
+  ],
+  [
+   "Q7656201",
+   "Swimmer",
+   "arcade game developed in 1982 by Tehkan"
+  ]
+ ],
+ "wrestler": [
+  [
+   "Q12369333",
+   "amateur wrestler",
+   "sportsperson specialized in amateur wrestling (excluding the so-called"
+  ],
+  [
+   "Q13474373",
+   "professional wrestler",
+   "sportspersons taking part in professional wrestling"
+  ],
+  [
+   "Q37498083",
+   "Wrestler",
+   "family name"
+  ]
+ ],
+ "mixed martial artist": [
+  [
+   "Q11607585",
+   "mixed martial arts fighter",
+   "fighter who performs mixed martial arts (MMA)"
+  ]
+ ],
+ "golfer": [
+  [
+   "Q11303721",
+   "golfer",
+   "someone who plays golf"
+  ],
+  [
+   "Q114482053",
+   "Golfer",
+   "episode of If Loving You Is Wrong (S3 E15)"
+  ],
+  [
+   "Q87577213",
+   "🏌",
+   "Unicode character"
+  ]
+ ],
+ "badminton player": [
+  [
+   "Q13141064",
+   "badminton player",
+   "sportsperson specialized in badminton"
+  ],
+  [
+   "Q4841036",
+   "Badminton Players Federation",
+   "badminton association"
+  ],
+  [
+   "Q106828518",
+   "Badminton players at the 2020 Summer Olympics",
+   "badminton players started at the 2020 Summer Olympics"
+  ]
+ ],
+ "field hockey player": [
+  [
+   "Q10843263",
+   "field hockey player",
+   "sportsperson taking part in field hockey"
+  ],
+  [
+   "Q123455599",
+   "Field hockey players who competed for more than one nation",
+   "Wikimedia list article"
+  ],
+  [
+   "Q48530722",
+   "Field hockey players have different values of ulnar and tibial motor nerve conduction velocity than soccer and tennis players",
+   "scientific article published in December 2010"
+  ]
+ ],
+ "volleyball player": [
+  [
+   "Q15117302",
+   "volleyball player",
+   "sportsperson who plays volleyball"
+  ],
+  [
+   "Q42533166",
+   "Volleyball Player",
+   "character from 2011 film 'Geek Charming'"
+  ],
+  [
+   "Q122361970",
+   "volleyball players who play in this club",
+   "Wikidata metaclass"
+  ]
+ ],
+ "physicist": [
+  [
+   "Q169470",
+   "physicist",
+   "scientist who does research in physics"
+  ],
+  [
+   "Q572062",
+   "Physicist",
+   "music album by Devin Townsend"
+  ],
+  [
+   "Q84413283",
+   "Kalaga Madhav",
+   "Physicist"
+  ]
+ ],
+ "chemist": [
+  [
+   "Q593644",
+   "chemist",
+   "scientist trained in the study of chemistry"
+  ],
+  [
+   "Q105186",
+   "pharmacist",
+   "healthcare professional who practices in pharmacy"
+  ],
+  [
+   "Q898737",
+   "Chemistry—A European Journal",
+   "scientific journal for chemistry in Europe"
+  ]
+ ],
+ "mathematician": [
+  [
+   "Q170790",
+   "mathematician",
+   "person with an extensive knowledge of mathematics"
+  ],
+  [
+   "Q140412049",
+   "mathematician",
+   "prototypical agent (PAG) for predicate \"square.02\": mathematics"
+  ],
+  [
+   "Q141480801",
+   "Mathematician",
+   "2025 video game"
+  ]
+ ],
+ "biologist": [
+  [
+   "Q864503",
+   "biologist",
+   "scientist studying living organisms"
+  ],
+  [
+   "Q15753123",
+   "The Biologist",
+   "British journal"
+  ],
+  [
+   "Q420",
+   "biology",
+   "scientific study of living things, especially their structure, functio"
+  ]
+ ],
+ "astronomer": [
+  [
+   "Q11063",
+   "astronomer",
+   "scientist who studies celestial bodies"
+  ],
+  [
+   "Q18205341",
+   "The Astronomer's Telegram",
+   "internet-based publication service for astronomical observations"
+  ],
+  [
+   "Q27277655",
+   "The Astronomer",
+   "painting by Gerrit Dou, Museum De Lakenhal"
+  ]
+ ],
+ "inventor": [
+  [
+   "Q205375",
+   "inventor",
+   "person that devises a new device, method, composition, or process"
+  ],
+  [
+   "Q2668072",
+   "collection",
+   "set of purposely gathered physical or digital objects with some common"
+  ],
+  [
+   "Q18593264",
+   "item of collection or exhibition",
+   "defines an item, such as an object or document, that is a member of a "
+  ]
+ ],
+ "neuroscientist": [
+  [
+   "Q6337803",
+   "neuroscientist",
+   "someone who studies neuroscience"
+  ],
+  [
+   "Q7753449",
+   "The Neuroscientist",
+   "peer-reviewed academic journal that publishes papers in the field of N"
+  ],
+  [
+   "Q93353777",
+   "Neuroscientists tell Wikinews about empathy and harm aversion observed in lab rats",
+   "Wikinews article"
+  ]
+ ],
+ "physician": [
+  [
+   "Q39631",
+   "physician",
+   "professional who practices medicine"
+  ],
+  [
+   "Q15924224",
+   "internist",
+   "physician with medical specialty internal medicine; is skilled in the "
+  ],
+  [
+   "Q5287521",
+   "Doctor of Osteopathic Medicine",
+   "professional degree"
+  ]
+ ],
+ "computer scientist": [
+  [
+   "Q82594",
+   "computer scientist",
+   "one who studies or practices computer science"
+  ],
+  [
+   "Q27075877",
+   "Computer Scientist: ALAN TURING",
+   ""
+  ],
+  [
+   "Q52329719",
+   "Computer Scientists Rethink Their Discipline's Foundations",
+   "scientific article published on September 8, 1995"
+  ]
+ ],
+ "engineer": [
+  [
+   "Q81096",
+   "engineer",
+   "professional practitioner of engineering"
+  ],
+  [
+   "Q96329007",
+   "Engineering Mechanics",
+   "Chinese journal"
+  ],
+  [
+   "Q11023",
+   "engineering",
+   "type of applied science"
+  ]
+ ],
+ "programmer": [
+  [
+   "Q5482740",
+   "programmer",
+   "person who writes computer software (subclass of software developer)"
+  ],
+  [
+   "Q1709010",
+   "software engineer",
+   "practitioner of software engineering"
+  ],
+  [
+   "Q57999368",
+   "music programmer",
+   "person programming music"
+  ]
+ ],
+ "entrepreneur": [
+  [
+   "Q131524",
+   "entrepreneur",
+   "person who owns and operates a business"
+  ],
+  [
+   "Q30598698",
+   "Entrepreneur",
+   "1997 video game"
+  ],
+  [
+   "Q3908516",
+   "entrepreneurship",
+   "creation or extraction of economic value"
+  ]
+ ],
+ "businessperson": [
+  [
+   "Q43845",
+   "businessperson",
+   "person involved in activities for the purpose of generating revenue"
+  ],
+  [
+   "Q11330574",
+   "business office worker",
+   "Japanese concept; someone who works in an office of a big business"
+  ]
+ ],
+ "chief executive officer": [
+  [
+   "Q484876",
+   "chief executive officer",
+   "highest-ranking officer of an organization"
+  ],
+  [
+   "Q20204943",
+   "Chief Executive Officer of Afghanistan",
+   "a position within the Government of Afghanistan"
+  ],
+  [
+   "Q16743867",
+   "Chief Executive Officer of the Wikimedia Foundation",
+   "senior staff officer of the Wikimedia Foundation"
+  ]
+ ],
+ "investor": [
+  [
+   "Q557880",
+   "investor",
+   "person who allocates capital with the expectation of a financial retur"
+  ],
+  [
+   "Q1671804",
+   "Investor",
+   "Swedish investment company"
+  ],
+  [
+   "Q102240573",
+   "Investor",
+   "Thoroughbred racehorse"
+  ]
+ ],
+ "philosopher": [
+  [
+   "Q4964182",
+   "philosopher",
+   "person with an extensive knowledge of philosophy"
+  ],
+  [
+   "Q139814069",
+   "Aurelius Mahin",
+   "Bangladeshi science student, entrepreneur, and philosopher"
+  ],
+  [
+   "Q21741447",
+   "Philosopher",
+   "painting by Luca, attributed Giordano"
+  ]
+ ],
+ "historian": [
+  [
+   "Q201788",
+   "historian",
+   "scholar who deals with the exploration and presentation of history"
+  ],
+  [
+   "Q1792450",
+   "art historian",
+   "humanist who is engaged in history of art"
+  ],
+  [
+   "Q6005495",
+   "The Historian",
+   "academic journal"
+  ]
+ ],
+ "writer": [
+  [
+   "Q36180",
+   "writer",
+   "person who uses written words to communicate ideas and to produce lite"
+  ],
+  [
+   "Q28389",
+   "screenwriter",
+   "writer who writes for films, TV shows, comics and games"
+  ],
+  [
+   "Q37244077",
+   "Writer",
+   "family name"
+  ]
+ ],
+ "poet": [
+  [
+   "Q49757",
+   "poet",
+   "person who writes poetry"
+  ],
+  [
+   "Q482",
+   "poetry",
+   "literary style characterized by a strong expressiveness of words"
+  ],
+  [
+   "Q5185279",
+   "poem",
+   "form of literature, work of poetry, often composed of verses"
+  ]
+ ],
+ "novelist": [
+  [
+   "Q6625963",
+   "novelist",
+   "writer of novels"
+  ],
+  [
+   "Q16210372",
+   "Emcee N.I.C.E.",
+   "American rapper"
+  ],
+  [
+   "Q18160990",
+   "Novelist",
+   "British rapper and record producer"
+  ]
+ ],
+ "journalist": [
+  [
+   "Q1930187",
+   "journalist",
+   "person who collects, writes, and distributes news and other informatio"
+  ],
+  [
+   "Q10540976",
+   "Journalist",
+   "2000 computer game"
+  ],
+  [
+   "Q123947167",
+   "Journalist",
+   "square in Sofia (Bulgaria)"
+  ]
+ ],
+ "painter": [
+  [
+   "Q1028181",
+   "painter",
+   "artist who practices painting"
+  ],
+  [
+   "Q288728",
+   "painter and varnisher",
+   "tradesman responsible for the painting and decorating of buildings"
+  ],
+  [
+   "Q110315",
+   "lead poisoning",
+   "poisoning by lead in the body, especially affects the brain"
+  ]
+ ],
+ "architect": [
+  [
+   "Q42973",
+   "architect",
+   "person trained to plan and design buildings, and oversee their constru"
+  ],
+  [
+   "Q4387609",
+   "architectural firm",
+   "company employing licensed architects, offering architecture-related s"
+  ],
+  [
+   "Q1340643",
+   "master builder",
+   "central figure leading construction projects"
+  ]
+ ],
+ "composer": [
+  [
+   "Q36834",
+   "composer",
+   "person who is an author of music in any form"
+  ],
+  [
+   "Q15252222",
+   "Composer",
+   "software; application-level dependency manager for the PHP programming"
+  ],
+  [
+   "Q713223",
+   "artist-in-residence",
+   "program that invites artists to work at a specific venue or place for "
+  ]
+ ],
+ "conductor": [
+  [
+   "Q158852",
+   "conductor",
+   "person who directs a musical group during a performance"
+  ],
+  [
+   "Q124291",
+   "electrical conductor",
+   "material that allows the flow of electrical current"
+  ],
+  [
+   "Q2962041",
+   "train manager",
+   "railway staff"
+  ]
+ ],
+ "chef": [
+  [
+   "Q156839",
+   "cook",
+   "occupation involving cooking food"
+  ],
+  [
+   "Q3499072",
+   "chef",
+   "person that directs preparation of meals"
+  ],
+  [
+   "Q47594",
+   "Chef",
+   "fictional character of the South Park series"
+  ]
+ ],
+ "comedian": [
+  [
+   "Q245068",
+   "comedian",
+   "person who seeks to entertain an audience, primarily by making them la"
+  ],
+  [
+   "Q77715187",
+   "Comedian",
+   "Maurizio Cattelan artwork"
+  ],
+  [
+   "Q2591461",
+   "Comedian",
+   "fictional character in Watchmen"
+  ]
+ ],
+ "film director": [
+  [
+   "Q2526255",
+   "film director",
+   "person who controls the artistic and dramatic aspects of a film produc"
+  ],
+  [
+   "Q6102247",
+   "film or television director",
+   "occupation"
+  ],
+  [
+   "Q17610572",
+   "Film director Sydney Pollack dies at age 73",
+   "Wikinews article"
+  ]
+ ],
+ "photographer": [
+  [
+   "Q33231",
+   "photographer",
+   "person who takes photographs"
+  ],
+  [
+   "Q23892012",
+   "Photographers' Identities Catalog",
+   "database on photographers and photography studios"
+  ],
+  [
+   "Q15880691",
+   "Photographers in the Netherlands",
+   "book by Steven Wachlin"
+  ]
+ ],
+ "fashion designer": [
+  [
+   "Q3501317",
+   "fashion designer",
+   "one who designs clothing and related items"
+  ],
+  [
+   "Q134968200",
+   "Fashion Designer",
+   "video game developed by SupaGames"
+  ],
+  [
+   "Q3576201",
+   "Fashion Designer: Style Icon",
+   "2007 video game"
+  ]
+ ],
+ "YouTuber": [
+  [
+   "Q17125263",
+   "YouTuber",
+   "person that produces videos on YouTube"
+  ],
+  [
+   "Q24228232",
+   "Youtubers Life",
+   "2016 life simulation indie game"
+  ],
+  [
+   "Q108858512",
+   "Youtubers Life 2",
+   "2021 video game"
+  ]
+ ],
+ "influencer": [
+  [
+   "Q28869301",
+   "Influencer",
+   "2017 single by Nogizaka46"
+  ],
+  [
+   "Q2906862",
+   "influencer",
+   "person who is influential on social media"
+  ],
+  [
+   "Q2045208",
+   "Internet celebrity",
+   "someone who has become famous by means of the Internet"
+  ]
+ ],
+ "internet celebrity": [
+  [
+   "Q2045208",
+   "Internet celebrity",
+   "someone who has become famous by means of the Internet"
+  ],
+  [
+   "Q120917657",
+   "Internet celebrity city, flow effect and tourism development",
+   ""
+  ]
+ ],
+ "streamer": [
+  [
+   "Q57414145",
+   "online streamer",
+   "person who streams activities on their computer to a live online audie"
+  ],
+  [
+   "Q50279140",
+   "Twitch streamer",
+   "person who streams video on Twitch"
+  ],
+  [
+   "Q2069129",
+   "pennon",
+   "triangular flag"
+  ]
+ ],
+ "tiktoker": [
+  [
+   "Q94791573",
+   "TikToker",
+   "person that produces videos on video sharing service TikTok"
+  ],
+  [
+   "Q105416259",
+   "team of content creators",
+   "group of people who create content for online social media platforms"
+  ],
+  [
+   "Q141113833",
+   "Tiktokers de Venezuela",
+   "Wikimedia category"
+  ]
+ ],
+ "politician": [
+  [
+   "Q82955",
+   "politician",
+   "person who seeks or holds a political office or mandate or is otherwis"
+  ],
+  [
+   "Q64581291",
+   "Politician",
+   "drawing in the National Gallery of Art (NGA 7042)"
+  ],
+  [
+   "Q104854338",
+   "Politician",
+   "1985 novel by Piers Anthony"
+  ]
+ ],
+ "monarch": [
+  [
+   "Q116",
+   "monarch",
+   "person at the head of a monarchy"
+  ],
+  [
+   "Q681374",
+   "Monarchidae",
+   "family of birds"
+  ],
+  [
+   "Q28513",
+   "Austria–Hungary",
+   "1867–1918 empire in Central Europe"
+  ]
+ ],
+ "military officer": [
+  [
+   "Q189290",
+   "military officer",
+   "member of an armed force or uniformed service who holds a position of "
+  ],
+  [
+   "Q11545923",
+   "military commander",
+   "person commanding a military force"
+  ],
+  [
+   "Q11637384",
+   "Military Officer",
+   "Japanese government agency"
+  ]
+ ],
+ "revolutionary": [
+  [
+   "Q3242115",
+   "revolutionary",
+   "person who participates in a revolution"
+  ],
+  [
+   "Q15765357",
+   "Revolutionary Russia",
+   "academic journal"
+  ],
+  [
+   "Q40949",
+   "American Revolutionary War",
+   "1775–1783 war between Great Britain and the Thirteen Colonies, which w"
+  ]
+ ],
+ "emperor": [
+  [
+   "Q116",
+   "monarch",
+   "person at the head of a monarchy"
+  ],
+  [
+   "Q39018",
+   "emperor",
+   "type of monarch"
+  ],
+  [
+   "Q268218",
+   "Emperor of China",
+   "sovereign of Imperial China"
+  ]
+ ],
+ "queen regnant": [
+  [
+   "Q116",
+   "monarch",
+   "person at the head of a monarchy"
+  ],
+  [
+   "Q19643",
+   "queen regnant",
+   "female monarch who rules a country in her own right"
+  ],
+  [
+   "Q29166132",
+   "Sovereign of Navarre",
+   "(1162-1839) ruler in his own right of the Kingdom of Navarre"
+  ]
+ ],
+ "diplomat": [
+  [
+   "Q193391",
+   "diplomat",
+   "person appointed by a state to conduct diplomacy with another state or"
+  ],
+  [
+   "Q3917681",
+   "embassy",
+   "permanent diplomatic mission of higher level, representing its operato"
+  ],
+  [
+   "Q2860452",
+   "Diplomatic Archives",
+   "French diplomatic archives"
+  ]
+ ],
+ "activist": [
+  [
+   "Q15253558",
+   "activist",
+   "person working with promoting or impeding, or causing social, politica"
+  ],
+  [
+   "Q42889568",
+   "Activist",
+   "character from 2004 film 'Pixel Perfect'"
+  ],
+  [
+   "Q1887898",
+   "activist group",
+   "collection of people fighting for a common cause"
+  ]
+ ],
+ "monk": [
+  [
+   "Q733786",
+   "monk",
+   "member of a monastic religious order"
+  ],
+  [
+   "Q854997",
+   "Buddhist monk",
+   "fully ordained male Buddhist monastic"
+  ],
+  [
+   "Q111322207",
+   "Monk",
+   "male given name"
+  ]
+ ],
+ "fictional character": [
+  [
+   "Q95074",
+   "character",
+   "fictional human or non-human character in a narrative work of art"
+  ],
+  [
+   "Q65924737",
+   "character in a fictitious work",
+   "fictional character that is considered fictional even in a fictional s"
+  ],
+  [
+   "Q14514600",
+   "group of fictional characters",
+   "set of fictional characters"
+  ]
+ ],
+ "superhero": [
+  [
+   "Q188784",
+   "superhero",
+   "type of stock character usually possessing \"supernatural or superhuman"
+  ],
+  [
+   "Q1535153",
+   "superhero film",
+   "film genre"
+  ],
+  [
+   "Q76424139",
+   "Superhero",
+   "2019 Viki Gabor single"
+  ]
+ ],
+ "video game character": [
+  [
+   "Q1569167",
+   "video game character",
+   "fictional character appearing in a video game"
+  ],
+  [
+   "Q137796820",
+   "WikiProject Video game characters",
+   ""
+  ],
+  [
+   "Q56079131",
+   "Video Game Characters and the Socialization of Gender Roles: Young People’s Perceptions Mirror Sexist Media Depictions",
+   "scholarly article"
+  ]
+ ],
+ "animated character": [
+  [
+   "Q15711870",
+   "animated character",
+   "fictional character who appears in animated films, television, and oth"
+  ]
+ ],
+ "manga character": [
+  [
+   "Q87576284",
+   "manga character",
+   "fictional character which appears in a Japanese manga comic"
+  ]
+ ],
+ "pornographic film actor": [
+  [
+   "Q488111",
+   "pornographic film actor",
+   "person who performs sex acts in pornographic films"
+  ]
+ ],
+ "playmate": [
+  [
+   "Q728711",
+   "Playboy Playmate",
+   "female model featured in a centerfold of Playboy magazine"
+  ],
+  [
+   "Q1660544",
+   "Playmates Toys",
+   "Hong Kong toy company."
+  ],
+  [
+   "Q107716060",
+   "Playboy Playmate of the Month",
+   "award"
+  ]
+ ],
+ "philanthropist": [
+  [
+   "Q12362622",
+   "philanthropist",
+   "person known for philanthropic work"
+  ],
+  [
+   "Q24027092",
+   "Philanthropist",
+   "merchant ship"
+  ],
+  [
+   "Q115043474",
+   "Abdullahi Mohamoud Ali",
+   "Somali philanthropist; founder of Kulmis Podcast"
+  ]
+ ],
+ "astronaut": [
+  [
+   "Q11631",
+   "astronaut",
+   "person who commands, pilots, or serves as a crew member of a spacecraf"
+  ],
+  [
+   "Q2453076",
+   "Astronaut",
+   "2004 studio album by Duran Duran"
+  ],
+  [
+   "Q124672095",
+   "Astronaut",
+   "Dutch singer-songwriter"
+  ]
+ ],
+ "pilot": [
+  [
+   "Q2095549",
+   "aircraft pilot",
+   "person controlling an aircraft in flight"
+  ],
+  [
+   "Q16866966",
+   "Pilot",
+   "family name"
+  ],
+  [
+   "Q1753527",
+   "Pilot",
+   "Scottish musical group"
+  ]
+ ],
+ "explorer": [
+  [
+   "Q11900058",
+   "explorer",
+   "person who by means of travel searches out new information"
+  ],
+  [
+   "Q43790821",
+   "Explorer",
+   "1986 video game"
+  ],
+  [
+   "Q65784879",
+   "Explorer",
+   "2012 Role Playing"
+  ]
+ ]
+}

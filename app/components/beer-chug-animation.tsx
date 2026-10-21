@@ -56,12 +56,12 @@ export function BeerChugAnimation({
 
   return (
     <AnimatePresence>
-      <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/80 backdrop-blur-md">
+      <div className="fixed inset-0 z-50 flex items-center justify-center p-3 sm:p-4 bg-black/80 backdrop-blur-md">
         <motion.div
           initial={{ scale: 0.8, opacity: 0, y: 20 }}
           animate={{ scale: 1, opacity: 1, y: 0 }}
           exit={{ scale: 0.8, opacity: 0, y: 20 }}
-          className="relative w-full max-w-md bg-zinc-950 border border-amber-500/30 rounded-3xl p-6 text-white text-center shadow-2xl overflow-hidden flex flex-col items-center"
+          className="relative w-full max-w-sm sm:max-w-md bg-zinc-950 border border-amber-500/30 rounded-3xl p-4 sm:p-6 text-white text-center shadow-2xl overflow-hidden flex flex-col items-center"
         >
           {/* Top Close Button */}
           <button

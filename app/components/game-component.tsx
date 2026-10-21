@@ -27,7 +27,7 @@ import {
   HelpCircle,
   Beer
 } from "lucide-react"
-import { Trophy as TrophyIcon } from "lucide-react"
+import { Trophy, Trophy as TrophyIcon } from "lucide-react"
 import { Switch } from "@/components/ui/switch"
 import { CardsAgainstHumanity } from "./cards-against-humanity"
 import { IndianDrinkingGame } from "./indian-drinking-game"
@@ -36,6 +36,7 @@ import { BeerChugAnimation } from "./beer-chug-animation"
 import { getGameContent } from "../../lib/game-data/questions"
 import { useSocket } from "@/hooks/useSocket"
 import { motion, AnimatePresence } from "framer-motion"
+import { KMKImageCards, WYRImageCards } from "./image-game-cards"
 
 interface GameComponentProps {
   roomCode?: string
@@ -48,6 +49,12 @@ interface GameComponentProps {
   soundEnabled: boolean
   playSound: (type: "click" | "success" | "transition") => void
   matureContent: boolean
+  initialSettings?: {
+    category?: string
+    gender?: "female" | "male" | "mixed"
+    timerDuration?: number
+    mode?: "standard" | "challenge" | "spicy"
+  }
 }
 
 function getTimerDuration(gameId: string): number {
@@ -66,21 +73,30 @@ export function GameComponent({
   soundEnabled,
   playSound,
   matureContent,
+  initialSettings,
 }: GameComponentProps) {
   const socket = useSocket()
   const [currentPlayer, setCurrentPlayer] = useState(0)
   const [currentContent, setCurrentContent] = useState("")
   const [gameStarted, setGameStarted] = useState(false)
-  const [timerDuration, setTimerDuration] = useState<number>(30)
-  const [timerEnabled, setTimerEnabled] = useState(true)
+  const [timerDuration, setTimerDuration] = useState<number>(
+    initialSettings?.timerDuration !== undefined ? initialSettings.timerDuration : 30
+  )
+  const [timerEnabled, setTimerEnabled] = useState(
+    initialSettings?.timerDuration !== undefined ? initialSettings.timerDuration > 0 : true
+  )
   const [autoNextEnabled, setAutoNextEnabled] = useState(true)
-  const [timeLeft, setTimeLeft] = useState(30)
+  const [timeLeft, setTimeLeft] = useState(
+    initialSettings?.timerDuration !== undefined ? initialSettings.timerDuration : 30
+  )
   const [timerActive, setTimerActive] = useState(false)
   const [contentIndex, setContentIndex] = useState(0)
   const [gameContent, setGameContent] = useState<string[]>([])
   const [playerScores, setPlayerScores] = useState<Record<string, number>>({})
   const [showScoring, setShowScoring] = useState(false)
-  const [gameMode, setGameMode] = useState<"standard" | "challenge" | "spicy">("standard")
+  const [gameMode, setGameMode] = useState<"standard" | "challenge" | "spicy">(
+    initialSettings?.mode || "standard"
+  )
 
   const timerDurationRef = useRef(timerDuration)
   useEffect(() => {
@@ -90,8 +106,8 @@ export function GameComponent({
   const changeTimerDuration = (newDuration: number) => {
     setTimerDuration(newDuration)
     setTimeLeft(newDuration)
-    setTimerEnabled(true)
-    setTimerActive(true)
+    setTimerEnabled(newDuration > 0)
+    setTimerActive(newDuration > 0)
     if (socket && roomCode) {
       socket.emit("game-action", roomCode, {
         type: "set-timer-duration",
@@ -100,8 +116,12 @@ export function GameComponent({
     }
   }
 
-  const [kmkGender, setKmkGender] = useState<"female" | "male" | "mixed">("female")
-  const [kmkCategory, setKmkCategory] = useState<"all" | "bollywood" | "hollywood" | "popstars" | "adultstars" | "fantasy">("all")
+  const [kmkGender, setKmkGender] = useState<"female" | "male" | "mixed">(
+    initialSettings?.gender || "female"
+  )
+  const [kmkCategory, setKmkCategory] = useState<string>(
+    initialSettings?.category || "all"
+  )
 
   const changeKMKGender = (gender: "female" | "male" | "mixed") => {
     setKmkGender(gender)
@@ -113,7 +133,7 @@ export function GameComponent({
     }
   }
 
-  const changeKMKCategory = (category: "all" | "bollywood" | "hollywood" | "popstars" | "adultstars" | "fantasy") => {
+  const changeKMKCategory = (category: string) => {
     setKmkCategory(category)
     if (socket && roomCode) {
       socket.emit("game-action", roomCode, {
@@ -131,6 +151,8 @@ export function GameComponent({
   const [kmkSelections, setKmkSelections] = useState<Record<string, string>>({ kiss: "", marry: "", kill: "" })
   const [kmkVotes, setKmkVotes] = useState<Record<string, { kiss: string; marry: string; kill: string }>>({})
   const [todChoice, setTodChoice] = useState<"truth" | "dare" | null>(null)
+  const [personRounds, setPersonRounds] = useState<any[]>([])
+  const [wyrChoice, setWyrChoice] = useState<"A" | "B" | null>(null)
   const [customDeck, setCustomDeck] = useState<string[]>([])
   const [newCustomPrompt, setNewCustomPrompt] = useState("")
 
@@ -158,6 +180,13 @@ export function GameComponent({
     kmkVotes?: Record<string, { kiss: string; marry: string; kill: string }>
   }[]>([])
   const [showSummary, setShowSummary] = useState(false)
+
+  // Spice Up Deck / Custom Bulk Names State
+  const [isSpiceModalOpen, setIsSpiceModalOpen] = useState(false)
+  const [spiceNamesInput, setSpiceNamesInput] = useState("")
+  const [spiceCategory, setSpiceCategory] = useState("scientists")
+  const [isAddingSpice, setIsAddingSpice] = useState(false)
+  const [spiceMessage, setSpiceMessage] = useState<{ text: string; isError?: boolean } | null>(null)
 
   // Refs to avoid stale closures in socket events
   const currentPlayerRef = useRef(currentPlayer)
@@ -201,26 +230,31 @@ export function GameComponent({
     const fetchQuestions = async () => {
       setIsLoading(true)
 
-      // If in multiplayer and not host, request state from host instead of generating divergent deck
+      // If in multiplayer and not host, request authoritative state from server
       if (roomCode && !isHost) {
         if (socket) {
           socket.emit("request-game-state", roomCode)
         }
-        // Give 1.5s for host sync, else fallback
+        // Give 2.5s for sync, else fallback
         setTimeout(() => {
           setIsLoading(false)
-        }, 1500)
+        }, 2500)
         return
       }
 
       let fetchedQuestions: string[] = []
+      let fetchedRounds: any[] = []
       
       try {
-        const res = await fetch(`/api/questions?gameId=${gameId}&mature=${matureContent}&mode=${gameMode}&ai=${aiEnabled}&kmkGender=${kmkGender}&kmkCategory=${kmkCategory}`)
+        const res = await fetch(`/api/questions?gameId=${gameId}&mature=${matureContent}&mode=${gameMode}&ai=${aiEnabled}&kmkGender=${kmkGender}&kmkCategory=${kmkCategory}&imageCards=true`)
         if (res.ok) {
           const data = await res.json()
           if (data.questions && data.questions.length > 0) {
             fetchedQuestions = data.questions
+          }
+          if (data.personRounds && data.personRounds.length > 0) {
+            fetchedRounds = data.personRounds
+            setPersonRounds(data.personRounds)
           }
         }
       } catch (err) {
@@ -245,7 +279,13 @@ export function GameComponent({
       if (roomCode && isHost && socket && fetchedQuestions.length > 0) {
         socket.emit("game-action", roomCode, {
           type: "sync-questions",
-          payload: { gameContent: fetchedQuestions, currentContent: fetchedQuestions[0], contentIndex: 0, currentPlayer: 0 }
+          payload: {
+            gameContent: fetchedQuestions,
+            personRounds: fetchedRounds,
+            currentContent: fetchedQuestions[0],
+            contentIndex: 0,
+            currentPlayer: 0
+          }
         })
       }
     }
@@ -322,6 +362,7 @@ export function GameComponent({
         setHasVoted(false)
         setVotingReveal(false)
         setTodChoice(null)
+        setWyrChoice(null)
         setKmkSelections({ kiss: "", marry: "", kill: "" })
         setKmkVotes({})
         setSpinTargetPlayer("")
@@ -416,14 +457,88 @@ export function GameComponent({
       } else if (action.type === "sync-questions") {
         setGameContent(action.payload.gameContent)
         setCurrentContent(action.payload.currentContent)
+        if (action.payload.personRounds) {
+          setPersonRounds(action.payload.personRounds)
+        }
         if (action.payload.contentIndex !== undefined) setContentIndex(action.payload.contentIndex)
         if (action.payload.currentPlayer !== undefined) setCurrentPlayer(action.payload.currentPlayer)
         setIsLoading(false)
+      } else if (action.type === "custom-persons-added") {
+        if (action.payload?.personRounds && Array.isArray(action.payload.personRounds)) {
+          setPersonRounds((prev) => [...action.payload.personRounds, ...prev])
+        }
+        if (action.payload?.questions && Array.isArray(action.payload.questions)) {
+          setGameContent((prev) => [...action.payload.questions, ...prev])
+        }
       } else if (action.type === "add-custom-prompt") {
         setCustomDeck(prev => [...prev, action.payload])
       } else if (action.type === "remove-custom-prompt") {
         setCustomDeck(prev => prev.filter((_, idx) => idx !== action.payload))
       }
+    })
+
+    socket.on("room-state-sync", (state: any) => {
+      if (!state) return
+      if (state.gameContent && state.gameContent.length > 0) {
+        setGameContent(state.gameContent)
+      }
+      if (state.personRounds && state.personRounds.length > 0) {
+        setPersonRounds(state.personRounds)
+      }
+      if (state.currentContent) {
+        setCurrentContent(state.currentContent)
+      }
+      if (state.contentIndex !== undefined) {
+        setContentIndex(state.contentIndex)
+      }
+      if (state.currentPlayer !== undefined) {
+        setCurrentPlayer(state.currentPlayer)
+      }
+      if (state.playerScores) {
+        setPlayerScores((prev) => ({ ...prev, ...state.playerScores }))
+      }
+      if (state.sips) {
+        setSips((prev) => ({ ...prev, ...state.sips }))
+      }
+      if (state.votes) {
+        setVotes(state.votes)
+      }
+      if (state.kmkVotes) {
+        setKmkVotes(state.kmkVotes)
+      }
+      if (state.votingReveal !== undefined) {
+        setVotingReveal(state.votingReveal)
+      }
+      if (state.timerActive !== undefined) {
+        setTimerActive(state.timerActive)
+      }
+      if (state.timeLeft !== undefined) {
+        setTimeLeft(state.timeLeft)
+      }
+      if (state.gameStarted !== undefined) {
+        setGameStarted(state.gameStarted)
+      }
+      if (state.settings) {
+        if (state.settings.category) setKmkCategory(state.settings.category)
+        if (state.settings.gender) setKmkGender(state.settings.gender)
+        if (state.settings.timerDuration !== undefined) {
+          setTimerDuration(state.settings.timerDuration)
+          setTimerEnabled(state.settings.timerDuration > 0)
+        }
+        if (state.settings.mode) setGameMode(state.settings.mode)
+      }
+      setIsLoading(false)
+    })
+
+    socket.on("room-settings-updated", (settings: any) => {
+      if (!settings) return
+      if (settings.category) setKmkCategory(settings.category)
+      if (settings.gender) setKmkGender(settings.gender)
+      if (settings.timerDuration !== undefined) {
+        setTimerDuration(settings.timerDuration)
+        setTimerEnabled(settings.timerDuration > 0)
+      }
+      if (settings.mode) setGameMode(settings.mode)
     })
 
     socket.on("cast-vote", (voteData) => {
@@ -466,6 +581,8 @@ export function GameComponent({
 
     return () => {
       socket.off("game-action")
+      socket.off("room-state-sync")
+      socket.off("room-settings-updated")
       socket.off("cast-vote")
       socket.off("send-reaction")
       socket.off("anonymous-prompt")
@@ -561,9 +678,106 @@ export function GameComponent({
       if (activeContent.length > 0) {
         socket.emit("game-action", roomCode, {
           type: "sync-questions",
-          payload: { gameContent: activeContent, currentContent: activeContent[0] }
+          payload: {
+            gameContent: activeContent,
+            personRounds: personRounds,
+            currentContent: activeContent[0],
+            contentIndex: 0,
+            currentPlayer: 0
+          }
         })
       }
+    }
+  }
+
+  const handleBulkAddSpice = async () => {
+    if (!spiceNamesInput.trim()) return
+    setIsAddingSpice(true)
+    setSpiceMessage(null)
+
+    try {
+      const res = await fetch("/api/catalog/bulk-add", {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          names: spiceNamesInput,
+          category: spiceCategory,
+          addedBy: myPlayerName || "Party Member"
+        })
+      })
+
+      const data = await res.json()
+      if (data.success) {
+        const { added, skippedDuplicates, totalAdded } = data.data
+        let feedback = `Successfully added ${totalAdded} personalities!`
+        if (skippedDuplicates.length > 0) {
+          feedback += ` (${skippedDuplicates.length} duplicates automatically skipped)`
+        }
+        setSpiceMessage({ text: feedback, isError: false })
+        setSpiceNamesInput("")
+
+        if (added && added.length > 0) {
+          const newCards = added.map((item: any) => ({
+            id: item.id,
+            name: item.name,
+            category: item.category,
+            gender: null,
+            imageUrl: "/placeholder-user.jpg",
+            thumbnailUrl: "/placeholder-user.jpg",
+            hasVerifiedPortrait: false,
+            license: "Public Domain / Custom Entry",
+            licenseUrl: null,
+            author: myPlayerName || "Party Member",
+            sourceUrl: "/placeholder-user.jpg",
+            attribution: `Portrait for ${item.name}`
+          }))
+
+          const newRounds: any[] = []
+          for (let i = 0; i < newCards.length; i += 3) {
+            const trio = newCards.slice(i, i + 3)
+            if (trio.length < 3 && personRounds.length > 0) {
+              const fillerTrio = personRounds[0].persons
+              for (const f of fillerTrio) {
+                if (trio.length < 3 && !trio.some((t: any) => t.id === f.id)) {
+                  trio.push(f)
+                }
+              }
+            }
+            if (trio.length >= 2) {
+              newRounds.push({
+                roundNumber: 0,
+                scenario: `Spice Round: ${trio.map((c: any) => c.name).join(", ")}`,
+                persons: trio
+              })
+            }
+          }
+
+          const newQuestions = added.map((item: any) => `Wild Card: What would you do with ${item.name}?`)
+
+          if (newRounds.length > 0) {
+            setPersonRounds((prev) => [...newRounds, ...prev])
+          }
+          if (newQuestions.length > 0) {
+            setGameContent((prev) => [...newQuestions, ...prev])
+          }
+
+          if (socket && roomCode) {
+            socket.emit("game-action", roomCode, {
+              type: "custom-persons-added",
+              payload: {
+                personRounds: newRounds,
+                questions: newQuestions
+              }
+            })
+          }
+        }
+      } else {
+        setSpiceMessage({ text: data.error || "Failed to add names", isError: true })
+      }
+    } catch (err: any) {
+      setSpiceMessage({ text: err.message || "Network error", isError: true })
+    } finally {
+      setIsAddingSpice(false)
     }
   }
 
@@ -632,6 +846,7 @@ export function GameComponent({
     setHasVoted(false)
     setVotingReveal(false)
     setTodChoice(null)
+    setWyrChoice(null)
     setKmkSelections({ kiss: "", marry: "", kill: "" })
     setKmkVotes({})
     setSpinTargetPlayer("")
@@ -667,6 +882,7 @@ export function GameComponent({
     setContentIndex(newIndex)
     setCurrentContent(nextContentStr)
     setTodChoice(null)
+    setWyrChoice(null)
     setKmkSelections({ kiss: "", marry: "", kill: "" })
     setKmkVotes({})
     setSpinTargetPlayer("")
@@ -692,6 +908,7 @@ export function GameComponent({
     setCurrentContent(shuffled[0])
     setContentIndex(0)
     setTodChoice(null)
+    setWyrChoice(null)
     setKmkSelections({ kiss: "", marry: "", kill: "" })
     setKmkVotes({})
     setSpinTargetPlayer("")
@@ -1335,7 +1552,7 @@ export function GameComponent({
   const isTurnPlayer = players[currentPlayer] === players[0] || isHost || !roomCode
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-zinc-100 font-sans selection:bg-zinc-800 selection:text-white flex flex-col justify-between py-6">
+    <div className="min-h-screen bg-neutral-950 text-zinc-100 font-sans selection:bg-zinc-800 selection:text-white flex flex-col justify-between py-3 sm:py-6 px-2 sm:px-4 pt-safe pb-safe overflow-x-hidden">
       
       {/* Floating Reactions Overlay */}
       <div className="fixed inset-0 pointer-events-none z-50 overflow-hidden">
@@ -1364,54 +1581,64 @@ export function GameComponent({
         onClose={handleChugFinished}
       />
 
-      <div className="container mx-auto px-6 relative z-10 flex-1 flex flex-col justify-between max-w-4xl w-full">
-        {/* Header */}
-        <header className="flex flex-col sm:flex-row gap-4 items-center justify-between mb-6">
+      <div className="container mx-auto px-1 sm:px-6 relative z-10 flex-1 flex flex-col justify-between max-w-4xl w-full">
+        {/* Mobile-Optimized Header */}
+        <header className="flex items-center justify-between gap-2 mb-3 sm:mb-6 pt-1">
           <Button
             variant="ghost"
             onClick={handleEndGame}
-            className="rounded-lg border border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-900 h-8 px-3 text-[9px] uppercase tracking-wider"
+            className="rounded-lg border border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-900 h-8 px-2 sm:px-3 text-[9px] uppercase tracking-wider flex items-center flex-shrink-0"
           >
-            <ArrowLeft className="w-4 h-4 mr-1.5" />
-            End Game
+            <ArrowLeft className="w-3.5 h-3.5 mr-1" />
+            <span className="hidden xs:inline">End Game</span>
+            <span className="xs:hidden">Exit</span>
           </Button>
 
-          <div className="text-center">
-            <h1 className="text-lg font-bold uppercase tracking-tight text-white leading-none">{getGameName(gameId)}</h1>
-            <p className="text-xs text-zinc-450 uppercase tracking-wider font-semibold mt-1">{players[currentPlayer]}'s Turn</p>
-            {gameMode === "spicy" && (
-              <Badge className="bg-red-950/40 text-red-400 border border-red-900/30 font-bold uppercase text-[8px] px-2 py-0.5 rounded-md mt-1.5">Spicy Mode</Badge>
-            )}
+          <div className="text-center min-w-0 px-1">
+            <h1 className="text-sm sm:text-lg font-bold uppercase tracking-tight text-white leading-tight truncate">
+              {getGameName(gameId)}
+            </h1>
+            <div className="flex items-center justify-center gap-1.5 mt-0.5">
+              <span className="text-[10px] sm:text-xs text-zinc-400 uppercase font-semibold truncate">
+                {players[currentPlayer]}'s Turn
+              </span>
+              {gameMode === "spicy" && (
+                <span className="bg-red-950/60 text-red-400 border border-red-900/40 font-bold uppercase text-[7.5px] px-1.5 py-0.2 rounded">
+                  Spicy
+                </span>
+              )}
+            </div>
           </div>
 
-          <div className="flex items-center gap-2">
+          <div className="flex items-center gap-1 sm:gap-2 flex-shrink-0">
             <Button
               variant="outline"
               onClick={toggleTimer}
-              className={`rounded-lg border h-8 px-3 text-[9px] font-bold uppercase tracking-wider transition-colors ${
+              className={`rounded-lg border h-8 px-2 sm:px-3 text-[9px] font-bold uppercase tracking-wider transition-colors ${
                 timerActive
                   ? "bg-amber-500/10 border-amber-500/40 text-amber-300 hover:bg-amber-500/20"
                   : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-white"
               }`}
             >
               {timerActive ? (
-                <>
-                  <Pause className="w-3.5 h-3.5 mr-1 text-amber-400 fill-amber-400" />
-                  <span>Auto-Flow ({timeLeft}s)</span>
-                </>
+                <span className="flex items-center gap-1">
+                  <Pause className="w-3 h-3 text-amber-400 fill-amber-400 flex-shrink-0" />
+                  <span>{timeLeft}s</span>
+                </span>
               ) : (
-                <>
-                  <Play className="w-3.5 h-3.5 mr-1 text-zinc-400 fill-zinc-400" />
-                  <span>Paused [Space]</span>
-                </>
+                <span className="flex items-center gap-1">
+                  <Play className="w-3 h-3 text-zinc-400 flex-shrink-0" />
+                  <span className="hidden sm:inline">Timer</span>
+                </span>
               )}
             </Button>
             <Button
               variant="outline"
               onClick={() => setShowLeaderboard(true)}
-              className="rounded-lg border border-zinc-800 hover:bg-zinc-900 text-zinc-300 h-8 px-3 text-[9px] uppercase tracking-wider"
+              className="rounded-lg border border-zinc-800 hover:bg-zinc-900 text-zinc-300 h-8 px-2 sm:px-3 text-[9px] uppercase tracking-wider flex items-center gap-1"
             >
-              Scores
+              <Trophy className="w-3 h-3 sm:hidden text-amber-400" />
+              <span className="hidden sm:inline">Scores</span>
             </Button>
           </div>
         </header>
@@ -1466,12 +1693,13 @@ export function GameComponent({
             </div>
           )}
 
-          {/* Kiss Marry Kill Customizer Bar */}
-          {gameId === "kiss-marry-kill" && (
+          {/* Kiss Marry Kill & Would You Rather Customizer Bar */}
+          {(gameId === "kiss-marry-kill" || gameId === "would-you-rather") && (
             <div className="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-3.5 max-w-3xl mx-auto w-full mb-1 space-y-2.5 shadow-xl">
               <div className="flex flex-col sm:flex-row items-center justify-between gap-2 border-b border-zinc-800/80 pb-2">
                 <span className="text-[10px] font-extrabold uppercase tracking-widest text-amber-400 flex items-center gap-1.5">
-                  <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Kiss Marry Kill Customizer
+                  <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                  {gameId === "kiss-marry-kill" ? "Kiss Marry Kill Customizer" : "Would You Rather People Customizer"}
                 </span>
                 
                 {/* AI Generator Toggle */}
@@ -1483,7 +1711,7 @@ export function GameComponent({
                       : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200"
                   }`}
                 >
-                  {aiEnabled ? "🤖 Groq AI Options: ON" : "📚 Local Database: ON"}
+                  {aiEnabled ? "🤖 Groq AI Options: ON" : "📚 Local Database (15k+): ON"}
                 </button>
               </div>
 
@@ -1493,8 +1721,8 @@ export function GameComponent({
                   <label className="text-[8px] font-bold uppercase tracking-wider text-zinc-500">Gender Pool:</label>
                   <div className="flex gap-1">
                     {[
-                      { id: "female", label: "👩 Female Stars" },
-                      { id: "male", label: "👨 Male Stars" },
+                      { id: "female", label: "👩 Female" },
+                      { id: "male", label: "👨 Male" },
                       { id: "mixed", label: "🔀 Mixed" }
                     ].map((g) => (
                       <button
@@ -1513,23 +1741,29 @@ export function GameComponent({
                 </div>
 
                 {/* Category / Genre Filter */}
-                <div className="flex flex-col gap-1">
+                <div className="flex flex-col gap-1 min-w-0">
                   <label className="text-[8px] font-bold uppercase tracking-wider text-zinc-500">Industry / Genre:</label>
-                  <div className="flex flex-wrap gap-1">
+                  <div className="flex overflow-x-auto pb-1 sm:pb-0 sm:flex-wrap gap-1 scrollbar-none touch-pan-x">
                     {[
                       { id: "all", label: "🌟 All" },
+                      { id: "scientists", label: "🔬 Scientists" },
+                      { id: "history", label: "🏛️ History" },
                       { id: "bollywood", label: "🎬 Bollywood" },
                       { id: "hollywood", label: "📽️ Hollywood" },
-                      { id: "popstars", label: "🎵 Popstars" },
-                      { id: "adultstars", label: "🌶️ Adult Stars" },
+                      { id: "singers", label: "🎤 Singers" },
+                      { id: "athletes", label: "⚽ Athletes" },
+                      { id: "tech", label: "💻 Tech" },
+                      { id: "writers", label: "✍️ Writers" },
+                      { id: "artists", label: "🎨 Artists" },
+                      { id: "adultstars", label: "🌶️ Adult Stars (18+)" },
                       { id: "fantasy", label: "⚔️ Fantasy" }
                     ].map((c) => (
                       <button
                         key={c.id}
-                        onClick={() => changeKMKCategory(c.id as any)}
-                        className={`py-0.5 px-2 rounded-lg text-[8px] font-bold uppercase transition-colors ${
+                        onClick={() => changeKMKCategory(c.id)}
+                        className={`py-1 px-2.5 rounded-lg text-[8px] font-bold uppercase whitespace-nowrap transition-colors flex-shrink-0 sm:flex-shrink ${
                           kmkCategory === c.id
-                            ? "bg-zinc-100 text-black font-extrabold"
+                            ? "bg-amber-400 text-black font-extrabold shadow-sm"
                             : "bg-zinc-900 border border-zinc-800 text-zinc-400 hover:bg-zinc-850 hover:text-zinc-200"
                         }`}
                       >
@@ -1600,73 +1834,97 @@ export function GameComponent({
                     </Button>
                   </div>
                 )}
+
+                {/* Interactive Would You Rather Image Cards */}
+                {gameId === "would-you-rather" && personRounds[contentIndex]?.optionA && (
+                  <WYRImageCards
+                    optionA={personRounds[contentIndex].optionA}
+                    optionB={personRounds[contentIndex].optionB}
+                    selectedOption={wyrChoice}
+                    onChoose={(opt) => setWyrChoice(opt)}
+                  />
+                )}
                 
                 {/* Interactive Kiss Marry Kill with Synced Multiplayer Reveal */}
                 {(() => {
                   const kmkOptionsList = getKMKOptions()
-                  if (gameId === "kiss-marry-kill" && kmkOptionsList) {
-                    const [o1, o2, o3] = kmkOptionsList
+                  const currentPersonRound = personRounds[contentIndex]
+                  const hasImageCards = Boolean(currentPersonRound && currentPersonRound.persons && currentPersonRound.persons.length === 3)
+
+                  if (gameId === "kiss-marry-kill" && (hasImageCards || kmkOptionsList)) {
                     const myUser = myPlayerName || players[currentPlayer] || "Player"
                     const hasSubmitted = !!kmkVotes[myUser]
                     const isAllComplete = kmkSelections.kiss && kmkSelections.marry && kmkSelections.kill
 
                     return (
-                      <div className="mt-6 border-t border-zinc-900 pt-5 w-full max-w-lg mx-auto space-y-4">
-                        {/* Option Selection Panel */}
-                        <div className="bg-zinc-900/30 border border-zinc-800/80 rounded-2xl p-4 space-y-3">
-                          <h4 className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 flex items-center justify-between">
-                            <span>Assign Your Choices ({myUser})</span>
-                            {hasSubmitted && (
-                              <span className="text-emerald-400 font-extrabold text-[9px] bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded-full">
-                                ✓ Submitted
-                              </span>
-                            )}
-                          </h4>
+                      <div className="mt-6 border-t border-zinc-900 pt-5 w-full max-w-4xl mx-auto space-y-4">
+                        {hasImageCards ? (
+                          /* Image-Backed 3-Card KMK Presentation */
+                          <KMKImageCards
+                            persons={currentPersonRound.persons}
+                            selections={kmkSelections}
+                            onSelect={selectKMK}
+                            onSubmit={submitKMKChoices}
+                            hasSubmitted={hasSubmitted}
+                            playerName={myUser}
+                          />
+                        ) : (
+                          /* Text Option Fallback Panel */
+                          <div className="bg-zinc-900/30 border border-zinc-800/80 rounded-2xl p-4 space-y-3 max-w-lg mx-auto">
+                            <h4 className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 flex items-center justify-between">
+                              <span>Assign Your Choices ({myUser})</span>
+                              {hasSubmitted && (
+                                <span className="text-emerald-400 font-extrabold text-[9px] bg-emerald-500/10 border border-emerald-500/30 px-2 py-0.5 rounded-full">
+                                  ✓ Submitted
+                                </span>
+                              )}
+                            </h4>
 
-                          <div className="space-y-2">
-                            {[o1, o2, o3].map((opt) => {
-                              return (
-                                <div key={opt} className="p-2.5 bg-zinc-950/60 border border-zinc-800 rounded-xl flex flex-col sm:flex-row justify-between items-center gap-2">
-                                  <span className="font-extrabold text-xs text-left uppercase tracking-wider text-zinc-200 flex-1">{opt}</span>
-                                  <div className="flex gap-1.5">
-                                    {(['kiss', 'marry', 'kill'] as const).map((role) => {
-                                      const labels = { kiss: "💋 Kiss", marry: "💍 Marry", kill: "🔪 Kill" }
-                                      const isSelected = kmkSelections[role] === opt
-                                      return (
-                                        <Button
-                                          key={role}
-                                          size="sm"
-                                          onClick={() => selectKMK(opt, role)}
-                                          className={`h-8 px-2.5 rounded-lg text-[9px] font-extrabold uppercase tracking-wider transition-all ${
-                                            isSelected 
-                                              ? role === "kiss" ? "bg-pink-500 text-white shadow-md" : role === "marry" ? "bg-amber-400 text-black shadow-md" : "bg-red-600 text-white shadow-md"
-                                              : "border border-zinc-800 bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
-                                          }`}
-                                        >
-                                          {labels[role]}
-                                        </Button>
-                                      )
-                                    })}
+                            <div className="space-y-2">
+                              {kmkOptionsList?.map((opt) => {
+                                return (
+                                  <div key={opt} className="p-2.5 bg-zinc-950/60 border border-zinc-800 rounded-xl flex flex-col sm:flex-row justify-between items-center gap-2">
+                                    <span className="font-extrabold text-xs text-left uppercase tracking-wider text-zinc-200 flex-1">{opt}</span>
+                                    <div className="flex gap-1.5">
+                                      {(['kiss', 'marry', 'kill'] as const).map((role) => {
+                                        const labels = { kiss: "💋 Kiss", marry: "💍 Marry", kill: "🔪 Kill" }
+                                        const isSelected = kmkSelections[role] === opt
+                                        return (
+                                          <Button
+                                            key={role}
+                                            size="sm"
+                                            onClick={() => selectKMK(opt, role)}
+                                            className={`h-8 px-2.5 rounded-lg text-[9px] font-extrabold uppercase tracking-wider transition-all ${
+                                              isSelected 
+                                                ? role === "kiss" ? "bg-pink-500 text-white shadow-md" : role === "marry" ? "bg-amber-400 text-black shadow-md" : "bg-red-600 text-white shadow-md"
+                                                : "border border-zinc-800 bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
+                                            }`}
+                                          >
+                                            {labels[role]}
+                                          </Button>
+                                        )
+                                      })}
+                                    </div>
                                   </div>
-                                </div>
-                              )
-                            })}
-                          </div>
+                                )
+                              })}
+                            </div>
 
-                          <Button
-                            onClick={submitKMKChoices}
-                            disabled={!isAllComplete}
-                            className={`w-full h-10 text-xs font-black uppercase tracking-wider rounded-xl transition-all border-0 shadow-lg ${
-                              hasSubmitted
-                                ? "bg-emerald-500 hover:bg-emerald-400 text-black"
-                                : isAllComplete
-                                ? "bg-amber-400 hover:bg-amber-300 text-black"
-                                : "bg-zinc-800 text-zinc-500 cursor-not-allowed"
-                            }`}
-                          >
-                            {hasSubmitted ? "✓ Update My Choices" : "Submit Choices 💋 💍 🔪"}
-                          </Button>
-                        </div>
+                            <Button
+                              onClick={submitKMKChoices}
+                              disabled={!isAllComplete}
+                              className={`w-full h-10 text-xs font-black uppercase tracking-wider rounded-xl transition-all border-0 shadow-lg ${
+                                hasSubmitted
+                                  ? "bg-emerald-500 hover:bg-emerald-400 text-black"
+                                  : isAllComplete
+                                  ? "bg-amber-400 hover:bg-amber-300 text-black"
+                                  : "bg-zinc-800 text-zinc-500 cursor-not-allowed"
+                              }`}
+                            >
+                              {hasSubmitted ? "✓ Update My Choices" : "Submit Choices 💋 💍 🔪"}
+                            </Button>
+                          </div>
+                        )}
 
                         {/* Live Room Reveal Grid */}
                         <div className="bg-zinc-950/80 border border-zinc-800 rounded-2xl p-4 text-left space-y-3 shadow-2xl">
@@ -1964,39 +2222,50 @@ export function GameComponent({
               </div>
             )}
 
-            {/* Standard Navigation Controls (Host Controlled) */}
-            <div className="flex flex-col sm:flex-row gap-2.5 w-full">
-              <Button
-                onClick={skipContent}
-                disabled={!isHost && !!roomCode}
-                variant="outline"
-                size="lg"
-                className="h-11 text-xs border-zinc-800 text-zinc-400 hover:bg-zinc-900 hover:text-white rounded-xl font-bold uppercase tracking-wider flex-1 transition-colors disabled:opacity-50"
-              >
-                <SkipForward className="w-4 h-4 mr-1.5" />
-                Skip
-              </Button>
-
+            {/* Standard Navigation Controls (Host Controlled) - Mobile Thumb-Friendly */}
+            <div className="flex flex-col gap-2 w-full">
+              {/* Primary Action Button: Next Turn (Prominent, High-Contrast) */}
               <Button
                 onClick={nextTurn}
                 disabled={!isHost && !!roomCode}
                 size="lg"
-                className="h-11 text-xs bg-zinc-100 hover:bg-zinc-200 text-black rounded-xl font-bold uppercase tracking-wider flex-1 transition-colors disabled:opacity-50 shadow-md"
+                className="w-full h-12 text-xs sm:text-sm bg-zinc-100 hover:bg-zinc-200 text-black rounded-xl font-black uppercase tracking-wider transition-all disabled:opacity-40 shadow-lg active:scale-98 flex items-center justify-center gap-2 border-0"
               >
-                <Play className="w-4 h-4 mr-1.5 fill-black" />
-                Next Turn
+                <Play className="w-4 h-4 fill-black" />
+                <span>Next Turn</span>
               </Button>
 
-              <Button
-                onClick={shuffleContent}
-                disabled={!isHost && !!roomCode}
-                variant="outline"
-                size="lg"
-                className="h-11 text-xs border-zinc-800 text-zinc-400 hover:bg-zinc-900 hover:text-white rounded-xl font-bold uppercase tracking-wider flex-1 transition-colors disabled:opacity-50"
-              >
-                <Shuffle className="w-4 h-4 mr-1.5" />
-                Shuffle
-              </Button>
+              {/* Secondary Row: Skip, Shuffle, Spice Up */}
+              <div className="grid grid-cols-3 gap-2 w-full">
+                <Button
+                  onClick={skipContent}
+                  disabled={!isHost && !!roomCode}
+                  variant="outline"
+                  className="h-10 text-[10px] sm:text-xs border-zinc-800 text-zinc-400 hover:bg-zinc-900 hover:text-white rounded-xl font-bold uppercase tracking-wider transition-colors disabled:opacity-40"
+                >
+                  <SkipForward className="w-3.5 h-3.5 mr-1" />
+                  Skip
+                </Button>
+
+                <Button
+                  onClick={shuffleContent}
+                  disabled={!isHost && !!roomCode}
+                  variant="outline"
+                  className="h-10 text-[10px] sm:text-xs border-zinc-800 text-zinc-400 hover:bg-zinc-900 hover:text-white rounded-xl font-bold uppercase tracking-wider transition-colors disabled:opacity-40"
+                >
+                  <Shuffle className="w-3.5 h-3.5 mr-1" />
+                  Shuffle
+                </Button>
+
+                <Button
+                  onClick={() => setIsSpiceModalOpen(true)}
+                  variant="outline"
+                  className="h-10 text-[10px] sm:text-xs border-amber-500/40 bg-amber-500/10 text-amber-300 hover:bg-amber-500/20 rounded-xl font-bold uppercase tracking-wider transition-colors"
+                >
+                  <Sparkles className="w-3.5 h-3.5 mr-1 text-amber-400" />
+                  Spice
+                </Button>
+              </div>
             </div>
           </div>
         </main>
@@ -2170,6 +2439,158 @@ export function GameComponent({
               >
                 Submit Daringly
               </Button>
+            </motion.div>
+          </>
+        )}
+      </AnimatePresence>
+
+      {/* Spice Up Deck / Bulk Names Modal */}
+      <AnimatePresence>
+        {isSpiceModalOpen && (
+          <>
+            <motion.div
+              initial={{ opacity: 0 }}
+              animate={{ opacity: 0.6 }}
+              exit={{ opacity: 0 }}
+              onClick={() => {
+                setIsSpiceModalOpen(false)
+                setSpiceMessage(null)
+              }}
+              className="fixed inset-0 bg-black z-50 backdrop-blur-sm"
+            />
+            <motion.div
+              initial={{ scale: 0.95, opacity: 0, y: 15 }}
+              animate={{ scale: 1, opacity: 1, y: 0 }}
+              exit={{ scale: 0.95, opacity: 0, y: 15 }}
+              className="fixed inset-0 m-auto w-full max-w-lg h-fit bg-neutral-950 border border-zinc-800 rounded-3xl p-6 z-50 text-zinc-100 flex flex-col gap-4 shadow-2xl"
+            >
+              <div className="flex justify-between items-center border-b border-zinc-900 pb-3">
+                <div className="flex items-center gap-2">
+                  <span className="p-2 bg-amber-500/10 text-amber-400 rounded-xl text-lg">⚡</span>
+                  <div>
+                    <h3 className="text-sm font-extrabold uppercase tracking-tight text-white">
+                      Spice Up Deck / Add Custom Personalities
+                    </h3>
+                    <p className="text-[10px] text-zinc-400">
+                      Add comma-separated names to inject into the game. Duplicates are safely skipped!
+                    </p>
+                  </div>
+                </div>
+                <Button
+                  variant="ghost"
+                  size="icon"
+                  onClick={() => {
+                    setIsSpiceModalOpen(false)
+                    setSpiceMessage(null)
+                  }}
+                  className="text-zinc-500 hover:bg-zinc-900 hover:text-white rounded-full"
+                >
+                  <X className="w-4 h-4" />
+                </Button>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block mb-1.5">
+                  Category Tag
+                </label>
+                <select
+                  value={spiceCategory}
+                  onChange={(e) => setSpiceCategory(e.target.value)}
+                  className="w-full bg-zinc-900 border border-zinc-800 text-zinc-200 text-xs rounded-xl px-3 py-2 outline-none focus:border-zinc-700"
+                >
+                  <option value="scientists">🔬 Famous Scientists & Thinkers</option>
+                  <option value="tech">💻 Tech Pioneers & Innovators</option>
+                  <option value="anime">⚡ Anime & Fantasy Figures</option>
+                  <option value="bollywood">🎬 Bollywood Celebrities</option>
+                  <option value="hollywood">🌟 Hollywood Celebrities</option>
+                  <option value="athletes">🏆 World Athletes</option>
+                  <option value="history">👑 Historical Icons</option>
+                  <option value="other">🎭 Wild / Custom Names</option>
+                </select>
+              </div>
+
+              <div>
+                <label className="text-[10px] font-bold uppercase tracking-wider text-zinc-400 block mb-1.5">
+                  Enter Comma-Separated or Line-by-Line Names
+                </label>
+                <textarea
+                  value={spiceNamesInput}
+                  onChange={(e) => setSpiceNamesInput(e.target.value)}
+                  placeholder="e.g. Albert Einstein, Marie Curie, Nikola Tesla, Oppenheimer, Shrek, Walter White"
+                  rows={4}
+                  className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl p-3 text-xs text-white placeholder-zinc-500 outline-none focus:border-amber-500/50 resize-none font-mono"
+                />
+              </div>
+
+              <div className="space-y-1.5">
+                <span className="text-[9px] uppercase font-bold tracking-wider text-zinc-500 block">
+                  Quick Add Presets:
+                </span>
+                <div className="flex flex-wrap gap-1.5">
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSpiceCategory("scientists")
+                      setSpiceNamesInput("Albert Einstein, Marie Curie, Nikola Tesla, J. Robert Oppenheimer, Isaac Newton")
+                    }}
+                    className="text-[9px] font-bold uppercase bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 text-zinc-300 px-2.5 py-1 rounded-lg transition-colors"
+                  >
+                    + Scientists Pack
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSpiceCategory("tech")
+                      setSpiceNamesInput("Steve Jobs, Elon Musk, Sam Altman, Jensen Huang, Bill Gates")
+                    }}
+                    className="text-[9px] font-bold uppercase bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 text-zinc-300 px-2.5 py-1 rounded-lg transition-colors"
+                  >
+                    + Tech Visionaries
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSpiceCategory("anime")
+                      setSpiceNamesInput("Goku, Satoru Gojo, Levi Ackerman, Naruto Uzumaki, Shrek")
+                    }}
+                    className="text-[9px] font-bold uppercase bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 text-zinc-300 px-2.5 py-1 rounded-lg transition-colors"
+                  >
+                    + Anime & Legends
+                  </button>
+                </div>
+              </div>
+
+              {spiceMessage && (
+                <div
+                  className={`p-3 rounded-xl text-xs font-semibold ${
+                    spiceMessage.isError
+                      ? "bg-red-500/10 border border-red-500/30 text-red-400"
+                      : "bg-emerald-500/10 border border-emerald-500/30 text-emerald-400"
+                  }`}
+                >
+                  {spiceMessage.text}
+                </div>
+              )}
+
+              <div className="flex gap-2 pt-2">
+                <Button
+                  variant="ghost"
+                  onClick={() => {
+                    setIsSpiceModalOpen(false)
+                    setSpiceMessage(null)
+                  }}
+                  className="flex-1 h-10 rounded-xl border border-zinc-800 text-zinc-400 hover:text-white"
+                >
+                  Close
+                </Button>
+                <Button
+                  onClick={handleBulkAddSpice}
+                  disabled={isAddingSpice || !spiceNamesInput.trim()}
+                  className="flex-1 h-10 bg-amber-500 hover:bg-amber-400 text-black font-extrabold uppercase text-xs rounded-xl border-0 shadow-lg shadow-amber-500/20 disabled:opacity-50"
+                >
+                  {isAddingSpice ? "Adding..." : "Add to Game 🚀"}
+                </Button>
+              </div>
             </motion.div>
           </>
         )}

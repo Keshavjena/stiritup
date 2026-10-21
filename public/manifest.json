@@ -1,0 +1,64 @@
+{
+  "id": "/?source=pwa",
+  "name": "Stir It Up - Ultimate Party Game Platform",
+  "short_name": "Stir It Up",
+  "description": "The ultimate interactive multiplayer party game platform to break the ice, spark wild debates, and reveal hidden confessions.",
+  "start_url": "/",
+  "scope": "/",
+  "display": "standalone",
+  "display_override": ["standalone", "minimal-ui", "browser"],
+  "orientation": "portrait",
+  "theme_color": "#0a0a0a",
+  "background_color": "#0a0a0a",
+  "lang": "en",
+  "dir": "ltr",
+  "categories": ["games", "entertainment", "social"],
+  "icons": [
+    {
+      "src": "/icon-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "any"
+    },
+    {
+      "src": "/icon-maskable-192.png",
+      "sizes": "192x192",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/icon-maskable-512.png",
+      "sizes": "512x512",
+      "type": "image/png",
+      "purpose": "maskable"
+    },
+    {
+      "src": "/apple-touch-icon.png",
+      "sizes": "180x180",
+      "type": "image/png"
+    }
+  ],
+  "shortcuts": [
+    {
+      "name": "Join Party",
+      "url": "/?action=join",
+      "description": "Join an ongoing party room"
+    },
+    {
+      "name": "Host Party",
+      "url": "/?action=create",
+      "description": "Host a new game room"
+    },
+    {
+      "name": "People Catalog",
+      "url": "/?action=catalog",
+      "description": "Browse 15k+ personalities"
+    }
+  ]
+}

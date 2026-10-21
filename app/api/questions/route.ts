@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from "next/server";
 import questionsDb from "@/lib/game-data/questions-db.json";
 import { getGameContent } from "@/lib/game-data/questions";
 import { generateKMKQuestions, KMKGender, KMKCategory } from "@/lib/game-data/kmk-generator";
+import { generateKMKRounds, generateWYRRounds } from "@/lib/catalog/game-generator";
 
 export const dynamic = "force-dynamic";
 
@@ -16,10 +17,46 @@ export async function GET(req: NextRequest) {
     const kmkCategory = (searchParams.get("kmkCategory") || "all") as KMKCategory;
 
     // Load static database
+    const limit = parseInt(searchParams.get("limit") || "100", 10);
     let questions: string[] = [];
+    let personRounds: any = undefined;
 
     if (gameId === "kiss-marry-kill") {
-      questions = generateKMKQuestions(kmkGender, kmkCategory, 50);
+      try {
+        personRounds = generateKMKRounds({
+          gender: kmkGender,
+          category: kmkCategory,
+          count: Math.min(limit, 50)
+        });
+        if (personRounds && personRounds.length > 0) {
+          // Exactly synchronize the displayed question text with the 3 person image cards!
+          questions = personRounds.map((r: any) => r.scenario);
+        }
+      } catch (err) {
+        console.warn("Could not generate KMK person rounds:", err);
+      }
+      if (questions.length === 0) {
+        questions = generateKMKQuestions(kmkGender, kmkCategory, 50);
+      }
+    } else if (gameId === "would-you-rather") {
+      try {
+        personRounds = generateWYRRounds({
+          gender: kmkGender,
+          category: kmkCategory,
+          count: Math.min(limit, 50)
+        });
+        if (personRounds && personRounds.length > 0) {
+          // Exactly synchronize the displayed dilemma text with Option A and Option B!
+          questions = personRounds.map((r: any) => r.scenario);
+        }
+      } catch (err) {
+        console.warn("Could not generate WYR person rounds:", err);
+      }
+      if (questions.length === 0) {
+        const db = questionsDb as Record<string, Record<string, string[]>>;
+        const selectedMode = mature ? mode : "standard";
+        questions = db[gameId]?.[selectedMode] || db[gameId]?.standard || getGameContent(gameId, mature, mode);
+      }
     } else {
       const db = questionsDb as Record<string, Record<string, string[]>>;
       if (db[gameId]) {
@@ -33,7 +70,7 @@ export async function GET(req: NextRequest) {
 
     // Call Groq API if AI is requested and we have the API key
     const apiKey = process.env.GROQ_API_KEY;
-    if (useAI && apiKey) {
+    if (useAI && apiKey && gameId !== "kiss-marry-kill" && gameId !== "would-you-rather") {
       try {
         const aiQuestions = await generateQuestionsWithAI(apiKey, gameId, mode, mature, kmkGender, kmkCategory);
         if (aiQuestions && aiQuestions.length > 0) {
@@ -44,12 +81,15 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // Shuffle questions to avoid repetition
-    questions = questions.sort(() => Math.random() - 0.5);
+    // Shuffle only for text-only games (KMK and WYR already come randomly sampled from catalog)
+    if (!personRounds) {
+      questions = questions.sort(() => Math.random() - 0.5);
+    }
 
-    // Limit returned questions to 100 to keep responses lightweight
-    const limit = parseInt(searchParams.get("limit") || "100", 10);
     const slicedQuestions = questions.slice(0, limit);
+    if (personRounds) {
+      personRounds = personRounds.slice(0, slicedQuestions.length);
+    }
 
     return NextResponse.json({
       success: true,
@@ -57,6 +97,7 @@ export async function GET(req: NextRequest) {
       mode,
       mature,
       questions: slicedQuestions,
+      personRounds,
       totalAvailable: questions.length,
       source: useAI && apiKey ? "groq-ai" : "local-db"
     });

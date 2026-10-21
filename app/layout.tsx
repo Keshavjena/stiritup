@@ -3,6 +3,9 @@ import type { Metadata } from "next"
 import { Inter, Space_Grotesk, Playfair_Display } from "next/font/google"
 import "./globals.css"
 
+import { PwaRegistrar } from "./components/pwa-registrar"
+import { PwaInstallPrompt } from "./components/pwa-install-prompt"
+
 const inter = Inter({ subsets: ["latin"], variable: "--font-inter" })
 const spaceGrotesk = Space_Grotesk({ subsets: ["latin"], variable: "--font-space" })
 const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfair" })
@@ -10,29 +13,45 @@ const playfair = Playfair_Display({ subsets: ["latin"], variable: "--font-playfa
 export const viewport = {
   width: "device-width",
   initialScale: 1,
-  themeColor: [
-    { media: "(prefers-color-scheme: light)", color: "#ffffff" },
-    { media: "(prefers-color-scheme: dark)", color: "#111827" },
-  ],
+  maximumScale: 1,
+  userScalable: false,
+  viewportFit: "cover" as const,
+  themeColor: "#0a0a0a",
 }
 
 export const metadata: Metadata = {
-  title: "Stir the Game - Ultimate Party Games Platform",
-  description: "The ultimate party game collection for unforgettable nights. No filters. No judgment. Just fun.",
-  keywords: "party games, drinking games, truth or dare, never have I ever, multiplayer games",
-  authors: [{ name: "Stir the Game Team" }],
+  title: "Stir It Up - Ultimate Party Games Platform",
+  description: "The ultimate interactive multiplayer party game collection for unforgettable nights. No filters. No judgment. Just fun.",
+  keywords: "party games, drinking games, truth or dare, kiss marry kill, would you rather, multiplayer games, pwa",
+  authors: [{ name: "Stir It Up Team" }],
+  manifest: "/manifest.json",
+  appleWebApp: {
+    capable: true,
+    statusBarStyle: "black-translucent",
+    title: "Stir It Up",
+  },
+  icons: {
+    icon: [
+      { url: "/favicon-32x32.png", sizes: "32x32", type: "image/png" },
+      { url: "/icon-192.png", sizes: "192x192", type: "image/png" },
+    ],
+    apple: [
+      { url: "/apple-touch-icon.png", sizes: "180x180", type: "image/png" },
+    ],
+  },
   openGraph: {
-    title: "Stir the Game - Ultimate Party Games Platform",
-    description: "The ultimate party game collection for unforgettable nights. No filters. No judgment. Just fun.",
+    title: "Stir It Up - Ultimate Party Games Platform",
+    description: "The ultimate interactive party game collection for unforgettable nights. No filters. No judgment. Just fun.",
     type: "website",
     url: "https://stirthegame.com",
+    images: [{ url: "/icon-512.png", width: 512, height: 512, alt: "Stir It Up Party Engine" }],
   },
   twitter: {
     card: "summary_large_image",
-    title: "Stir the Game - Ultimate Party Games Platform",
-    description: "The ultimate party game collection for unforgettable nights. No filters. No judgment. Just fun.",
+    title: "Stir It Up - Ultimate Party Games Platform",
+    description: "The ultimate interactive party game collection for unforgettable nights. No filters. No judgment. Just fun.",
+    images: ["/icon-512.png"],
   },
-  generator: 'v0.app'
 }
 
 export default function RootLayout({
@@ -41,8 +60,12 @@ export default function RootLayout({
   children: React.ReactNode
 }) {
   return (
-    <html lang="en" suppressHydrationWarning>
-      <body className={`${inter.variable} ${spaceGrotesk.variable} ${playfair.variable} font-sans`}>{children}</body>
+    <html lang="en" suppressHydrationWarning className="dark selection:bg-zinc-800 selection:text-white">
+      <body className={`${inter.variable} ${spaceGrotesk.variable} ${playfair.variable} font-sans bg-neutral-950 text-zinc-100 min-h-screen antialiased overflow-x-hidden touch-manipulation`}>
+        <PwaRegistrar />
+        {children}
+        <PwaInstallPrompt />
+      </body>
     </html>
   )
 }

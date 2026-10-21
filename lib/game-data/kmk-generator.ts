@@ -1,7 +1,26 @@
 import { FEMALE_CELEBRITIES, MALE_CELEBRITIES, Celebrity } from "./celebrities"
+import { getCatalogCelebrities } from "../catalog/compatibility"
 
 export type KMKGender = "female" | "male" | "mixed"
-export type KMKCategory = "all" | "bollywood" | "hollywood" | "popstars" | "adultstars" | "fantasy"
+export type KMKCategory = 
+  | "all" 
+  | "bollywood" 
+  | "hollywood" 
+  | "singers"
+  | "popstars" 
+  | "athletes"
+  | "scientists"
+  | "history"
+  | "tech"
+  | "writers"
+  | "artists"
+  | "actors"
+  | "fantasy" 
+  | "glamour"
+  | "adultstars" 
+  | "creators"
+  | "models"
+  | "icons"
 
 const FLAVOR_SCENARIOS = [
   "",
@@ -20,18 +39,23 @@ export function generateKMKQuestions(
 ): string[] {
   let pool: Celebrity[] = []
 
-  if (gender === "female") {
-    pool = [...FEMALE_CELEBRITIES]
-  } else if (gender === "male") {
-    pool = [...MALE_CELEBRITIES]
-  } else {
-    pool = [...FEMALE_CELEBRITIES, ...MALE_CELEBRITIES]
-  }
+  try {
+    pool = getCatalogCelebrities(gender, category)
+  } catch {
+    // Direct static fallback
+    if (gender === "female") {
+      pool = [...FEMALE_CELEBRITIES]
+    } else if (gender === "male") {
+      pool = [...MALE_CELEBRITIES]
+    } else {
+      pool = [...FEMALE_CELEBRITIES, ...MALE_CELEBRITIES]
+    }
 
-  if (category !== "all") {
-    const filtered = pool.filter((c) => c.category === category)
-    if (filtered.length >= 3) {
-      pool = filtered
+    if (category !== "all") {
+      const filtered = pool.filter((c) => c.category === category)
+      if (filtered.length >= 3) {
+        pool = filtered
+      }
     }
   }
 

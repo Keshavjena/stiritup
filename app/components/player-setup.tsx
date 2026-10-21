@@ -60,118 +60,117 @@ export function PlayerSetup({ gameName, onBack, onStart, darkMode, playSound }: 
   const validPlayers = players.filter((p) => p.trim())
 
   return (
-    <div className={`min-h-screen transition-all duration-500 ${darkMode ? "dark bg-black" : "bg-white"}`}>
-      <div className="container mx-auto px-6 py-8">
-        <div className="max-w-2xl mx-auto">
-          {/* Header */}
-          <div className="flex items-center mb-12">
-            <Button
-              variant="ghost"
-              onClick={onBack}
-              className="mr-4 hover:bg-gray-100 dark:hover:bg-gray-800 text-black dark:text-white"
-            >
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back
-            </Button>
-            <div>
-              <h1 className="text-4xl font-bold text-black dark:text-white mb-2">Setup {gameName}</h1>
-              <p className="text-gray-600 dark:text-gray-400">Add players and get ready to play</p>
-            </div>
+    <div className={`min-h-screen transition-all duration-500 py-4 sm:py-8 px-3 sm:px-6 pt-safe pb-safe ${darkMode ? "dark bg-black text-white" : "bg-white text-black"}`}>
+      <div className="container mx-auto max-w-2xl">
+        {/* Header */}
+        <div className="flex items-center mb-6 sm:mb-10">
+          <Button
+            variant="ghost"
+            onClick={onBack}
+            className="mr-3 sm:mr-4 hover:bg-gray-100 dark:hover:bg-gray-800 text-black dark:text-white h-8 px-2.5 sm:px-3 text-xs"
+          >
+            <ArrowLeft className="w-4 h-4 mr-1.5" />
+            Back
+          </Button>
+          <div>
+            <h1 className="text-2xl sm:text-4xl font-bold text-black dark:text-white mb-0.5">Setup {gameName}</h1>
+            <p className="text-xs sm:text-sm text-gray-600 dark:text-gray-400">Add players and get ready to play</p>
           </div>
+        </div>
 
-          {/* Room Creation */}
-          <Card className="mb-8 border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-            <CardHeader>
-              <CardTitle className="flex items-center text-black dark:text-white">
-                <Users className="w-5 h-5 mr-2" />
-                Multiplayer Room
+        {/* Room Creation */}
+        <Card className="mb-6 sm:mb-8 border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-2xl">
+          <CardHeader className="py-3 px-4">
+            <CardTitle className="flex items-center text-xs sm:text-sm text-black dark:text-white font-bold uppercase tracking-wider">
+              <Users className="w-4 h-4 mr-2" />
+              Multiplayer Room
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="px-4 pb-4">
+            {!isCreatingRoom ? (
+              <div className="text-center py-2">
+                <p className="text-gray-600 dark:text-gray-400 text-xs sm:text-sm mb-4">
+                  Want to play with friends online? Create a room!
+                </p>
+                <Button
+                  onClick={generateRoomCode}
+                  className="bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200 rounded-xl h-11 px-6 font-bold uppercase text-xs"
+                >
+                  Create Room
+                </Button>
+              </div>
+            ) : (
+              <div className="text-center py-2">
+                <p className="text-gray-600 dark:text-gray-400 text-xs mb-3">Share this code with your friends:</p>
+                <div className="text-3xl sm:text-4xl font-black text-black dark:text-white bg-gray-100 dark:bg-gray-800 rounded-xl py-4 mb-3 tracking-widest">
+                  {roomCode}
+                </div>
+                <Badge variant="secondary" className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400 text-[10px] uppercase font-bold">
+                  Room created! Friends can join with this code
+                </Badge>
+              </div>
+            )}
+          </CardContent>
+        </Card>
+
+        {/* Player Setup */}
+        <Card className="mb-6 sm:mb-8 border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900 rounded-2xl">
+          <CardHeader className="py-3 px-4">
+            <div className="flex items-center justify-between">
+              <CardTitle className="flex items-center text-xs sm:text-sm text-black dark:text-white font-bold uppercase tracking-wider">
+                <Users className="w-4 h-4 mr-2" />
+                Players ({validPlayers.length})
               </CardTitle>
-            </CardHeader>
-            <CardContent>
-              {!isCreatingRoom ? (
-                <div className="text-center">
-                  <p className="text-gray-600 dark:text-gray-400 mb-6">
-                    Want to play with friends online? Create a room!
-                  </p>
-                  <Button
-                    onClick={generateRoomCode}
-                    className="bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200"
-                  >
-                    Create Room
-                  </Button>
-                </div>
-              ) : (
-                <div className="text-center">
-                  <p className="text-gray-600 dark:text-gray-400 mb-4">Share this code with your friends:</p>
-                  <div className="text-4xl font-bold text-black dark:text-white bg-gray-100 dark:bg-gray-800 rounded-xl py-6 mb-6">
-                    {roomCode}
-                  </div>
-                  <Badge variant="secondary" className="bg-gray-100 dark:bg-gray-800 text-gray-600 dark:text-gray-400">
-                    Room created! Friends can join with this code
-                  </Badge>
-                </div>
-              )}
-            </CardContent>
-          </Card>
-
-          {/* Player Setup */}
-          <Card className="mb-8 border border-gray-200 dark:border-gray-800 bg-white dark:bg-gray-900">
-            <CardHeader>
-              <div className="flex items-center justify-between">
-                <CardTitle className="flex items-center text-black dark:text-white">
-                  <Users className="w-5 h-5 mr-2" />
-                  Players ({validPlayers.length})
-                </CardTitle>
-                <div className="flex space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={shufflePlayers}
-                    disabled={validPlayers.length < 2}
-                    className="border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white bg-transparent"
-                  >
-                    <Shuffle className="w-4 h-4 mr-2" />
-                    Shuffle
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={addPlayer}
-                    disabled={players.length >= 10}
-                    className="border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white"
-                  >
-                    <Plus className="w-4 h-4 mr-2" />
-                    Add Player
-                  </Button>
-                </div>
+              <div className="flex space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={shufflePlayers}
+                  disabled={validPlayers.length < 2}
+                  className="border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white bg-transparent h-8 text-xs rounded-lg"
+                >
+                  <Shuffle className="w-3.5 h-3.5 mr-1" />
+                  Shuffle
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={addPlayer}
+                  disabled={players.length >= 10}
+                  className="border-gray-200 dark:border-gray-700 text-gray-600 dark:text-gray-400 hover:text-black dark:hover:text-white h-8 text-xs rounded-lg"
+                >
+                  <Plus className="w-3.5 h-3.5 mr-1" />
+                  Add Player
+                </Button>
               </div>
-            </CardHeader>
-            <CardContent>
-              <div className="space-y-4">
-                {players.map((player, index) => (
-                  <div key={index} className="flex items-center space-x-4">
-                    <div className="w-10 h-10 bg-black dark:bg-white rounded-full flex items-center justify-center text-white dark:text-black font-bold">
-                      {index === 0 ? <Crown className="w-4 h-4" /> : index + 1}
-                    </div>
-                    <Input
-                      placeholder={`Player ${index + 1} name`}
-                      value={player}
-                      onChange={(e) => updatePlayer(index, e.target.value)}
-                      className="flex-1 border-gray-200 dark:border-gray-700 bg-white dark:bg-black focus:border-black dark:focus:border-white"
-                    />
-                    {players.length > 1 && (
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => removePlayer(index)}
-                        className="text-gray-500 hover:text-red-600 dark:hover:text-red-400"
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    )}
+            </div>
+          </CardHeader>
+          <CardContent className="px-4 pb-4">
+            <div className="space-y-3">
+              {players.map((player, index) => (
+                <div key={index} className="flex items-center space-x-3">
+                  <div className="w-9 h-9 sm:w-10 sm:h-10 bg-black dark:bg-white rounded-xl flex items-center justify-center text-white dark:text-black font-extrabold text-xs flex-shrink-0">
+                    {index === 0 ? <Crown className="w-4 h-4 text-amber-500" /> : index + 1}
                   </div>
-                ))}
-              </div>
+                  <Input
+                    placeholder={`Player ${index + 1} name`}
+                    value={player}
+                    onChange={(e) => updatePlayer(index, e.target.value)}
+                    className="flex-1 border-gray-200 dark:border-gray-700 bg-white dark:bg-black focus:border-black dark:focus:border-white text-base sm:text-sm h-11 rounded-xl"
+                  />
+                  {players.length > 1 && (
+                    <Button
+                      variant="ghost"
+                      size="sm"
+                      onClick={() => removePlayer(index)}
+                      className="text-gray-500 hover:text-red-600 dark:hover:text-red-400 h-9 w-9 p-0 flex-shrink-0"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  )}
+                </div>
+              ))}
+            </div>
 
               {validPlayers.length < 2 && (
                 <div className="mt-6 p-4 bg-gray-100 dark:bg-gray-800 border border-gray-200 dark:border-gray-700 rounded-lg">
@@ -199,7 +198,7 @@ export function PlayerSetup({ gameName, onBack, onStart, darkMode, playSound }: 
               onClick={handleStart}
               disabled={validPlayers.length < 2}
               size="lg"
-              className="bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200 px-12 py-4 text-lg font-semibold disabled:opacity-50 disabled:cursor-not-allowed"
+              className="w-full sm:w-auto bg-black dark:bg-white text-white dark:text-black hover:bg-gray-800 dark:hover:bg-gray-200 px-10 h-12 text-sm font-bold uppercase tracking-wider rounded-xl disabled:opacity-50 disabled:cursor-not-allowed shadow-lg active:scale-98"
             >
               <Play className="w-5 h-5 mr-2" />
               Start Game
@@ -207,7 +206,6 @@ export function PlayerSetup({ gameName, onBack, onStart, darkMode, playSound }: 
           </div>
         </div>
       </div>
-    </div>
   )
 }
 

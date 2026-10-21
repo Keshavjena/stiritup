@@ -186,112 +186,113 @@ export function CardsAgainstHumanity({
 
   if (!gameStarted) {
     return (
-      <div className="min-h-screen bg-neutral-950 text-zinc-100 font-sans selection:bg-zinc-800 selection:text-white py-8">
-        <div className="container mx-auto px-4">
-          <div className="max-w-2xl mx-auto text-center">
-            <Button variant="ghost" onClick={onBack} className="mb-8 border border-zinc-800 text-zinc-400 hover:text-white">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              Back to Setup
+      <div className="min-h-screen bg-neutral-950 text-zinc-100 font-sans selection:bg-zinc-800 selection:text-white py-4 sm:py-8 px-3 sm:px-6 pt-safe pb-safe flex flex-col justify-between">
+        <div className="container mx-auto max-w-2xl text-center">
+          <div className="flex justify-start mb-4 sm:mb-6">
+            <Button variant="ghost" onClick={onBack} className="border border-zinc-800 text-zinc-400 hover:text-white h-8 px-3 text-[9px] uppercase tracking-wider rounded-lg">
+              <ArrowLeft className="w-3.5 h-3.5 mr-1.5" />
+              Back
             </Button>
-
-            <div className="mb-8">
-              <div className="text-6xl mb-4">🃏</div>
-              <h1 className="text-4xl font-extrabold mb-2 uppercase text-white tracking-tight">Cards Against Humanity</h1>
-              <p className="text-sm font-bold uppercase tracking-wider text-zinc-500">The party game for horrible people</p>
-            </div>
-
-            <Card className="mb-8 bg-zinc-900/40 border-zinc-800 text-white">
-              <CardHeader>
-                <CardTitle className="text-white uppercase tracking-wider text-sm font-bold">How to Play</CardTitle>
-              </CardHeader>
-              <CardContent className="text-left text-zinc-400 text-xs font-semibold">
-                <ul className="list-disc list-inside space-y-2">
-                  <li>Each round, one player is the Card Czar (judge)</li>
-                  <li>The Card Czar reads a black card out loud</li>
-                  <li>Other players choose their funniest white card to complete the phrase</li>
-                  <li>The Card Czar picks the funniest combination</li>
-                  <li>First player to 5 points wins!</li>
-                </ul>
-              </CardContent>
-            </Card>
-
-            <Card className="mb-8 bg-zinc-900/30 border-zinc-800">
-              <CardHeader>
-                <CardTitle className="text-xs font-bold uppercase tracking-wider text-zinc-300">Players</CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="flex flex-wrap justify-center gap-3">
-                  {players.map((player, index) => (
-                    <Badge
-                      key={index}
-                      className={`text-xs px-4 py-2 uppercase font-bold tracking-wider ${
-                        index === currentJudge ? "bg-zinc-100 text-black" : "bg-zinc-900 border-zinc-800 text-zinc-400"
-                      }`}
-                    >
-                      {player}
-                      {index === currentJudge && <Crown className="w-3.5 h-3.5 ml-2 inline text-zinc-500" />}
-                    </Badge>
-                  ))}
-                </div>
-              </CardContent>
-            </Card>
-
-            {isHost || !roomCode ? (
-              <Button
-                onClick={startGame}
-                size="lg"
-                className="bg-zinc-100 hover:bg-zinc-200 text-black px-12 py-4 text-xs font-extrabold uppercase tracking-wider rounded-xl border-0"
-              >
-                <Trophy className="w-4 h-4 mr-2" />
-                Start Game!
-              </Button>
-            ) : (
-              <div className="text-xs text-zinc-500 font-bold uppercase tracking-wider">Waiting for Host to start...</div>
-            )}
           </div>
+
+          <div className="mb-6">
+            <div className="text-5xl sm:text-6xl mb-3">🃏</div>
+            <h1 className="text-2xl sm:text-4xl font-extrabold mb-1.5 uppercase text-white tracking-tight">Cards Against Humanity</h1>
+            <p className="text-xs sm:text-sm font-bold uppercase tracking-wider text-zinc-500">The party game for horrible people</p>
+          </div>
+
+          <Card className="mb-5 bg-zinc-900/40 border-zinc-800 text-white rounded-2xl">
+            <CardHeader className="py-3 px-4">
+              <CardTitle className="text-white uppercase tracking-wider text-xs font-bold">How to Play</CardTitle>
+            </CardHeader>
+            <CardContent className="text-left text-zinc-400 text-xs font-semibold px-4 pb-4">
+              <ul className="list-disc list-inside space-y-1.5">
+                <li>Each round, one player is the Card Czar (judge)</li>
+                <li>The Card Czar reads a black card out loud</li>
+                <li>Other players choose their funniest white card to complete the phrase</li>
+                <li>The Card Czar picks the funniest combination</li>
+                <li>First player to 5 points wins!</li>
+              </ul>
+            </CardContent>
+          </Card>
+
+          <Card className="mb-6 bg-zinc-900/30 border-zinc-800 rounded-2xl">
+            <CardHeader className="py-3 px-4">
+              <CardTitle className="text-xs font-bold uppercase tracking-wider text-zinc-300">Players ({players.length})</CardTitle>
+            </CardHeader>
+            <CardContent className="px-4 pb-4">
+              <div className="flex flex-wrap justify-center gap-2">
+                {players.map((player, index) => (
+                  <Badge
+                    key={index}
+                    className={`text-xs px-3 py-1.5 uppercase font-bold tracking-wider rounded-xl ${
+                      index === currentJudge ? "bg-zinc-100 text-black font-extrabold" : "bg-zinc-900 border-zinc-800 text-zinc-400"
+                    }`}
+                  >
+                    {player}
+                    {index === currentJudge && <Crown className="w-3.5 h-3.5 ml-1.5 inline text-amber-500" />}
+                  </Badge>
+                ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          {isHost || !roomCode ? (
+            <Button
+              onClick={startGame}
+              size="lg"
+              className="w-full sm:w-auto bg-zinc-100 hover:bg-zinc-200 text-black px-10 h-12 text-xs font-black uppercase tracking-wider rounded-xl border-0 shadow-lg active:scale-98"
+            >
+              <Trophy className="w-4 h-4 mr-2" />
+              Start Game!
+            </Button>
+          ) : (
+            <div className="text-xs text-zinc-500 font-bold uppercase tracking-wider py-3 px-4 bg-zinc-900/50 rounded-xl border border-zinc-800">Waiting for Host to start...</div>
+          )}
         </div>
       </div>
     )
   }
 
   return (
-    <div className="min-h-screen bg-neutral-950 text-zinc-100 font-sans py-8">
-      <div className="container mx-auto px-4">
+    <div className="min-h-screen bg-neutral-950 text-zinc-100 font-sans py-3 sm:py-8 px-2 sm:px-4 pt-safe pb-safe overflow-x-hidden">
+      <div className="container mx-auto px-1 sm:px-4">
         <div className="max-w-4xl mx-auto">
           {/* Header */}
-          <div className="flex items-center justify-between mb-8">
-            <Button variant="ghost" onClick={onBack} className="border border-zinc-800 text-zinc-400 hover:text-white">
-              <ArrowLeft className="w-4 h-4 mr-2" />
-              End Game
+          <div className="flex items-center justify-between mb-4 sm:mb-8">
+            <Button variant="ghost" onClick={onBack} className="border border-zinc-800 text-zinc-400 hover:text-white h-8 px-2.5 sm:px-3 text-[9px] uppercase tracking-wider rounded-lg">
+              <ArrowLeft className="w-3.5 h-3.5 mr-1" />
+              <span className="hidden xs:inline">End Game</span>
+              <span className="xs:hidden">Exit</span>
             </Button>
 
-            <div className="text-center">
-              <h1 className="text-xl font-bold text-white uppercase tracking-tight">🃏 Cards Against Humanity</h1>
-              <p className="text-xs text-zinc-500 font-bold uppercase tracking-wider">Round {roundNumber}</p>
+            <div className="text-center px-2">
+              <h1 className="text-sm sm:text-xl font-bold text-white uppercase tracking-tight">🃏 Cards Against Humanity</h1>
+              <p className="text-[10px] sm:text-xs text-zinc-500 font-bold uppercase tracking-wider">Round {roundNumber}</p>
             </div>
 
-            <div className="flex items-center space-x-2">
-              <Trophy className="w-5 h-5 text-zinc-400" />
+            <div className="flex items-center space-x-1 sm:space-x-2">
+              <Trophy className="w-4 h-4 sm:w-5 sm:h-5 text-amber-400" />
             </div>
           </div>
 
           {/* Scores */}
-          <Card className="mb-6 bg-zinc-900/40 border-zinc-800">
-            <CardHeader>
-              <CardTitle className="flex items-center text-xs uppercase font-bold tracking-wider text-zinc-300">
-                <Trophy className="w-4 h-4 mr-2 text-zinc-500" />
+          <Card className="mb-4 sm:mb-6 bg-zinc-900/40 border-zinc-800 rounded-2xl">
+            <CardHeader className="py-2.5 px-3 sm:px-6">
+              <CardTitle className="flex items-center text-[10px] sm:text-xs uppercase font-bold tracking-wider text-zinc-300">
+                <Trophy className="w-3.5 h-3.5 mr-1.5 text-amber-400" />
                 Scores (First to 5 wins!)
               </CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <CardContent className="px-3 sm:px-6 pb-3 sm:pb-4">
+              <div className="grid grid-cols-2 sm:grid-cols-4 gap-2 sm:gap-4">
                 {players.map((player, index) => (
-                  <div key={player} className="text-center p-3 bg-zinc-900/60 rounded-xl border border-zinc-800">
-                    <div className="font-bold text-xs uppercase text-zinc-300 flex items-center justify-center gap-1">
-                      {player}
-                      {index === currentJudge && <Crown className="w-3 h-3 text-amber-400" />}
+                  <div key={player} className="text-center p-2 sm:p-3 bg-zinc-900/60 rounded-xl border border-zinc-800">
+                    <div className="font-bold text-[10px] sm:text-xs uppercase text-zinc-300 flex items-center justify-center gap-1 truncate">
+                      <span className="truncate">{player}</span>
+                      {index === currentJudge && <Crown className="w-3 h-3 text-amber-400 flex-shrink-0" />}
                     </div>
-                    <div className="text-2xl font-black text-white mt-1">{scores[player] || 0}</div>
+                    <div className="text-xl sm:text-2xl font-black text-white mt-0.5 sm:mt-1">{scores[player] || 0}</div>
                   </div>
                 ))}
               </div>
@@ -299,36 +300,36 @@ export function CardsAgainstHumanity({
           </Card>
 
           {/* Current Judge */}
-          <Card className="mb-6 border-2 border-zinc-700 bg-zinc-900/60">
-            <CardHeader className="bg-zinc-900 text-white">
-              <CardTitle className="text-center text-sm font-extrabold uppercase tracking-wider flex items-center justify-center gap-2">
-                <Crown className="w-4 h-4 text-amber-400" />
+          <Card className="mb-4 sm:mb-6 border-2 border-zinc-700 bg-zinc-900/60 rounded-2xl">
+            <CardHeader className="bg-zinc-900/80 text-white py-2.5 px-3 rounded-2xl">
+              <CardTitle className="text-center text-xs sm:text-sm font-extrabold uppercase tracking-wider flex items-center justify-center gap-2">
+                <Crown className="w-3.5 h-3.5 sm:w-4 sm:h-4 text-amber-400" />
                 {players[currentJudge]} is the Card Czar
               </CardTitle>
             </CardHeader>
           </Card>
 
           {/* Black Card */}
-          <Card className="mb-8 bg-zinc-900 border border-zinc-800 text-white min-h-[180px] flex items-center justify-center shadow-xl">
-            <CardContent className="p-8 text-center">
-              <div className="text-xl md:text-2xl font-bold leading-relaxed tracking-tight uppercase">{currentBlackCard?.text}</div>
-              <div className="mt-4 text-xs font-bold uppercase tracking-widest text-zinc-500">
+          <Card className="mb-5 sm:mb-8 bg-zinc-900 border border-zinc-800 text-white min-h-[140px] sm:min-h-[180px] flex items-center justify-center shadow-xl rounded-2xl">
+            <CardContent className="p-5 sm:p-8 text-center">
+              <div className="text-base sm:text-xl md:text-2xl font-black leading-relaxed tracking-tight uppercase">{currentBlackCard?.text}</div>
+              <div className="mt-3 text-[10px] sm:text-xs font-extrabold uppercase tracking-widest text-amber-400 bg-amber-400/10 border border-amber-400/20 px-3 py-1 rounded-full inline-block">
                 {currentBlackCard?.blanks === 1 ? "Pick 1" : `Pick ${currentBlackCard?.blanks}`}
               </div>
             </CardContent>
           </Card>
 
           {/* White Cards Sample */}
-          <Card className="mb-8 bg-zinc-900/20 border-zinc-800">
-            <CardHeader>
-              <CardTitle className="text-xs font-bold uppercase tracking-wider text-zinc-400">Sample White Cards (Pick the funniest!)</CardTitle>
+          <Card className="mb-5 sm:mb-8 bg-zinc-900/20 border-zinc-800 rounded-2xl">
+            <CardHeader className="py-2.5 px-3 sm:px-6">
+              <CardTitle className="text-[10px] sm:text-xs font-bold uppercase tracking-wider text-zinc-400">Sample White Cards</CardTitle>
             </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+            <CardContent className="px-3 sm:px-6 pb-3 sm:pb-4">
+              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-2 sm:gap-3">
                 {getRandomWhiteCards(6).map((card, index) => (
-                  <Card key={index} className="bg-zinc-900 border-zinc-800 hover:border-zinc-700 cursor-pointer">
-                    <CardContent className="p-4">
-                      <div className="text-zinc-200 font-bold text-xs uppercase tracking-wider">{card.text}</div>
+                  <Card key={index} className="bg-zinc-900/80 border-zinc-800 hover:border-zinc-700 cursor-pointer rounded-xl transition-all">
+                    <CardContent className="p-3 sm:p-4">
+                      <div className="text-zinc-200 font-bold text-xs uppercase tracking-wider leading-snug">{card.text}</div>
                     </CardContent>
                   </Card>
                 ))}
@@ -338,8 +339,8 @@ export function CardsAgainstHumanity({
 
           {/* Game Phase Controls */}
           {gamePhase === "playing" && (
-            <Card className="mb-8 bg-zinc-900/40 border-zinc-800">
-              <CardContent className="p-6 text-center">
+            <Card className="mb-5 sm:mb-8 bg-zinc-900/40 border-zinc-800 rounded-2xl">
+              <CardContent className="p-4 sm:p-6 text-center">
                 <p className="text-xs font-bold uppercase tracking-wider text-zinc-400 mb-4">
                   Players (except {players[currentJudge]}) choose your funniest white card!
                 </p>
@@ -355,7 +356,7 @@ export function CardsAgainstHumanity({
                       }
                     }}
                     size="lg"
-                    className="bg-zinc-100 hover:bg-zinc-200 text-black font-extrabold uppercase text-xs rounded-xl px-8"
+                    className="w-full sm:w-auto h-12 bg-zinc-100 hover:bg-zinc-200 text-black font-extrabold uppercase text-xs rounded-xl px-8 shadow-md"
                   >
                     All Cards Submitted - Start Judging
                   </Button>
@@ -365,12 +366,12 @@ export function CardsAgainstHumanity({
           )}
 
           {gamePhase === "judging" && (
-            <Card className="mb-8 bg-zinc-900/40 border-zinc-800">
-              <CardContent className="p-6 text-center">
+            <Card className="mb-5 sm:mb-8 bg-zinc-900/40 border-zinc-800 rounded-2xl">
+              <CardContent className="p-4 sm:p-6 text-center">
                 <p className="text-xs font-bold uppercase tracking-wider text-zinc-300 mb-4">
                   {players[currentJudge]}, pick the funniest card!
                 </p>
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-2.5 sm:gap-3">
                   {players
                     .filter((_, index) => index !== currentJudge)
                     .map((player) => (
@@ -379,9 +380,9 @@ export function CardsAgainstHumanity({
                         onClick={() => selectWinner(player)}
                         variant="outline"
                         size="lg"
-                        className="h-12 text-xs font-bold uppercase tracking-wider border-zinc-800 bg-zinc-900 hover:bg-zinc-800 text-zinc-200"
+                        className="h-12 text-xs font-bold uppercase tracking-wider border-zinc-800 bg-zinc-900 hover:bg-zinc-800 text-zinc-200 rounded-xl"
                       >
-                        <ThumbsUp className="w-4 h-4 mr-2" />
+                        <ThumbsUp className="w-4 h-4 mr-2 text-amber-400" />
                         Choose {player}'s Card
                       </Button>
                     ))}
@@ -391,13 +392,13 @@ export function CardsAgainstHumanity({
           )}
 
           {gamePhase === "results" && (
-            <Card className="mb-8 bg-emerald-950/30 border border-emerald-900/50">
-              <CardContent className="p-6 text-center">
-                <p className="text-lg font-bold uppercase text-emerald-400 mb-4">
+            <Card className="mb-5 sm:mb-8 bg-emerald-950/30 border border-emerald-900/50 rounded-2xl">
+              <CardContent className="p-4 sm:p-6 text-center">
+                <p className="text-base sm:text-lg font-bold uppercase text-emerald-400 mb-4">
                   🎉 {winnerThisRound} wins this round!
                 </p>
                 {(isHost || !roomCode) && (
-                  <Button onClick={nextRound} size="lg" className="bg-zinc-100 hover:bg-zinc-200 text-black font-bold uppercase text-xs px-8 rounded-xl">
+                  <Button onClick={nextRound} size="lg" className="w-full sm:w-auto h-12 bg-zinc-100 hover:bg-zinc-200 text-black font-extrabold uppercase text-xs px-8 rounded-xl shadow-md">
                     Next Round
                   </Button>
                 )}
@@ -407,20 +408,20 @@ export function CardsAgainstHumanity({
 
           {/* Game Controls */}
           {(isHost || !roomCode) && (
-            <div className="grid grid-cols-2 gap-3">
+            <div className="grid grid-cols-2 gap-2 sm:gap-3">
               <Button
                 onClick={() => {
                   const card = blackCards[Math.floor(Math.random() * blackCards.length)]
                   setCurrentBlackCard(card)
                 }}
                 variant="outline"
-                className="h-11 text-xs border-zinc-800 text-zinc-400 hover:bg-zinc-900 rounded-xl font-bold uppercase"
+                className="h-11 text-xs border-zinc-800 text-zinc-300 hover:bg-zinc-900 rounded-xl font-bold uppercase"
               >
-                <Shuffle className="w-4 h-4 mr-2" />
-                New Black Card
+                <Shuffle className="w-3.5 h-3.5 mr-1.5" />
+                New Card
               </Button>
 
-              <Button onClick={nextRound} variant="outline" className="h-11 text-xs border-zinc-800 text-zinc-400 hover:bg-zinc-900 rounded-xl font-bold uppercase">
+              <Button onClick={nextRound} variant="outline" className="h-11 text-xs border-zinc-800 text-zinc-300 hover:bg-zinc-900 rounded-xl font-bold uppercase">
                 Skip Round
               </Button>
             </div>

@@ -1,0 +1,111 @@
+PHASE1
+ bucket bollywood
+ bucket hollywood
+ bucket actors
+ bucket singers
+ bucket football
+ bucket cricket
+ bucket basketball
+ bucket tennis
+ bucket boxing
+ bucket racing
+ bucket othersport
+ bucket scientists
+ bucket tech
+ bucket models
+ bucket creators
+ bucket glamour
+ bucket history
+ bucket writers
+ bucket artists
+ bucket fantasy
+ bucket indian
+ bucket models2
+ bucket glamour2
+ bucket creators2
+ bucket worldcinema
+ bucket artists2
+ bucket writers2
+ bucket singers2
+ bucket cricket2
+ bucket india2
+ bucket athletics
+ bucket fame_fiction
+ bucket fame_us
+ bucket fame_in
+ bucket fame_uk
+ bucket fame_ca
+ bucket fame_au
+ bucket fame_fr
+ bucket fame_de
+ bucket fame_it
+ bucket fame_es
+ bucket fame_br
+ bucket fame_mx
+ bucket fame_jp
+ bucket fame_kr
+ bucket fame_cn
+ bucket fame_pk
+ bucket fame_bd
+ bucket fame_ng
+ bucket fame_eg
+ bucket fame_tr
+ bucket fame_ru
+ bucket cl_Q169470
+ bucket cl_Q593644
+ bucket cl_Q170790
+ bucket cl_Q864503
+ bucket cl_Q11063
+ bucket cl_Q205375
+ bucket cl_Q82594
+ bucket cl_Q39631
+  cl_Q39631: off=0 unique=71
+  cl_Q39631: off=0 unique=99
+  cl_Q39631: off=0 unique=296
+  cl_Q39631: off=0 unique=892
+ bucket cl_Q33999
+ bucket cl_Q177220
+ bucket cl_Q36180
+  cl_Q36180: off=0 unique=776
+  cl_Q36180: off=0 unique=1239
+ bucket cl_Q1028181
+  cl_Q1028181: off=0 unique=835
+ bucket cl_Q2526255
+  cl_Q2526255: off=0 unique=988
+ bucket cl_Q245068
+  cl_Q245068: off=0 unique=442
+ bucket cl_Q4610556
+  cl_Q4610556: off=0 unique=834
+ bucket cl_Q131524
+  cl_Q131524: off=0 unique=855
+ bucket cl_Q1930187
+  cl_Q1930187: off=0 unique=68
+  cl_Q1930187: off=0 unique=769
+ bucket cl_Q17125263
+  cl_Q17125263: off=0 unique=68
+ bucket cl_Q3286043
+  cl_Q3286043: off=0 unique=126
+ bucket cl_Q488111
+  cl_Q488111: off=0 unique=151
+ bucket cl_Q4964182
+  cl_Q4964182: off=0 unique=842
+ bucket cl_Q937857
+  cl_Q937857: off=0 unique=990
+ bucket cl_Q12299841
+  cl_Q12299841: off=0 unique=32
+ bucket cl_Q3665646
+  cl_Q3665646: off=0 unique=128
+ bucket cl_Q10833314
+  cl_Q10833314: off=0 unique=187
+ bucket cl_Q11338576
+  cl_Q11338576: off=0 unique=57
+ bucket cl_Q10349745
+  cl_Q10349745: off=0 unique=155
+unique ids: 36850
+detail batches: 11 of 737
+  10/11 batches, 36797 rows, 162s
+sweep 0: 3 ids still missing
+sweep 1: 3 ids still missing
+sweep 2: 3 ids still missing
+sweep 3: 3 ids still missing
+DONE 36847 records in 165 s
