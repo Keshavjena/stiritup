@@ -38,6 +38,7 @@ import { getGameContent } from "../../lib/game-data/questions"
 import { useSocket } from "@/hooks/useSocket"
 import { motion, AnimatePresence } from "framer-motion"
 import { KMKImageCards, WYRImageCards } from "./image-game-cards"
+import { LivePlayersSidebar } from "./live-players-sidebar"
 
 interface GameComponentProps {
   roomCode?: string
@@ -95,6 +96,7 @@ export function GameComponent({
   const [gameContent, setGameContent] = useState<string[]>([])
   const [playerScores, setPlayerScores] = useState<Record<string, number>>({})
   const [showScoring, setShowScoring] = useState(false)
+  const [isLiveSidebarOpen, setIsLiveSidebarOpen] = useState(false)
   const [gameMode, setGameMode] = useState<"standard" | "challenge" | "spicy">(
     initialSettings?.mode || "standard"
   )
@@ -375,6 +377,7 @@ export function GameComponent({
         setContentIndex(action.payload.contentIndex)
         setCurrentContent(action.payload.currentContent)
         setTodChoice(null)
+        setWyrChoice(null)
         setKmkSelections({ kiss: "", marry: "", kill: "" })
         setKmkVotes({})
         setSpinTargetPlayer("")
@@ -385,8 +388,12 @@ export function GameComponent({
       } else if (action.type === "shuffle-content") {
         setGameContent(action.payload.gameContent)
         setCurrentContent(action.payload.currentContent)
+        if (action.payload.personRounds && Array.isArray(action.payload.personRounds)) {
+          setPersonRounds(action.payload.personRounds)
+        }
         setContentIndex(0)
         setTodChoice(null)
+        setWyrChoice(null)
         setKmkSelections({ kiss: "", marry: "", kill: "" })
         setKmkVotes({})
         setSpinTargetPlayer("")
@@ -904,9 +911,76 @@ export function GameComponent({
 
   const shuffleContent = () => {
     playSound("click")
-    const shuffled = [...gameContent].sort(() => Math.random() - 0.5)
-    setGameContent(shuffled)
-    setCurrentContent(shuffled[0])
+    if (gameContent.length === 0 && personRounds.length === 0) return
+
+    let shuffledQuestions: string[] = []
+    let shuffledRounds: any[] = []
+
+    if (personRounds && personRounds.length > 0 && personRounds.length === gameContent.length) {
+      // Pair-shuffle gameContent and personRounds simultaneously with Fisher-Yates
+      const indices = Array.from({ length: gameContent.length }, (_, i) => i)
+      for (let i = indices.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1))
+        const temp = indices[i]
+        indices[i] = indices[j]
+        indices[j] = temp
+      }
+      // Guarantee order changes at index 0 so the current question/cards don't show the same one
+      if (indices.length > 1 && indices[0] === contentIndex) {
+        const swapTarget = 1 + Math.floor(Math.random() * (indices.length - 1))
+        const temp = indices[0]
+        indices[0] = indices[swapTarget]
+        indices[swapTarget] = temp
+      }
+      shuffledQuestions = indices.map((idx) => gameContent[idx])
+      shuffledRounds = indices.map((idx) => personRounds[idx])
+    } else {
+      // Fisher-Yates shuffle on gameContent
+      const qCopy = [...gameContent]
+      for (let i = qCopy.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1))
+        const temp = qCopy[i]
+        qCopy[i] = qCopy[j]
+        qCopy[j] = temp
+      }
+      if (qCopy.length > 1 && qCopy[0] === currentContent) {
+        const swapTarget = 1 + Math.floor(Math.random() * (qCopy.length - 1))
+        const temp = qCopy[0]
+        qCopy[0] = qCopy[swapTarget]
+        qCopy[swapTarget] = temp
+      }
+      shuffledQuestions = qCopy
+
+      // Fisher-Yates shuffle on personRounds if present
+      if (personRounds && personRounds.length > 0) {
+        const rCopy = [...personRounds]
+        for (let i = rCopy.length - 1; i > 0; i--) {
+          const j = Math.floor(Math.random() * (i + 1))
+          const temp = rCopy[i]
+          rCopy[i] = rCopy[j]
+          rCopy[j] = temp
+        }
+        if (
+          rCopy.length > 1 &&
+          personRounds[contentIndex] &&
+          (rCopy[0]?.id === personRounds[contentIndex]?.id || rCopy[0]?.scenario === personRounds[contentIndex]?.scenario)
+        ) {
+          const swapTarget = 1 + Math.floor(Math.random() * (rCopy.length - 1))
+          const temp = rCopy[0]
+          rCopy[0] = rCopy[swapTarget]
+          rCopy[swapTarget] = temp
+        }
+        shuffledRounds = rCopy
+      }
+    }
+
+    setGameContent(shuffledQuestions)
+    if (shuffledQuestions.length > 0) {
+      setCurrentContent(shuffledQuestions[0])
+    }
+    if (shuffledRounds.length > 0) {
+      setPersonRounds(shuffledRounds)
+    }
     setContentIndex(0)
     setTodChoice(null)
     setWyrChoice(null)
@@ -918,7 +992,11 @@ export function GameComponent({
     if (socket && roomCode) {
       socket.emit("game-action", roomCode, {
         type: "shuffle-content",
-        payload: { gameContent: shuffled, currentContent: shuffled[0] }
+        payload: {
+          gameContent: shuffledQuestions,
+          currentContent: shuffledQuestions[0] || "",
+          personRounds: shuffledRounds
+        }
       })
     }
 
@@ -1197,14 +1275,26 @@ export function GameComponent({
       <div className="min-h-screen bg-neutral-950 text-zinc-100 font-sans selection:bg-zinc-800 selection:text-white flex flex-col items-center justify-center py-12 w-full">
         <div className="container mx-auto px-6 relative z-10 w-full max-w-xl">
           <div className="text-center w-full">
-            <Button
-              variant="ghost"
-              onClick={onBack}
-              className="mb-8 text-zinc-400 hover:text-white border border-zinc-800 rounded-lg h-9 px-4 text-xs"
-            >
-              <ArrowLeft className="w-4 h-4 mr-1.5" />
-              Back to Setup
-            </Button>
+            <div className="flex items-center justify-between mb-8">
+              <Button
+                variant="ghost"
+                onClick={onBack}
+                className="text-zinc-400 hover:text-white border border-zinc-800 rounded-lg h-9 px-4 text-xs"
+              >
+                <ArrowLeft className="w-4 h-4 mr-1.5" />
+                Back to Setup
+              </Button>
+
+              <Button
+                variant="outline"
+                onClick={() => setIsLiveSidebarOpen(true)}
+                className="rounded-lg border border-emerald-900/50 bg-emerald-950/20 text-emerald-400 hover:bg-emerald-950/40 h-9 px-3 text-xs font-bold uppercase tracking-wider flex items-center gap-2"
+              >
+                <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+                <span>{players.length} Playing</span>
+                {roomCode && <span className="font-mono text-zinc-500">• {roomCode}</span>}
+              </Button>
+            </div>
 
             <div className="mb-8">
               <h1 className="text-3xl font-extrabold mb-2 uppercase tracking-tight text-white">Ready to Play?</h1>
@@ -1399,6 +1489,23 @@ export function GameComponent({
             )}
           </div>
         </div>
+
+        {/* Live Players Sidebar */}
+        <LivePlayersSidebar
+          isOpen={isLiveSidebarOpen}
+          onClose={() => setIsLiveSidebarOpen(false)}
+          roomCode={roomCode}
+          gameId={gameId}
+          gameName={getGameName(gameId)}
+          players={players}
+          currentPlayerIndex={currentPlayer}
+          myPlayerName={myPlayerName}
+          isHost={isHost}
+          scores={playerScores}
+          sips={sips}
+          matureContent={matureContent}
+          soundEnabled={soundEnabled}
+        />
       </div>
     )
   }
@@ -1642,6 +1749,15 @@ export function GameComponent({
             >
               <Trophy className="w-3 h-3 sm:hidden text-amber-400" />
               <span className="hidden sm:inline">Scores</span>
+            </Button>
+            <Button
+              variant="outline"
+              onClick={() => setIsLiveSidebarOpen(true)}
+              className="rounded-lg border border-emerald-900/50 bg-emerald-950/20 text-emerald-400 hover:bg-emerald-950/40 h-8 px-2 sm:px-3 text-[9px] font-bold uppercase tracking-wider flex items-center gap-1.5"
+            >
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>{players.length}</span>
+              <span className="hidden sm:inline">Live</span>
             </Button>
           </div>
         </header>
@@ -2598,6 +2714,23 @@ export function GameComponent({
           </>
         )}
       </AnimatePresence>
+
+      {/* Live Players & Session Sidebar for All Games */}
+      <LivePlayersSidebar
+        isOpen={isLiveSidebarOpen}
+        onClose={() => setIsLiveSidebarOpen(false)}
+        roomCode={roomCode}
+        gameId={gameId}
+        gameName={getGameName(gameId)}
+        players={players}
+        currentPlayerIndex={currentPlayer}
+        myPlayerName={myPlayerName}
+        isHost={isHost}
+        scores={playerScores}
+        sips={sips}
+        matureContent={matureContent}
+        soundEnabled={soundEnabled}
+      />
     </div>
   )
 }

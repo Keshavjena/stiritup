@@ -39,8 +39,24 @@ export function PlayerSetup({ gameName, onBack, onStart, darkMode, playSound }: 
   const shufflePlayers = () => {
     playSound("click")
     const validPlayers = players.filter((p) => p.trim())
-    const shuffled = [...validPlayers].sort(() => Math.random() - 0.5)
-    setPlayers([...shuffled, ...Array(Math.max(0, players.length - validPlayers.length)).fill("")])
+    if (validPlayers.length <= 1) return
+
+    const copy = [...validPlayers]
+    for (let i = copy.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      const temp = copy[i]
+      copy[i] = copy[j]
+      copy[j] = temp
+    }
+
+    // Guarantee order changes visibly when validPlayers >= 2
+    if (copy.every((p, idx) => p === validPlayers[idx])) {
+      const temp = copy[0]
+      copy[0] = copy[1]
+      copy[1] = temp
+    }
+
+    setPlayers([...copy, ...Array(Math.max(0, players.length - validPlayers.length)).fill("")])
   }
 
   const handleStart = () => {

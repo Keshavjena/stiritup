@@ -7,7 +7,6 @@ import { Input } from "@/components/ui/input"
 import { games } from "@/lib/game-data/games"
 import { GameRoom, RoomSettings } from "./components/game-room"
 import { GameComponent } from "./components/game-component"
-import { CatalogExplorer } from "./components/catalog-explorer"
 import { useSocket } from "@/hooks/useSocket"
 import { FlameIcon as Fire, Sparkles, UserPlus, Play, Trophy, Users, Clock, Compass } from "lucide-react"
 
@@ -21,7 +20,6 @@ export default function Home() {
   const [isHost, setIsHost] = useState(false)
   const [matureContent, setMatureContent] = useState(true) // Default to spicy
   const [activeTab, setActiveTab] = useState<"all" | "classic" | "spicy" | "creative">("all")
-  const [isCatalogOpen, setIsCatalogOpen] = useState(false)
   const [roomSettings, setRoomSettings] = useState<RoomSettings>({
     category: "all",
     gender: "female",
@@ -247,15 +245,6 @@ export default function Home() {
           </h1>
         </div>
         <div className="flex gap-1.5 sm:gap-2">
-          <Button
-            onClick={() => setIsCatalogOpen(true)}
-            variant="outline"
-            className="rounded-lg border border-zinc-800 bg-zinc-900/60 hover:bg-zinc-900 hover:text-white text-zinc-300 font-bold uppercase text-[9px] tracking-wider px-2 sm:px-3 h-8 flex items-center gap-1.5"
-          >
-            <Users className="w-3.5 h-3.5 text-amber-400" />
-            <span className="hidden xs:inline">People Catalog</span>
-            <span className="xs:hidden">Catalog</span>
-          </Button>
           <Button variant="ghost" className="rounded-lg border border-zinc-800 hover:bg-zinc-900 hover:text-white text-zinc-400 font-bold uppercase text-[9px] tracking-wider px-2 sm:px-3 h-8 hidden sm:inline-flex">
             Rules
           </Button>
@@ -469,8 +458,6 @@ export default function Home() {
         )}
       </AnimatePresence>
 
-      {/* People Catalog & Discovery Modal */}
-      <CatalogExplorer isOpen={isCatalogOpen} onClose={() => setIsCatalogOpen(false)} />
     </div>
   )
 }

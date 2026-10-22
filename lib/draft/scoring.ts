@@ -23,7 +23,9 @@ export function calculateDraftScores(
   const results: DraftScoreResult[] = Object.values(teams).map((team) => {
     // 1. Stat Score: sum of item OVR or primary stat
     let statScore = 0
-    team.roster.forEach((entry) => {
+    const filledEntries = (team.roster || []).filter((entry) => entry && entry.item)
+
+    filledEntries.forEach((entry) => {
       const stats = entry.item.stats || {}
       if (stats.OVR !== undefined) {
         statScore += stats.OVR
@@ -36,24 +38,24 @@ export function calculateDraftScores(
     })
 
     // 2. Full Roster Completion Bonus
-    const requiredSlotCount = preset.rosterSlots.filter((s) => s.required).length
-    const filledRequiredCount = Math.min(team.roster.length, requiredSlotCount)
-    const isFullRoster = team.roster.length >= preset.rosterSlots.length
-    const rosterBonus = isFullRoster ? preset.scoringConfig?.fullRosterBonus || 25 : filledRequiredCount * 2
+    const requiredSlotCount = preset?.rosterSlots ? preset.rosterSlots.filter((s) => s.required).length : 5
+    const filledRequiredCount = Math.min(filledEntries.length, requiredSlotCount)
+    const isFullRoster = filledEntries.length >= (preset?.rosterSlots?.length || 5)
+    const rosterBonus = isFullRoster ? preset?.scoringConfig?.fullRosterBonus || 25 : filledRequiredCount * 2
 
     // 3. Budget Efficiency Bonus
-    const budgetBonusPerUnit = preset.scoringConfig?.budgetBonusPerUnit || 0.5
-    const budgetScore = Math.round(team.budget * budgetBonusPerUnit)
+    const budgetBonusPerUnit = preset?.scoringConfig?.budgetBonusPerUnit || 0.5
+    const budgetScore = Math.round((team.budget || 0) * budgetBonusPerUnit)
 
     // 4. Synergy Detection & Multiplier
     const tagCounts: Record<string, number> = {}
-    team.roster.forEach((entry) => {
+    filledEntries.forEach((entry) => {
       entry.item.tags?.forEach((tag) => {
         tagCounts[tag] = (tagCounts[tag] || 0) + 1
       })
     })
 
-    const synergyMultiplier = preset.scoringConfig?.synergyMultiplier || 8
+    const synergyMultiplier = preset?.scoringConfig?.synergyMultiplier || 8
     const synergiesFound: Array<{ tag: string; count: number; bonus: number }> = []
     let synergyScore = 0
 
@@ -83,8 +85,8 @@ export function calculateDraftScores(
       synergyScore,
       votesScore,
       synergiesFound,
-      budgetRemaining: team.budget,
-      itemsCount: team.roster.length,
+      budgetRemaining: team.budget !== undefined ? team.budget : 0,
+      itemsCount: filledEntries.length,
     }
   })
 

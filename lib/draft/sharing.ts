@@ -19,10 +19,11 @@ export function generateDraftShareText(
 
   if (winner) {
     const winnerTeam = teams[winner.teamId]
-    const topPick = winnerTeam?.roster.sort((a, b) => b.pricePaid - a.pricePaid)[0]
+    const filledRoster = (winnerTeam?.roster || []).filter((r) => r && r.item)
+    const topPick = [...filledRoster].sort((a, b) => (b.pricePaid || 0) - (a.pricePaid || 0))[0]
     text += `👑 CHAMPION: ${winner.teamName} — ${winner.totalScore} PTS\n`
-    text += `   Left: ${preset.currencySymbol}${winner.budgetRemaining} ${preset.currencyName}\n`
-    if (topPick) {
+    text += `   Left: ${preset.currencySymbol}${winner.budgetRemaining} ${preset.currencyName || ""}\n`
+    if (topPick && topPick.item) {
       text += `   MVP Signing: ${topPick.item.name} (${preset.currencySymbol}${topPick.pricePaid})\n`
     }
     text += `\n`

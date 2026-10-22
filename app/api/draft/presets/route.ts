@@ -1,58 +1,13 @@
 import { NextResponse } from "next/server"
 import { DRAFT_PRESETS } from "@/lib/draft/presets"
-import { DraftPreset, DraftItem } from "@/lib/draft/types"
-import { getPeople } from "@/lib/catalog/service"
+import { DraftPreset } from "@/lib/draft/types"
 
 // In-memory custom presets cache for session
 const customPresets: DraftPreset[] = []
 
-export async function GET(request: Request) {
+export async function GET() {
   try {
-    const { searchParams } = new URL(request.url)
-    const includeCatalog = searchParams.get("includeCatalog") === "true"
-
-    let presets = [...DRAFT_PRESETS, ...customPresets]
-
-    // If requested, enrich the celebrity preset with dynamic figures from DB catalog
-    if (includeCatalog) {
-      try {
-        const catalogPeople = getPeople({ limit: 20 })
-        if (catalogPeople.items && catalogPeople.items.length > 0) {
-          const dynamicItems: DraftItem[] = catalogPeople.items.map((p: any) => {
-            const primaryImg = p.primaryImage || p.images?.[0]
-            return {
-              id: `db_${p.id}`,
-              name: p.name,
-              category: p.category || "Celebrity",
-              subtitle: p.description || p.category,
-              description: p.description || `${p.name} from public catalog`,
-              imageUrl: primaryImg?.thumbnailUrl || primaryImg?.url || "/placeholder-user.jpg",
-              baseValuation: Math.max(10, Math.min(30, Math.round((p.popularityScore || 50) / 3))),
-              stats: {
-                Fame: p.popularityScore || 75,
-                Influence: Math.min(99, (p.popularityScore || 70) + 5),
-                Charisma: 85,
-                OVR: Math.min(99, Math.max(70, p.popularityScore || 80)),
-              },
-              tags: [p.category, ...(p.tags || [])],
-              provenance: primaryImg?.sourcePageUrl,
-            }
-          })
-
-          presets = presets.map((preset) => {
-            if (preset.id === "celebrity-icons") {
-              return {
-                ...preset,
-                items: [...preset.items, ...dynamicItems],
-              }
-            }
-            return preset
-          })
-        }
-      } catch (err) {
-        console.warn("Could not enrich presets from DB catalog:", err)
-      }
-    }
+    const presets = [...DRAFT_PRESETS, ...customPresets]
 
     return NextResponse.json({
       success: true,

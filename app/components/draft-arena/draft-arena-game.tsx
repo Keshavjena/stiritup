@@ -33,6 +33,7 @@ import { useSocket } from "@/hooks/useSocket"
 import { DraftPresetPicker } from "./draft-preset-picker"
 import { DraftAuctionBlock } from "./draft-auction-block"
 import { DraftTeamRosters } from "./draft-team-rosters"
+import { DraftWarRoomSidebar } from "./draft-war-room-sidebar"
 import { DraftResultsView } from "./draft-results-view"
 import { DraftCustomThemeModal } from "./draft-custom-theme-modal"
 
@@ -63,8 +64,9 @@ export function DraftArenaGame({
 
   // Local or Authoritative Draft State
   const [draftState, setDraftState] = useState<DraftState | null>(null)
-  const [activeTab, setActiveTab] = useState<"auction" | "rosters" | "pool">("auction")
+  const [viewMode, setViewMode] = useState<"auction" | "full-rosters">("auction")
   const [activeTeamId, setActiveTeamId] = useState<string>("")
+  const [isWarRoomDrawerOpen, setIsWarRoomDrawerOpen] = useState(false)
   const [isVariantModalOpen, setIsVariantModalOpen] = useState(false)
   const [serverBidError, setServerBidError] = useState<string | null>(null)
 
@@ -178,7 +180,12 @@ export function DraftArenaGame({
           payload: { preset, teams }
         })
       } else {
-        const initialState = createInitialDraftState(preset, teams, 0)
+        let initialState = createInitialDraftState(preset, teams, 0)
+        // Auto-nominate first mystery lot
+        if (initialState.availableItemIds && initialState.availableItemIds.length > 0) {
+          const firstId = initialState.availableItemIds[0]
+          initialState = nominateItem(initialState, firstId).state
+        }
         setDraftState(initialState)
         setActiveTeamId(teams[0]?.id || "")
       }
@@ -198,7 +205,7 @@ export function DraftArenaGame({
       } else {
         setDraftState((prev) => (prev ? nominateItem(prev, itemId).state : null))
       }
-      setActiveTab("auction")
+      setViewMode("auction")
     },
     [isMultiplayer, socket, roomCode, activeTeamId, playSound]
   )
@@ -329,17 +336,24 @@ export function DraftArenaGame({
 
   const itemPool: DraftItem[] = draftState?.pool || draftState?.itemPool || draftState?.preset.items || []
 
-  // Current Nominated Item
+  // Current Nominated Item - prioritize nominatedItemId if present so item transitions cleanly
   const nominatedItem: DraftItem | null =
+    (draftState?.nominatedItemId ? itemPool.find((i) => i.id === draftState.nominatedItemId) || null : null) ||
     draftState?.currentItem ||
-    (draftState?.nominatedItemId ? itemPool.find((i) => i.id === draftState.nominatedItemId) || null : null)
+    null
+
+  // Exclude both sold items and passed items from availableItemIds
+  const soldOrPassedIds = new Set([
+    ...(draftState?.soldItems || []).map((s: any) => s.item?.id || s.itemId),
+    ...(draftState?.passedItemIds || [])
+  ])
 
   // Available Items in Pool
-  const availableItemIds: string[] =
-    draftState?.availableItemIds ||
-    itemPool
-      .filter((i) => !draftState?.soldItems?.some((s) => (s.item?.id === i.id) || s.itemId === i.id))
-      .map((i) => i.id)
+  const availableItemIds: string[] = (
+    draftState?.availableItemIds && draftState.availableItemIds.length > 0
+      ? draftState.availableItemIds
+      : itemPool.map((i) => i.id)
+  ).filter((id) => !soldOrPassedIds.has(id))
 
   const availableItems = itemPool.filter((i) => availableItemIds.includes(i.id))
 
@@ -349,43 +363,59 @@ export function DraftArenaGame({
   return (
     <div className="min-h-screen bg-neutral-950 text-zinc-100 font-sans selection:bg-amber-500/20 selection:text-amber-300 py-6 px-4 sm:px-6">
       {/* Top Navigation Bar */}
-      <div className="w-full max-w-5xl mx-auto flex items-center justify-between pb-6 border-b border-zinc-800/80 mb-6">
+      <div className="w-full max-w-7xl mx-auto flex items-center justify-between pb-5 border-b border-zinc-800/80 mb-6">
         <div className="flex items-center gap-3">
           <button
             type="button"
             onClick={draftState ? handleResetDraft : onBack}
-            className="p-2.5 rounded-2xl bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800 transition"
+            className="p-2.5 rounded-2xl bg-zinc-900 border border-zinc-800 text-zinc-400 hover:text-white hover:bg-zinc-800 transition shadow-sm"
           >
             <ArrowLeft className="w-4 h-4" />
           </button>
-          <div className="flex items-center gap-2">
-            <div className="w-8 h-8 rounded-xl bg-amber-500/20 border border-amber-500/40 flex items-center justify-center text-amber-400">
+          <div className="flex items-center gap-2.5">
+            <div className="w-9 h-9 rounded-2xl bg-amber-500/10 border border-amber-500/20 flex items-center justify-center text-amber-400">
               <Gavel className="w-4 h-4" />
             </div>
             <div>
-              <h1 className="font-bold text-base text-white tracking-tight flex items-center gap-2">
-                Draft Arena
+              <div className="flex items-center gap-2">
+                <h1 className="font-extrabold text-base text-white tracking-tight">
+                  Draft Arena
+                </h1>
                 {roomCode && (
-                  <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-md bg-zinc-800 text-amber-400 border border-zinc-700">
+                  <span className="text-[10px] font-mono uppercase px-2 py-0.5 rounded-md bg-zinc-900 text-amber-400 border border-zinc-800">
                     Room: {roomCode}
                   </span>
                 )}
-              </h1>
-              <span className="text-[11px] text-zinc-400">
+              </div>
+              <span className="text-[11px] text-zinc-400 block">
                 {isMultiplayer ? "Live Multiplayer Sync" : "Single-Device Pass & Play"}
               </span>
             </div>
           </div>
         </div>
 
-        {/* Action log / Ticker preview */}
-        {draftState && (
-          <div className="flex items-center gap-2">
-            <span className="text-xs text-zinc-400 hidden sm:inline">
-              Available: <strong>{availableItems.length}</strong> items
-            </span>
-          </div>
-        )}
+        {/* Live Presence & Header Actions */}
+        <div className="flex items-center gap-2">
+          <button
+            type="button"
+            onClick={() => setIsWarRoomDrawerOpen(true)}
+            className="py-1.5 px-3 rounded-full bg-emerald-950/30 border border-emerald-800/40 text-emerald-400 text-xs font-semibold flex items-center gap-2 hover:bg-emerald-950/50 transition shadow-sm"
+          >
+            <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+            <span>{players.length || 1} Live</span>
+          </button>
+
+          {draftState && (
+            <button
+              type="button"
+              onClick={handleResetDraft}
+              className="hidden sm:flex items-center gap-1.5 py-1.5 px-3 rounded-xl bg-zinc-900 border border-zinc-800 text-xs font-medium text-zinc-400 hover:text-white hover:bg-zinc-800 transition"
+            >
+              <RotateCcw className="w-3.5 h-3.5" />
+              <span>Reset</span>
+            </button>
+          )}
+        </div>
       </div>
 
       {/* Global Toast / Error Alert */}
@@ -422,207 +452,122 @@ export function DraftArenaGame({
           onExit={onBack}
         />
       ) : (
-        /* 3. Active Auction Workspace */
-        <div className="w-full max-w-4xl mx-auto space-y-6">
-          {/* View Tab Switcher */}
-          <div className="flex items-center justify-between p-1.5 rounded-2xl bg-zinc-900 border border-zinc-800">
-            <button
-              type="button"
-              onClick={() => setActiveTab("auction")}
-              className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 ${
-                activeTab === "auction"
-                  ? "bg-amber-500 text-black shadow-md shadow-amber-500/20"
-                  : "text-zinc-400 hover:text-white"
-              }`}
-            >
-              <Gavel className="w-3.5 h-3.5" /> Auction Block
-            </button>
+        /* 3. Active Auction Workspace (Side-by-Side with War Room) */
+        <div className="w-full max-w-7xl mx-auto space-y-4">
+          {/* Workspace Controls */}
+          <div className="flex items-center justify-between gap-3">
+            <div className="flex items-center gap-2 p-1 rounded-2xl bg-zinc-900/80 border border-zinc-800">
+              <button
+                type="button"
+                onClick={() => setViewMode("auction")}
+                className={`py-1.5 px-3 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+                  viewMode === "auction"
+                    ? "bg-amber-500 text-black shadow-md shadow-amber-500/20"
+                    : "text-zinc-400 hover:text-white"
+                }`}
+              >
+                <Gavel className="w-3.5 h-3.5" />
+                <span>Auction Arena</span>
+              </button>
 
-            <button
-              type="button"
-              onClick={() => setActiveTab("rosters")}
-              className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 ${
-                activeTab === "rosters"
-                  ? "bg-amber-500 text-black shadow-md shadow-amber-500/20"
-                  : "text-zinc-400 hover:text-white"
-              }`}
-            >
-              <Users className="w-3.5 h-3.5" /> Team Rosters ({draftState.teams.length})
-            </button>
+              <button
+                type="button"
+                onClick={() => setViewMode("full-rosters")}
+                className={`py-1.5 px-3 rounded-xl text-xs font-bold transition flex items-center gap-1.5 ${
+                  viewMode === "full-rosters"
+                    ? "bg-amber-500 text-black shadow-md shadow-amber-500/20"
+                    : "text-zinc-400 hover:text-white"
+                }`}
+              >
+                <Users className="w-3.5 h-3.5" />
+                <span>Team Rosters ({teamsList.length})</span>
+              </button>
+            </div>
 
+            {/* Mobile War Room Trigger Button */}
             <button
               type="button"
-              onClick={() => setActiveTab("pool")}
-              className={`flex-1 py-2 px-3 rounded-xl text-xs font-bold transition flex items-center justify-center gap-1.5 ${
-                activeTab === "pool"
-                  ? "bg-amber-500 text-black shadow-md shadow-amber-500/20"
-                  : "text-zinc-400 hover:text-white"
-              }`}
+              onClick={() => setIsWarRoomDrawerOpen(true)}
+              className="lg:hidden py-1.5 px-3.5 rounded-xl bg-zinc-900 border border-zinc-800 text-xs font-bold text-zinc-200 hover:text-white flex items-center gap-2 shadow-sm"
             >
-              <Layers className="w-3.5 h-3.5" /> Item Pool ({availableItems.length})
+              <span className="w-2 h-2 rounded-full bg-emerald-400 animate-pulse" />
+              <span>War Room</span>
             </button>
           </div>
 
-          {/* Nomination Alert Header if in Nominating phase */}
-          {draftState.phase === "nominating" && (
-            <div className="p-4 rounded-2xl bg-gradient-to-r from-amber-950/40 to-zinc-900 border border-amber-500/40 flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-              <div className="flex items-center gap-3">
-                <div className="w-9 h-9 rounded-xl bg-amber-500/20 flex items-center justify-center text-amber-400">
-                  <Sparkles className="w-5 h-5" />
-                </div>
-                <div>
-                  <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider block">
-                    Nomination Turn
-                  </span>
-                  <span className="font-bold text-sm text-white">
-                    {currentNominatingTeam ? currentNominatingTeam.name : "Host"} is on the clock to nominate!
-                  </span>
-                </div>
+          {/* View Mode 1: Main Auction Block & Desktop Sidebar */}
+          {viewMode === "auction" ? (
+            <div className="grid grid-cols-1 lg:grid-cols-12 gap-6 items-start">
+              {/* Left Column (8 cols): Central 10-Lot Auction Block */}
+              <div className="lg:col-span-8 space-y-4">
+                <DraftAuctionBlock
+                  item={nominatedItem}
+                  preset={draftState.preset}
+                  currentBid={draftState.currentBid}
+                  timeLeft={draftState.timeLeft}
+                  timerActive={draftState.timerActive}
+                  phase={(draftState.phase || draftState.status || "nominating") as any}
+                  teams={teamsList}
+                  activeTeamId={activeTeamId}
+                  isHost={isHost}
+                  isSingleDeviceMode={!isMultiplayer}
+                  availableItems={availableItems}
+                  soldItems={draftState.soldItems || []}
+                  passedItemIds={draftState.passedItemIds || []}
+                  nominatingTeam={currentNominatingTeam}
+                  onNominate={handleNominate}
+                  onSelectActiveTeam={setActiveTeamId}
+                  onPlaceBid={handlePlaceBid}
+                  onHammerSold={handleHammerSold}
+                  onPassItem={handlePassItem}
+                  onUndoBid={handleUndoBid}
+                  onNextItem={handleNextItem}
+                />
               </div>
 
-              {availableItems.length > 0 && (
-                <button
-                  type="button"
-                  onClick={() => handleNominate(availableItems[0].id)}
-                  className="px-4 py-2 rounded-xl bg-amber-500 hover:bg-amber-400 text-black font-bold text-xs transition flex items-center justify-center gap-1.5 shadow-md shadow-amber-500/20"
-                >
-                  Quick Nominate: {availableItems[0].name} <ChevronRight className="w-3.5 h-3.5" />
-                </button>
-              )}
+              {/* Right Column (4 cols): Desktop Persistent War Room Sidebar */}
+              <div className="lg:col-span-4 hidden lg:block sticky top-6">
+                <DraftWarRoomSidebar
+                  roomCode={roomCode}
+                  players={players}
+                  myPlayerName={myPlayerName}
+                  isHost={isHost}
+                  teams={teamsList}
+                  preset={draftState.preset}
+                  activeTeamId={activeTeamId}
+                  onSelectTeam={setActiveTeamId}
+                  actionLog={draftState.actionLog || []}
+                  isOpen={true}
+                  onClose={() => {}}
+                />
+              </div>
+            </div>
+          ) : (
+            /* View Mode 2: Expanded Team Rosters & Synergies */
+            <div className="space-y-4">
+              <DraftTeamRosters
+                teams={teamsList}
+                preset={draftState.preset}
+                activeTeamId={activeTeamId}
+                onSelectTeam={setActiveTeamId}
+              />
             </div>
           )}
 
-          {/* Tab 1: Central Auction Block */}
-          {activeTab === "auction" && (
-            <DraftAuctionBlock
-              item={nominatedItem}
-              preset={draftState.preset}
-              currentBid={draftState.currentBid}
-              timeLeft={draftState.timeLeft}
-              timerActive={draftState.timerActive}
-              phase={(draftState.phase || draftState.status || "nominating") as any}
-              teams={teamsList}
-              activeTeamId={activeTeamId}
-              isHost={isHost}
-              isSingleDeviceMode={!isMultiplayer}
-              onSelectActiveTeam={setActiveTeamId}
-              onPlaceBid={handlePlaceBid}
-              onHammerSold={handleHammerSold}
-              onPassItem={handlePassItem}
-              onUndoBid={handleUndoBid}
-              onNextItem={handleNextItem}
-            />
-          )}
-
-          {/* Tab 2: All Team Rosters & Synergies */}
-          {activeTab === "rosters" && (
-            <DraftTeamRosters
-              teams={teamsList}
-              preset={draftState.preset}
-              activeTeamId={activeTeamId}
-              onSelectTeam={setActiveTeamId}
-            />
-          )}
-
-          {/* Tab 3: Item Pool & Nomination Drawer */}
-          {activeTab === "pool" && (
-            <div className="p-5 sm:p-6 rounded-3xl bg-zinc-900 border border-zinc-800 space-y-4">
-              <div className="flex items-center justify-between">
-                <div>
-                  <h3 className="font-bold text-white text-base">Auction Pool Catalog</h3>
-                  <p className="text-xs text-zinc-400">
-                    Select an item to nominate to the central auction block
-                  </p>
-                </div>
-                <span className="text-xs font-mono text-amber-400">
-                  {availableItems.length} remaining / {itemPool.length} total
-                </span>
-              </div>
-
-              <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3">
-                {itemPool.map((item) => {
-                  const isAvailable = availableItemIds.includes(item.id)
-                  const isNominated =
-                    draftState.currentItem?.id === item.id || draftState.nominatedItemId === item.id
-                  const soldRecord = draftState.soldItems.find(
-                    (s: any) => s.item?.id === item.id || s.itemId === item.id
-                  )
-                  const winningTeam = soldRecord
-                    ? teamsList.find((t: any) => t.id === (soldRecord.buyerId || soldRecord.teamId))
-                    : null
-
-                  return (
-                    <div
-                      key={item.id}
-                      className={`p-3.5 rounded-2xl border transition flex flex-col justify-between ${
-                        isNominated
-                          ? "bg-amber-950/40 border-amber-500 shadow-md shadow-amber-500/10"
-                          : isAvailable
-                          ? "bg-zinc-950 border-zinc-800 hover:border-zinc-700"
-                          : "bg-zinc-950/40 border-zinc-900 opacity-60"
-                      }`}
-                    >
-                      <div className="flex items-start gap-3 mb-3">
-                        {item.imageUrl ? (
-                          // eslint-disable-next-line @next/next/no-img-element
-                          <img
-                            src={item.imageUrl}
-                            alt={item.name}
-                            className="w-12 h-12 rounded-xl object-cover border border-zinc-700 shrink-0"
-                          />
-                        ) : (
-                          <div className="w-12 h-12 rounded-xl bg-zinc-800 flex items-center justify-center text-zinc-500 shrink-0">
-                            <Sparkles className="w-5 h-5" />
-                          </div>
-                        )}
-                        <div className="truncate">
-                          <span className="text-[10px] font-bold text-amber-400 uppercase tracking-wider block">
-                            {item.category}
-                          </span>
-                          <span className="font-bold text-white text-sm truncate block">{item.name}</span>
-                          <span className="text-[11px] text-zinc-400 line-clamp-1">{item.description}</span>
-                        </div>
-                      </div>
-
-                      {/* Footer Actions */}
-                      <div className="pt-2 border-t border-zinc-800/80 flex items-center justify-between text-xs">
-                        {isAvailable ? (
-                          <button
-                            type="button"
-                            onClick={() => handleNominate(item.id)}
-                            className="w-full py-1.5 rounded-xl bg-zinc-800 hover:bg-amber-500 hover:text-black text-amber-400 font-bold transition text-xs flex items-center justify-center gap-1"
-                          >
-                            Nominate Item <Gavel className="w-3.5 h-3.5" />
-                          </button>
-                        ) : (
-                          <span className="text-[11px] text-zinc-500 italic">
-                            Sold to {winningTeam?.name || "Team"} for {draftState.preset.currencySymbol}{soldRecord?.price}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                  )
-                })}
-              </div>
-            </div>
-          )}
-
-          {/* Live Action Feed Ticker */}
-          {draftState.actionLog && draftState.actionLog.length > 0 && (
-            <div className="p-3.5 rounded-2xl bg-zinc-950/60 border border-zinc-800/80 space-y-1.5 text-xs">
-              <span className="text-[10px] font-bold text-zinc-500 uppercase tracking-wider block">
-                Live Auction Hall Feed:
-              </span>
-              <div className="space-y-1 max-h-24 overflow-y-auto">
-                {draftState.actionLog.slice(-4).reverse().map((log) => (
-                  <div key={log.id} className="text-zinc-400 flex items-center gap-2">
-                    <span className="text-amber-500 text-[10px]">●</span>
-                    <span className="text-zinc-300 font-medium">{log.description}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
-          )}
+          {/* Mobile Slide-Over War Room Drawer */}
+          <DraftWarRoomSidebar
+            roomCode={roomCode}
+            players={players}
+            myPlayerName={myPlayerName}
+            isHost={isHost}
+            teams={teamsList}
+            preset={draftState.preset}
+            activeTeamId={activeTeamId}
+            onSelectTeam={setActiveTeamId}
+            actionLog={draftState.actionLog || []}
+            isOpen={isWarRoomDrawerOpen}
+            onClose={() => setIsWarRoomDrawerOpen(false)}
+          />
         </div>
       )}
 

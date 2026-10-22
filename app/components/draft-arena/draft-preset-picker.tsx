@@ -15,11 +15,23 @@ import {
   Coins,
   ChevronRight,
   Gavel,
-  Sliders
+  Sliders,
+  Rocket,
+  Flame,
+  Gamepad2,
+  Car,
+  Crown,
+  Pizza,
+  ShieldAlert,
+  Gem,
+  Tv,
+  Zap,
+  Compass
 } from "lucide-react"
 import { DEFAULT_PRESETS } from "@/lib/draft/presets"
 import type { DraftPreset, DraftTeam } from "@/lib/draft/types"
 import { DraftCustomThemeModal } from "./draft-custom-theme-modal"
+import { sample10MysteryItems } from "@/lib/draft/kmk-draft-dataset"
 
 interface DraftPresetPickerProps {
   initialPresets?: DraftPreset[]
@@ -29,18 +41,28 @@ interface DraftPresetPickerProps {
 }
 
 const THEME_ICONS: Record<string, React.ReactNode> = {
-  football: <Trophy className="w-5 h-5 text-emerald-400" />,
+  superhero: <Shield className="w-5 h-5 text-amber-400" />,
   superheroes: <Shield className="w-5 h-5 text-amber-400" />,
-  celebrities: <Star className="w-5 h-5 text-purple-400" />,
-  "dream-houses": <Home className="w-5 h-5 text-cyan-400" />,
+  hollywood: <Star className="w-5 h-5 text-yellow-400" />,
+  popstars: <Sparkles className="w-5 h-5 text-pink-400" />,
+  bollywood: <Sparkles className="w-5 h-5 text-amber-400" />,
+  football: <Trophy className="w-5 h-5 text-emerald-400" />,
+  luxury: <Crown className="w-5 h-5 text-teal-400" />,
+  anime: <Zap className="w-5 h-5 text-pink-400" />,
+  starships: <Rocket className="w-5 h-5 text-cyan-400" />,
   custom: <Sparkles className="w-5 h-5 text-amber-300" />
 }
 
 const THEME_GRADIENTS: Record<string, string> = {
-  football: "from-emerald-950/60 to-zinc-950 border-emerald-500/30 hover:border-emerald-500/60",
+  superhero: "from-amber-950/60 to-zinc-950 border-amber-500/30 hover:border-amber-500/60",
   superheroes: "from-amber-950/60 to-zinc-950 border-amber-500/30 hover:border-amber-500/60",
-  celebrities: "from-purple-950/60 to-zinc-950 border-purple-500/30 hover:border-purple-500/60",
-  "dream-houses": "from-cyan-950/60 to-zinc-950 border-cyan-500/30 hover:border-cyan-500/60",
+  hollywood: "from-yellow-950/60 to-zinc-950 border-yellow-500/30 hover:border-yellow-500/60",
+  popstars: "from-pink-950/60 to-zinc-950 border-pink-500/30 hover:border-pink-500/60",
+  bollywood: "from-amber-950/60 to-zinc-950 border-amber-500/30 hover:border-amber-500/60",
+  football: "from-emerald-950/60 to-zinc-950 border-emerald-500/30 hover:border-emerald-500/60",
+  luxury: "from-teal-950/60 to-zinc-950 border-teal-500/30 hover:border-teal-500/60",
+  anime: "from-pink-950/60 to-zinc-950 border-pink-500/30 hover:border-pink-500/60",
+  starships: "from-cyan-950/60 to-zinc-950 border-cyan-500/30 hover:border-cyan-500/60",
   custom: "from-zinc-900 to-zinc-950 border-zinc-700 hover:border-amber-400/60"
 }
 
@@ -51,7 +73,7 @@ export function DraftPresetPicker({
   onStartDraft
 }: DraftPresetPickerProps) {
   const [presets, setPresets] = useState<DraftPreset[]>(initialPresets)
-  const [selectedPresetId, setSelectedPresetId] = useState<string>(initialPresets[0]?.id || "football-legends")
+  const [selectedPresetId, setSelectedPresetId] = useState<string>(initialPresets[0]?.id || "superheroes")
   const [isCustomModalOpen, setIsCustomModalOpen] = useState(false)
 
   // Teams setup
@@ -105,13 +127,34 @@ export function DraftPresetPicker({
 
   const handleLaunch = () => {
     if (!selectedPreset) return
+    // Sample 10 popular items at random from the KMK database for this theme
+    let mysteryItems = selectedPreset.items
+    try {
+      const sampled = sample10MysteryItems(selectedPreset.id)
+      if (sampled && sampled.length >= 10) {
+        mysteryItems = sampled
+      } else {
+        mysteryItems = selectedPreset.items.slice(0, 10)
+      }
+    } catch {
+      mysteryItems = selectedPreset.items.slice(0, 10)
+    }
+
+    const presetToLaunch: DraftPreset = {
+      ...selectedPreset,
+      items: mysteryItems,
+      timerSeconds: 0,
+      nominationTimerSeconds: 0,
+      antiSnipingSeconds: 0
+    }
+
     // Ensure teams have correct starting budget
-    const finalTeams = teams.map((t) => ({
+    const finalTeams = teams.slice(0, 2).map((t) => ({
       ...t,
       budget: selectedPreset.startingBudget,
       startingBudget: selectedPreset.startingBudget
     }))
-    onStartDraft(selectedPreset, finalTeams)
+    onStartDraft(presetToLaunch, finalTeams)
   }
 
   return (
@@ -203,7 +246,7 @@ export function DraftPresetPicker({
               </span>
               <span className="flex items-center gap-1">
                 <Clock className="w-3.5 h-3.5 text-blue-400" />
-                Timer: {selectedPreset.timerSeconds || selectedPreset.nominationTimerSeconds}s
+                Timer: {selectedPreset.timerSeconds ? `${selectedPreset.timerSeconds}s` : "Untimed (No Timer)"}
               </span>
             </div>
           </div>

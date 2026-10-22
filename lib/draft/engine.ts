@@ -65,6 +65,7 @@ export function createInitialDraftState(
     nominationIndex: 0,
     soldItems: [],
     passedItemIds: [],
+    availableItemIds: itemPool.map((i) => i.id),
     actionLogs: [initialLog],
   }
 }
@@ -74,16 +75,20 @@ export function createInitialDraftState(
  */
 export function findAvailableSlot(
   rosterSlots: DraftRosterSlot[],
-  teamRoster: Array<{ slotId: string }>,
+  teamRoster: Array<{ slotId: string; item?: any }>,
   item: DraftItem
 ): DraftRosterSlot | null {
-  const filledSlotIds = new Set(teamRoster.map((r) => r.slotId))
+  const filledSlotIds = new Set(
+    (teamRoster || [])
+      .filter((r) => !("item" in r) || Boolean(r.item))
+      .map((r) => r.slotId)
+  )
 
   // 1. Try to find a slot that explicitly lists or matches the item's category
   for (const slot of rosterSlots) {
     if (!filledSlotIds.has(slot.id)) {
       if (slot.allowedCategories && slot.allowedCategories.length > 0) {
-        if (slot.allowedCategories.includes(item.category)) {
+        if (slot.allowedCategories.some(c => c.toLowerCase() === item.category.toLowerCase())) {
           return slot
         }
       } else {
@@ -93,7 +98,7 @@ export function findAvailableSlot(
     }
   }
 
-  // 2. Fallback to any open slot if no strict category restrictions block it
+  // 2. Fallback to any open slot
   for (const slot of rosterSlots) {
     if (!filledSlotIds.has(slot.id)) {
       return slot
@@ -123,7 +128,8 @@ export function canTeamBid(
   }
 
   // Check if team roster is already full
-  if (team.roster.length >= state.preset.rosterSlots.length) {
+  const filledCount = (team.roster || []).filter((r: any) => !("item" in r) || Boolean(r.item)).length
+  if (filledCount >= state.preset.rosterSlots.length) {
     return { allowed: false, reason: "Your roster is already full!" }
   }
 
@@ -250,10 +256,12 @@ export function nominateItem(
   const updatedState: DraftState = {
     ...state,
     currentItem: item,
+    nominatedItemId: itemId,
     currentItemIndex: itemIndex,
     currentBid: null,
     bidHistory: [],
     status: "bidding",
+    phase: "bidding",
     timerActive: true,
     timeLeft: state.preset.timerSeconds,
     nominatedBy: nominatorId || state.nominationOrder[state.nominationIndex] || null,
@@ -323,11 +331,17 @@ export function sellCurrentItem(
 
   const nextNominationIndex = (state.nominationIndex + 1) % state.nominationOrder.length
 
+  const updatedAvailable = (state.availableItemIds || (state.itemPool || []).map((i) => i.id)).filter(
+    (id) => id !== state.currentItem!.id
+  )
+
   const updatedState: DraftState = {
     ...state,
     status: "sold",
+    phase: "sold",
     timerActive: false,
     soldItems: [...state.soldItems, soldRecord],
+    availableItemIds: updatedAvailable,
     teams: {
       ...state.teams,
       [bidderId]: updatedTeam,
@@ -345,26 +359,45 @@ export function sellCurrentItem(
 export function passCurrentItem(
   state: DraftState
 ): { success: boolean; state: DraftState } {
-  if (!state.currentItem) {
+  const passedId = state.currentItem?.id || state.nominatedItemId
+  if (!passedId) {
     return { success: false, state }
   }
+
+  const pool = state.itemPool || state.pool || state.preset.items || []
+  const item = state.currentItem || pool.find((i) => i.id === passedId)
 
   const log: DraftActionLog = {
     id: `log_${Date.now()}_pass`,
     type: "passed",
-    message: `No bids. ${state.currentItem.name} remains unsold.`,
+    message: `No bids. ${item ? item.name : "Item"} remains unsold.`,
     timestamp: Date.now(),
   }
 
-  const nextNominationIndex = (state.nominationIndex + 1) % state.nominationOrder.length
+  const teamsCount = Array.isArray(state.teams) ? state.teams.length : Object.keys(state.teams || {}).length || 1
+  const nominationOrderLength = state.nominationOrder?.length || teamsCount
+  const nextNominationIndex = (state.nominationIndex + 1) % nominationOrderLength
+
+  const updatedPassed = [...(state.passedItemIds || [])]
+  if (!updatedPassed.includes(passedId)) {
+    updatedPassed.push(passedId)
+  }
+  const updatedAvailable = (state.availableItemIds || pool.map((i) => i.id)).filter(
+    (id) => id !== passedId
+  )
 
   const updatedState: DraftState = {
     ...state,
     status: "passed",
+    phase: "passed",
+    currentItem: item || null,
+    nominatedItemId: passedId,
+    currentBid: null,
     timerActive: false,
-    passedItemIds: [...state.passedItemIds, state.currentItem.id],
+    passedItemIds: updatedPassed,
+    availableItemIds: updatedAvailable,
     nominationIndex: nextNominationIndex,
-    actionLogs: [log, ...state.actionLogs.slice(0, 49)],
+    actionLogs: [log, ...((state.actionLogs || state.actionLog || []).slice(0, 49))],
   }
 
   return { success: true, state: updatedState }
@@ -376,17 +409,20 @@ export function passCurrentItem(
 export function advanceToNextItem(
   state: DraftState
 ): { success: boolean; state: DraftState; isDraftComplete: boolean } {
-  // Check if all teams have filled their rosters
-  const allRostersFull = Object.values(state.teams).every(
-    (t) => t.roster.length >= state.preset.rosterSlots.length
+  const teamsList = Array.isArray(state.teams) ? state.teams : Object.values(state.teams || {})
+  const allRostersFull = teamsList.every(
+    (t: any) =>
+      (t.roster || []).filter((s: any) => !("item" in s) || Boolean(s.item)).length >=
+      state.preset.rosterSlots.length
   )
 
   // Check remaining unsold items
   const soldAndPassedIds = new Set([
-    ...state.soldItems.map((s) => s.item.id),
-    ...state.passedItemIds,
+    ...(state.soldItems || []).map((s: any) => s.item?.id || s.itemId),
+    ...(state.passedItemIds || []),
   ])
-  const remainingItems = state.itemPool.filter((i) => !soldAndPassedIds.has(i.id))
+  const pool = state.itemPool || state.pool || state.preset.items || []
+  const remainingItems = pool.filter((i) => !soldAndPassedIds.has(i.id))
 
   if (allRostersFull || remainingItems.length === 0) {
     const completeLog: DraftActionLog = {
@@ -401,10 +437,12 @@ export function advanceToNextItem(
       state: {
         ...state,
         status: "completed",
+        phase: "completed",
         currentItem: null,
+        nominatedItemId: null,
         currentBid: null,
         timerActive: false,
-        actionLogs: [completeLog, ...state.actionLogs.slice(0, 49)],
+        actionLogs: [completeLog, ...((state.actionLogs || state.actionLog || []).slice(0, 49))],
       },
       isDraftComplete: true,
     }
@@ -412,7 +450,7 @@ export function advanceToNextItem(
 
   // Pick the next unrevealed item in order
   const nextItem = remainingItems[0]
-  const nextItemIndex = state.itemPool.findIndex((i) => i.id === nextItem.id)
+  const nextItemIndex = pool.findIndex((i) => i.id === nextItem.id)
 
   const log: DraftActionLog = {
     id: `log_${Date.now()}_next`,
@@ -421,16 +459,21 @@ export function advanceToNextItem(
     timestamp: Date.now(),
   }
 
+  const updatedAvailable = remainingItems.map((i) => i.id)
+
   const updatedState: DraftState = {
     ...state,
     status: "bidding",
+    phase: "bidding",
     currentItem: nextItem,
+    nominatedItemId: nextItem.id,
     currentItemIndex: nextItemIndex,
+    availableItemIds: updatedAvailable,
     currentBid: null,
     bidHistory: [],
-    timerActive: true,
-    timeLeft: state.preset.timerSeconds,
-    actionLogs: [log, ...state.actionLogs.slice(0, 49)],
+    timerActive: (state.preset.timerSeconds || 0) > 0,
+    timeLeft: state.preset.timerSeconds || 0,
+    actionLogs: [log, ...((state.actionLogs || state.actionLog || []).slice(0, 49))],
   }
 
   return { success: true, state: updatedState, isDraftComplete: false }

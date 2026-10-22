@@ -188,6 +188,14 @@ test("Epic B — Draft Arena: Reusable Auction Game Engine", async (t) => {
     state = passRes.state
     assert.equal(state.status, "passed")
     assert.ok(state.passedItemIds.includes(ironman.id))
+
+    // Reveal next item after pass must NEVER show the passed item again
+    const advanceAfterPass = advanceToNextItem(state)
+    assert.ok(advanceAfterPass.success)
+    state = advanceAfterPass.state
+    assert.equal(state.status, "bidding")
+    assert.notEqual(state.currentItem?.id, ironman.id, "Next revealed item must not be the passed item")
+    assert.ok(!state.availableItemIds.includes(ironman.id), "Passed item must be excluded from availableItemIds")
   })
 
   // -------------------------------------------------------------

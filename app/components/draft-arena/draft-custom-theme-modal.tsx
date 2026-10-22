@@ -129,28 +129,30 @@ export function DraftCustomThemeModal({
     setItems((prev) => prev.filter((i) => i.id !== itemId))
   }
 
-  const handleImportCatalog = async () => {
-    setIsLoadingCatalog(true)
-    try {
-      const res = await fetch("/api/draft/presets?includeCatalog=true")
-      if (res.ok) {
-        const data = await res.json()
-        const celebPreset = data.presets?.find((p: any) => p.id === "celebrity-icons")
-        if (celebPreset && Array.isArray(celebPreset.items)) {
-          // Append up to 6 real catalog personalities
-          const imported = celebPreset.items.slice(0, 6)
-          setItems((prev) => {
-            const existingIds = new Set(prev.map((x) => x.id))
-            const filtered = imported.filter((x: any) => !existingIds.has(x.id))
-            return [...prev, ...filtered]
-          })
-        }
+  const handleImportSampleItems = () => {
+    const samples: DraftItem[] = [
+      {
+        id: `sample-${Date.now()}-1`,
+        name: "Hyper-Drive Quantum Frigate",
+        category: "Star",
+        imageUrl: "https://images.unsplash.com/photo-1518709268805-4e9042af9f23?auto=format&fit=crop&w=600&q=80",
+        description: "Equipped with tachyon shields and twin railguns.",
+        baseValuation: 25,
+        stats: { Firepower: 96, Speed: 95, OVR: 95 },
+        tags: ["Sci-Fi", "Starship"]
+      },
+      {
+        id: `sample-${Date.now()}-2`,
+        name: "Cursed Dragon Tooth Glaive",
+        category: "Specialist",
+        imageUrl: "https://images.unsplash.com/photo-1589241062272-c0a000072dfa?auto=format&fit=crop&w=600&q=80",
+        description: "Carved from the obsidian fang of an elder dragon.",
+        baseValuation: 24,
+        stats: { Slash: 97, Flame: 94, OVR: 95 },
+        tags: ["Mythic", "Weapon"]
       }
-    } catch (err) {
-      console.error("Failed to import catalog items", err)
-    } finally {
-      setIsLoadingCatalog(false)
-    }
+    ]
+    setItems((prev) => [...prev, ...samples])
   }
 
   const handleSave = () => {
@@ -367,12 +369,11 @@ export function DraftCustomThemeModal({
                 </span>
                 <button
                   type="button"
-                  onClick={handleImportCatalog}
-                  disabled={isLoadingCatalog}
-                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 hover:bg-amber-500/30 transition disabled:opacity-50"
+                  onClick={handleImportSampleItems}
+                  className="inline-flex items-center gap-1.5 px-3 py-1.5 text-xs font-medium rounded-xl bg-amber-500/20 border border-amber-500/40 text-amber-300 hover:bg-amber-500/30 transition"
                 >
                   <Sparkles className="w-3.5 h-3.5" />
-                  {isLoadingCatalog ? "Importing..." : "Auto-Import from Catalog"}
+                  + Add Sample Items
                 </button>
               </div>
 

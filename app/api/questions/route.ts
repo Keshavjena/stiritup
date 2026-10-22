@@ -82,8 +82,13 @@ export async function GET(req: NextRequest) {
     }
 
     // Shuffle only for text-only games (KMK and WYR already come randomly sampled from catalog)
-    if (!personRounds) {
-      questions = questions.sort(() => Math.random() - 0.5);
+    if (!personRounds && questions.length > 1) {
+      for (let i = questions.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1));
+        const temp = questions[i];
+        questions[i] = questions[j];
+        questions[j] = temp;
+      }
     }
 
     const slicedQuestions = questions.slice(0, limit);

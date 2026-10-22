@@ -85,7 +85,7 @@ app.prepare().then(() => {
 
     // Find eligible slot
     let slot = team.roster.find(
-      (s) => !s.item && s.slotCategory.toLowerCase() === item.category.toLowerCase()
+      (s) => !s.item && s.slotCategory && item.category && s.slotCategory.toLowerCase() === item.category.toLowerCase()
     );
     if (!slot) {
       slot = team.roster.find((s) => !s.item && s.isWildcard);
@@ -143,9 +143,12 @@ app.prepare().then(() => {
   }
 
   function executeDraftPass(room, roomCode) {
-    if (!room || !room.draftState || !room.draftState.nominatedItemId) return;
+    if (!room || !room.draftState) return;
     const state = room.draftState;
-    const item = state.pool.find((i) => i.id === state.nominatedItemId);
+    const passedId = state.nominatedItemId || (state.currentItem && state.currentItem.id);
+    if (!passedId) return;
+
+    const item = (state.pool || []).find((i) => i.id === passedId) || state.currentItem;
 
     if (room.draftTimerInterval) {
       clearInterval(room.draftTimerInterval);
@@ -153,16 +156,37 @@ app.prepare().then(() => {
     }
     state.timerActive = false;
     state.currentBid = null;
-    state.phase = "nominating";
+    state.previousBid = null;
+    state.phase = "passed";
+    state.status = "passed";
+    state.currentItem = item || null;
+    state.nominatedItemId = passedId;
+
+    if (!state.passedItemIds) state.passedItemIds = [];
+    if (!state.passedItemIds.includes(passedId)) {
+      state.passedItemIds.push(passedId);
+    }
+    // Remove passed item from availableItemIds so it cannot be revealed again
+    state.availableItemIds = (state.availableItemIds || []).filter((id) => id !== passedId);
+
     state.actionLog.push({
       id: `log-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
       timestamp: Date.now(),
       type: "pass",
       description: `PASSED: ${item ? item.name : "Item"} was passed without any winning bids.`,
-      itemId: item ? item.id : undefined
+      itemId: passedId
     });
-    state.nominatedItemId = null;
     state.nominatingTeamIndex = (state.nominatingTeamIndex + 1) % state.teams.length;
+
+    // Check completion: all team rosters full OR pool empty
+    const allFull = state.teams.every((t) => t.roster.every((s) => !!s.item));
+    const poolEmpty = (state.availableItemIds || []).length === 0;
+    if (allFull || poolEmpty) {
+      state.phase = "completed";
+      state.status = "completed";
+      state.nominatedItemId = null;
+      state.currentItem = null;
+    }
 
     io.to(roomCode).emit("draft-state-sync", state);
     io.to(roomCode).emit("draft-item-passed", { item });
@@ -174,6 +198,14 @@ app.prepare().then(() => {
       room.draftTimerInterval = null;
     }
     if (!room.draftState) return;
+
+    // Untimed draft mode: if timerSeconds is 0 or unspecified, do not start countdown
+    if (!room.draftState.preset || !room.draftState.preset.timerSeconds || room.draftState.preset.timerSeconds <= 0) {
+      room.draftState.timerActive = false;
+      room.draftState.timeLeft = 0;
+      io.to(roomCode).emit("draft-timer-tick", { timeLeft: 0 });
+      return;
+    }
 
     room.draftState.timerActive = true;
     room.draftTimerInterval = setInterval(() => {
@@ -424,6 +456,13 @@ app.prepare().then(() => {
 
       // Forward action to all other sockets in room
       socket.to(roomCode).emit("game-action", action);
+      if (action.type === "cah-action" && action.payload) {
+        socket.to(roomCode).emit("cah-action", action.payload);
+      } else if (action.type === "indian-game-action" && action.payload) {
+        socket.to(roomCode).emit("indian-game-action", action.payload);
+      } else if (action.type === "drama-game-action" && action.payload) {
+        socket.to(roomCode).emit("drama-game-action", action.payload);
+      }
     });
 
     socket.on("cast-vote", (rawCode, voteData) => {
@@ -514,8 +553,8 @@ app.prepare().then(() => {
             roster: preset.rosterSlots.map((slot) => ({
               slotId: slot.id,
               slotName: slot.name,
-              slotCategory: slot.category,
-              isWildcard: !!slot.isWildcard,
+              slotCategory: slot.slotCategory || slot.name || "Wildcard",
+              isWildcard: slot.isWildcard !== false,
               item: null
             }))
           })),
@@ -533,11 +572,33 @@ app.prepare().then(() => {
               id: `log-${Date.now()}`,
               timestamp: Date.now(),
               type: "state_change",
-              description: `Draft initialized with preset "${preset.name}". Starting budget: ${preset.currencySymbol || "$"}${preset.startingBudget}`
+              description: `Draft initialized with preset "${preset.name || preset.title}". Starting budget: ${preset.currencySymbol || "$"}${preset.startingBudget}`
             }
           ],
           audienceVotes: {}
         };
+
+        // Auto-nominate first mystery item to auction block
+        if (room.draftState.availableItemIds.length > 0) {
+          const firstItemId = room.draftState.availableItemIds[0];
+          const firstItem = room.draftState.pool.find((i) => i.id === firstItemId);
+          room.draftState.nominatedItemId = firstItemId;
+          room.draftState.currentItem = firstItem || null;
+          room.draftState.phase = "bidding";
+          room.draftState.status = "bidding";
+          room.draftState.timeLeft = room.draftState.preset.timerSeconds || 0;
+          room.draftState.timerActive = (room.draftState.preset.timerSeconds || 0) > 0;
+          if (firstItem) {
+            room.draftState.actionLog.push({
+              id: `log-${Date.now()}-first`,
+              timestamp: Date.now(),
+              type: "nomination",
+              description: `Mystery Lot #1: ${firstItem.name} (${firstItem.category}) is revealed on the auction block!`,
+              itemId: firstItem.id
+            });
+          }
+        }
+
         io.to(roomCode).emit("draft-state-sync", room.draftState);
       } else if (type === "nominate-item") {
         if (!room.draftState) return;
@@ -549,8 +610,10 @@ app.prepare().then(() => {
         }
 
         room.draftState.nominatedItemId = itemId;
+        room.draftState.currentItem = item || null;
         room.draftState.phase = "bidding";
-        room.draftState.timeLeft = room.draftState.preset.nominationTimerSeconds || 20;
+        room.draftState.status = "bidding";
+        room.draftState.timeLeft = room.draftState.preset.nominationTimerSeconds !== undefined ? room.draftState.preset.nominationTimerSeconds : (room.draftState.preset.timerSeconds || 0);
 
         if (startingBid && teamId) {
           const team = room.draftState.teams.find((t) => t.id === teamId);
@@ -592,13 +655,11 @@ app.prepare().then(() => {
           return;
         }
 
-        // Roster eligibility check
-        const hasSlot = team.roster.some(
-          (s) => !s.item && (s.isWildcard || s.slotCategory.toLowerCase() === item.category.toLowerCase())
-        );
+        // Roster eligibility check: any open slot allows drafting
+        const hasSlot = team.roster.some((s) => !s.item);
         if (!hasSlot) {
           socket.emit("draft-bid-error", {
-            message: `Roster full for category '${item.category}'. No open slots available!`
+            message: `Roster is full (${team.roster.length}/${team.roster.length} signed). You cannot draft more items!`
           });
           return;
         }
@@ -676,10 +737,49 @@ app.prepare().then(() => {
           clearInterval(room.draftTimerInterval);
           room.draftTimerInterval = null;
         }
-        room.draftState.phase = "nominating";
-        room.draftState.nominatedItemId = null;
-        room.draftState.currentBid = null;
-        room.draftState.timerActive = false;
+        const state = room.draftState;
+
+        // Filter out any already sold or passed item IDs from availableItemIds
+        const soldOrPassed = new Set([
+          ...(state.soldItems || []).map((s) => s.itemId || s.item?.id),
+          ...(state.passedItemIds || [])
+        ]);
+        if (!state.availableItemIds || state.availableItemIds.length === 0) {
+          state.availableItemIds = (state.pool || []).map((i) => i.id);
+        }
+        state.availableItemIds = state.availableItemIds.filter((id) => !soldOrPassed.has(id));
+
+        const nextId = (payload?.itemId && !soldOrPassed.has(payload.itemId))
+          ? payload.itemId
+          : (state.availableItemIds && state.availableItemIds[0]);
+        if (nextId) {
+          const item = state.pool.find((i) => i.id === nextId);
+          state.nominatedItemId = nextId;
+          state.currentItem = item || null;
+          state.phase = "bidding";
+          state.status = "bidding";
+          state.currentBid = null;
+          state.previousBid = null;
+          state.timeLeft = state.preset.timerSeconds || 0;
+          state.timerActive = (state.preset.timerSeconds || 0) > 0;
+          state.actionLog.push({
+            id: `log-${Date.now()}-${Math.random().toString(36).slice(2, 6)}`,
+            timestamp: Date.now(),
+            type: "nomination",
+            description: `${item ? item.name : "Mystery Pick"} is now on the auction block!`,
+            itemId: nextId
+          });
+          if (state.timerActive) {
+            startDraftTimer(room, roomCode);
+          }
+        } else {
+          state.phase = "completed";
+          state.status = "completed";
+          state.nominatedItemId = null;
+          state.currentItem = null;
+          state.currentBid = null;
+          state.timerActive = false;
+        }
         io.to(roomCode).emit("draft-state-sync", room.draftState);
       } else if (type === "undo-bid") {
         if (!room.draftState || !room.draftState.currentBid) return;

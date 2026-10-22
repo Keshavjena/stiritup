@@ -103,27 +103,45 @@ export function CardsAgainstHumanity({
   useEffect(() => {
     if (!socket) return
 
-    socket.on("cah-action", (action) => {
-      if (action.type === "start-game") {
+    const handlePayload = (payload: any) => {
+      if (!payload) return
+      if (payload.type === "start-game") {
         setGameStarted(true)
-        setCurrentBlackCard(action.payload.blackCard)
-      } else if (action.type === "next-round") {
-        setCurrentJudge(action.payload.currentJudge)
-        setCurrentBlackCard(action.payload.blackCard)
+        setCurrentBlackCard(payload.blackCard)
+      } else if (payload.type === "next-round") {
+        setCurrentJudge(payload.currentJudge)
+        setCurrentBlackCard(payload.blackCard)
         setGamePhase("playing")
         setWinnerThisRound("")
-        setRoundNumber(action.payload.roundNumber)
-      } else if (action.type === "set-phase") {
-        setGamePhase(action.payload.phase)
-      } else if (action.type === "select-winner") {
-        setWinnerThisRound(action.payload.winner)
-        setScores(action.payload.scores)
+        setRoundNumber(payload.roundNumber)
+      } else if (payload.type === "new-card") {
+        setCurrentBlackCard(payload.blackCard)
+      } else if (payload.type === "set-phase") {
+        setGamePhase(payload.phase)
+      } else if (payload.type === "select-winner") {
+        setWinnerThisRound(payload.winner)
+        setScores(payload.scores)
         setGamePhase("results")
       }
-    })
+    }
+
+    const onCahAction = (action: any) => {
+      // Direct cah-action from server or payload object
+      handlePayload(action?.payload || action)
+    }
+
+    const onGameAction = (action: any) => {
+      if (action?.type === "cah-action" && action?.payload) {
+        handlePayload(action.payload)
+      }
+    }
+
+    socket.on("cah-action", onCahAction)
+    socket.on("game-action", onGameAction)
 
     return () => {
-      socket.off("cah-action")
+      socket.off("cah-action", onCahAction)
+      socket.off("game-action", onGameAction)
     }
   }, [socket])
 
@@ -144,7 +162,10 @@ export function CardsAgainstHumanity({
   const nextRound = () => {
     playSound("click")
     const nextJ = (currentJudge + 1) % players.length
-    const nextCard = blackCards[Math.floor(Math.random() * blackCards.length)]
+    const available = blackCards.filter((c) => c.text !== currentBlackCard?.text)
+    const nextCard = available.length > 0
+      ? available[Math.floor(Math.random() * available.length)]
+      : blackCards[Math.floor(Math.random() * blackCards.length)]
     const nextRoundNum = roundNumber + 1
 
     setCurrentJudge(nextJ)
@@ -157,6 +178,23 @@ export function CardsAgainstHumanity({
       socket.emit("game-action", roomCode, {
         type: "cah-action",
         payload: { type: "next-round", currentJudge: nextJ, blackCard: nextCard, roundNumber: nextRoundNum }
+      })
+    }
+  }
+
+  const handleNewBlackCard = () => {
+    playSound("click")
+    const available = blackCards.filter((c) => c.text !== currentBlackCard?.text)
+    const newCard = available.length > 0
+      ? available[Math.floor(Math.random() * available.length)]
+      : blackCards[Math.floor(Math.random() * blackCards.length)]
+
+    setCurrentBlackCard(newCard)
+
+    if (socket && roomCode) {
+      socket.emit("game-action", roomCode, {
+        type: "cah-action",
+        payload: { type: "new-card", blackCard: newCard }
       })
     }
   }
@@ -180,8 +218,14 @@ export function CardsAgainstHumanity({
   }
 
   const getRandomWhiteCards = (count: number) => {
-    const shuffled = [...whiteCards].sort(() => Math.random() - 0.5)
-    return shuffled.slice(0, count)
+    const copy = [...whiteCards]
+    for (let i = copy.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      const temp = copy[i]
+      copy[i] = copy[j]
+      copy[j] = temp
+    }
+    return copy.slice(0, count)
   }
 
   if (!gameStarted) {
@@ -410,10 +454,7 @@ export function CardsAgainstHumanity({
           {(isHost || !roomCode) && (
             <div className="grid grid-cols-2 gap-2 sm:gap-3">
               <Button
-                onClick={() => {
-                  const card = blackCards[Math.floor(Math.random() * blackCards.length)]
-                  setCurrentBlackCard(card)
-                }}
+                onClick={handleNewBlackCard}
                 variant="outline"
                 className="h-11 text-xs border-zinc-800 text-zinc-300 hover:bg-zinc-900 rounded-xl font-bold uppercase"
               >

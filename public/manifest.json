@@ -37,11 +37,6 @@
       "name": "Host Party",
       "url": "/?action=create",
       "description": "Host a new game room"
-    },
-    {
-      "name": "People Catalog",
-      "url": "/?action=catalog",
-      "description": "Browse 15k+ personalities"
     }
   ]
 }

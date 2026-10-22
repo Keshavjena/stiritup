@@ -35,14 +35,23 @@ export interface DraftPreset {
   description: string
   icon: string
   theme:
+    | "starships"
+    | "mythical"
+    | "videogames"
+    | "vehicles"
+    | "realms"
+    | "food"
+    | "survival"
+    | "anime"
+    | "luxury"
+    | "retro"
+    | "superpowers"
+    | "hypercars"
+    | "pirates"
     | "football"
     | "superhero"
-    | "superheroes"
-    | "celebrity"
-    | "celebrities"
-    | "luxury"
-    | "dream-houses"
     | "custom"
+    | string
   currencySymbol: string
   currencyName?: string
   startingBudget: number
@@ -132,7 +141,7 @@ export interface DraftState {
   presetId: string
   preset: DraftPreset
   status: DraftAuctionStatus
-  phase?: "setup" | "nominating" | "bidding" | "sold" | "paused" | "completed"
+  phase?: "setup" | "nominating" | "bidding" | "sold" | "passed" | "paused" | "completed"
   teams: Record<string, any>
   itemPool: DraftItem[]
   pool?: DraftItem[]
