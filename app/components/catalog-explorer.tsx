@@ -336,16 +336,20 @@ export function CatalogExplorer({ isOpen, onClose }: CatalogExplorerProps) {
 
   const categories = [
     { id: "all", label: "All" },
-    { id: "scientists", label: "Scientists & Thinkers" },
-    { id: "tech", label: "Tech Pioneers" },
-    { id: "bollywood", label: "Bollywood" },
     { id: "hollywood", label: "Hollywood" },
+    { id: "bollywood", label: "Bollywood" },
     { id: "popstars", label: "Pop Stars" },
-    { id: "anime", label: "Anime" },
-    { id: "fantasy", label: "Fantasy & Heroes" },
+    { id: "creators", label: "Creators & Influencers" },
     { id: "athletes", label: "Athletes" },
-    { id: "history", label: "History" },
-    { id: "adultstars", label: "Adult Stars" }
+    { id: "f1", label: "Formula 1" },
+    { id: "combat", label: "UFC & Combat" },
+    { id: "wwe", label: "WWE Wrestling" },
+    { id: "adultstars", label: "OnlyFans & Glamour" },
+    { id: "tech", label: "Tech Icons" },
+    { id: "fantasy", label: "Fantasy & Heroes" },
+    { id: "anime", label: "Anime" },
+    { id: "scientists", label: "Scientists (A+)" },
+    { id: "history", label: "History (A+)" }
   ]
 
   return (
@@ -510,12 +514,20 @@ export function CatalogExplorer({ isOpen, onClose }: CatalogExplorerProps) {
                         key={person.id}
                         className="group bg-zinc-900/40 border border-zinc-800/80 hover:border-zinc-700 rounded-2xl overflow-hidden transition-all flex flex-col justify-between"
                       >
-                        {/* Image Preview Container */}
-                        <div className="relative aspect-square w-full bg-zinc-950 overflow-hidden">
+                        {/* Image Preview Container (100% visible, uncropped) */}
+                        <div className="relative aspect-square w-full bg-zinc-950 overflow-hidden flex items-center justify-center">
+                          {/* Ambient backdrop aura */}
+                          <img
+                            src={primaryImg?.thumbnailUrl || primaryImg?.url || "/placeholder-user.jpg"}
+                            alt=""
+                            aria-hidden="true"
+                            className="absolute inset-0 w-full h-full object-cover blur-xl opacity-35 scale-125 pointer-events-none"
+                          />
+                          {/* Uncropped foreground portrait */}
                           <img
                             src={primaryImg?.thumbnailUrl || primaryImg?.url || "/placeholder-user.jpg"}
                             alt={person.name}
-                            className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            className="relative z-10 max-h-full max-w-full object-contain p-2 group-hover:scale-105 transition-transform duration-300 drop-shadow-md"
                             onError={(e) => {
                               ;(e.target as HTMLImageElement).src = "/placeholder-user.jpg"
                             }}
@@ -691,11 +703,17 @@ export function CatalogExplorer({ isOpen, onClose }: CatalogExplorerProps) {
                           className="bg-zinc-900/40 border border-zinc-800 p-3 sm:p-4 rounded-2xl flex flex-col sm:flex-row gap-3 sm:gap-4 items-start justify-between"
                         >
                           <div className="flex gap-3 sm:gap-3.5 flex-1 min-w-0">
-                            <div className="relative w-16 h-16 sm:w-20 sm:h-20 bg-zinc-950 rounded-xl overflow-hidden flex-shrink-0 border border-zinc-800">
+                            <div className="relative w-16 h-16 sm:w-20 sm:h-20 bg-zinc-950 rounded-xl overflow-hidden flex-shrink-0 border border-zinc-800 flex items-center justify-center">
+                              <img
+                                src={img?.thumbnailUrl || "/placeholder-user.jpg"}
+                                alt=""
+                                aria-hidden="true"
+                                className="absolute inset-0 w-full h-full object-cover blur-md opacity-35 scale-125 pointer-events-none"
+                              />
                               <img
                                 src={img?.thumbnailUrl || "/placeholder-user.jpg"}
                                 alt={cand.name}
-                                className="w-full h-full object-cover"
+                                className="relative z-10 max-h-full max-w-full object-contain p-1"
                                 onError={(e) => {
                                   ;(e.target as HTMLImageElement).src = "/placeholder-user.jpg"
                                 }}

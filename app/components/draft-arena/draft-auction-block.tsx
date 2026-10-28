@@ -439,15 +439,26 @@ export function DraftAuctionBlock({
           <div className="grid grid-cols-1 md:grid-cols-12 gap-6 items-center">
             {/* Character / Celebrity Card with Verified Portrait */}
             <div className="md:col-span-5 flex flex-col items-center">
-              <div className="relative w-52 h-64 sm:w-60 sm:h-72 rounded-2xl overflow-hidden border-2 border-amber-500/40 shadow-2xl group bg-zinc-950">
+              <div className="relative w-56 h-72 sm:w-64 sm:h-80 md:w-72 md:h-88 rounded-2xl overflow-hidden border-2 border-amber-500/40 shadow-2xl group bg-zinc-950 flex items-center justify-center">
                 {!imageError && item.imageUrl ? (
-                  // eslint-disable-next-line @next/next/no-img-element
-                  <img
-                    src={item.imageUrl}
-                    alt={item.name}
-                    onError={() => setImageError(true)}
-                    className="w-full h-full object-cover transition duration-500 group-hover:scale-105"
-                  />
+                  <>
+                    {/* Ambient Background Aura */}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={item.imageUrl}
+                      alt=""
+                      aria-hidden="true"
+                      className="absolute inset-0 w-full h-full object-cover blur-2xl opacity-40 scale-125 pointer-events-none transition-opacity duration-300"
+                    />
+                    {/* High-Resolution Uncropped Foreground */}
+                    {/* eslint-disable-next-line @next/next/no-img-element */}
+                    <img
+                      src={item.imageUrl}
+                      alt={item.name}
+                      onError={() => setImageError(true)}
+                      className="relative z-10 max-h-full max-w-full object-contain p-2 drop-shadow-2xl transition duration-500 group-hover:scale-105"
+                    />
+                  </>
                 ) : (
                   <div className="w-full h-full bg-gradient-to-br from-indigo-950/60 via-zinc-900 to-zinc-950 flex flex-col items-center justify-center p-4 text-center space-y-2 border border-indigo-500/20">
                     <div className="w-16 h-16 rounded-2xl bg-indigo-500/20 border border-indigo-500/40 flex items-center justify-center text-indigo-300 text-3xl shadow-lg">

@@ -2,6 +2,7 @@ import fs from "node:fs"
 import path from "node:path"
 import { getDb } from "./db"
 import { normalizePersonName } from "./duplicate-detector"
+import { A_PLUS_SCIENTISTS, A_PLUS_HISTORY } from "./expanded-dataset"
 
 export interface Seed32kRecord {
   id: string
@@ -104,13 +105,22 @@ export function seed32kCatalog(options: {
     db.exec("BEGIN TRANSACTION;")
 
     for (const item of chunk) {
-      // Filter rule: Keep ALL scientists and history; remove anyone under minPopularity for other categories
-      const isExempt = item.category === "scientists" || item.category === "history"
-      if (!isExempt && (item.popularity || 0) < minPopThreshold) {
-        continue
-      }
-
       const normName = normalizePersonName(item.name)
+
+      // Strict A-Tier / Popularity Rule:
+      // 1. Scientists: keep ONLY A+ tier household names
+      // 2. History: keep ONLY A+ tier household names
+      // 3. Writers & Artists: keep only high popularity (>= 120) household icons
+      // 4. Other categories: keep only popular figures (>= minPopThreshold)
+      if (item.category === "scientists") {
+        if (!A_PLUS_SCIENTISTS.includes(normName)) continue
+      } else if (item.category === "history") {
+        if (!A_PLUS_HISTORY.includes(normName)) continue
+      } else if (item.category === "writers" || item.category === "artists") {
+        if ((item.popularity || 0) < 120) continue
+      } else {
+        if ((item.popularity || 0) < minPopThreshold) continue
+      }
       const existing = findExisting.get(normName) as any
 
       let targetPersonId = `p_${item.id}`

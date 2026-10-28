@@ -9,6 +9,9 @@ export type KMKCategory =
   | "singers"
   | "popstars" 
   | "athletes"
+  | "f1"
+  | "combat"
+  | "wwe"
   | "scientists"
   | "history"
   | "tech"
@@ -21,6 +24,7 @@ export type KMKCategory =
   | "creators"
   | "models"
   | "icons"
+  | "viral"
 
 const FLAVOR_SCENARIOS = [
   "",
@@ -56,6 +60,9 @@ export function generateKMKQuestions(
       if (filtered.length >= 3) {
         pool = filtered
       }
+    } else {
+      // Exclude scientists and history by default in 'all'
+      pool = pool.filter((c) => c.category !== "scientists" && c.category !== "history")
     }
   }
 

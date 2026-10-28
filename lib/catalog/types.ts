@@ -13,6 +13,11 @@ export type Category =
   | "creators"
   | "glamour"
   | "adultstars"
+  | "onlyfans"
+  | "f1"
+  | "combat"
+  | "wwe"
+  | "viral"
   | "history"
   | "writers"
   | "artists"
@@ -149,6 +154,7 @@ export interface CatalogSearchParams {
   sortOrder?: "asc" | "desc"
   page?: number
   limit?: number
+  includeHistoricalOrScientific?: boolean
 }
 
 export interface PaginatedResult<T> {

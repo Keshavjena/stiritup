@@ -50,6 +50,10 @@ const THEME_ICONS: Record<string, React.ReactNode> = {
   luxury: <Crown className="w-5 h-5 text-teal-400" />,
   anime: <Zap className="w-5 h-5 text-pink-400" />,
   starships: <Rocket className="w-5 h-5 text-cyan-400" />,
+  creators: <Tv className="w-5 h-5 text-purple-400" />,
+  combat: <Flame className="w-5 h-5 text-red-400" />,
+  f1: <Car className="w-5 h-5 text-red-500" />,
+  glamour: <Sparkles className="w-5 h-5 text-rose-400" />,
   custom: <Sparkles className="w-5 h-5 text-amber-300" />
 }
 
@@ -63,6 +67,10 @@ const THEME_GRADIENTS: Record<string, string> = {
   luxury: "from-teal-950/60 to-zinc-950 border-teal-500/30 hover:border-teal-500/60",
   anime: "from-pink-950/60 to-zinc-950 border-pink-500/30 hover:border-pink-500/60",
   starships: "from-cyan-950/60 to-zinc-950 border-cyan-500/30 hover:border-cyan-500/60",
+  creators: "from-purple-950/60 to-zinc-950 border-purple-500/30 hover:border-purple-500/60",
+  combat: "from-red-950/60 to-zinc-950 border-red-500/30 hover:border-red-500/60",
+  f1: "from-rose-950/60 to-zinc-950 border-rose-500/30 hover:border-rose-500/60",
+  glamour: "from-rose-950/60 to-zinc-950 border-pink-500/30 hover:border-pink-500/60",
   custom: "from-zinc-900 to-zinc-950 border-zinc-700 hover:border-amber-400/60"
 }
 

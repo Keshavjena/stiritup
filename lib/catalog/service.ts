@@ -18,7 +18,7 @@ import {
   PLACEHOLDER_IMAGE_URL
 } from "./providers/wikimedia"
 import { FEMALE_CELEBRITIES, MALE_CELEBRITIES } from "../game-data/celebrities"
-import { EXPANDED_PERSONALITIES } from "./expanded-dataset"
+import { EXPANDED_PERSONALITIES, A_PLUS_SCIENTISTS, A_PLUS_HISTORY } from "./expanded-dataset"
 import { seed32kCatalog } from "./seed-32k"
 import crypto from "node:crypto"
 
@@ -114,8 +114,8 @@ export function seedInitialCatalog(): { seeded: number; existing: number } {
   const insertPerson = db.prepare(`
     INSERT INTO people (
       id, name, normalized_name, gender, category, tags, primary_image_id,
-      provider, external_id, description, aliases, moderation_status, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      provider, external_id, description, aliases, popularity, moderation_status, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `)
 
   const insertImage = db.prepare(`
@@ -151,6 +151,7 @@ export function seedInitialCatalog(): { seeded: number; existing: number } {
       `seed_${norm.replace(/\s+/g, "_")}`,
       `${celeb.category.toUpperCase()} personality`,
       JSON.stringify(aliases),
+      95,
       "approved",
       now,
       now
@@ -197,8 +198,8 @@ export function seedExpandedPersonalities(): { added: number; existing: number }
   const insertPerson = db.prepare(`
     INSERT INTO people (
       id, name, normalized_name, gender, category, tags, primary_image_id,
-      provider, external_id, description, aliases, moderation_status, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      provider, external_id, description, aliases, popularity, moderation_status, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `)
   const insertImage = db.prepare(`
     INSERT INTO person_images (
@@ -215,10 +216,15 @@ export function seedExpandedPersonalities(): { added: number; existing: number }
     const { baseName, aliases } = extractBaseNameAndAliases(person.name)
     const norm = normalizePersonName(baseName)
     const existing = checkStmt.get(norm)
-    if (existing) continue
+    if (existing) {
+      db.prepare("UPDATE people SET popularity = MAX(COALESCE(popularity, 0), ?), category = COALESCE(?, category) WHERE id = ?")
+        .run(person.popularity || 95, person.category, (existing as any).id)
+      continue
+    }
 
     const personId = generateId("p_exp")
     const imageId = generateId("img_exp")
+    const personImageUrl = person.imageUrl || PLACEHOLDER_IMAGE_URL
 
     insertPerson.run(
       personId,
@@ -232,6 +238,7 @@ export function seedExpandedPersonalities(): { added: number; existing: number }
       `exp_${norm.replace(/\s+/g, "_")}`,
       person.description,
       JSON.stringify(aliases),
+      person.popularity || 95,
       "approved",
       now,
       now
@@ -240,11 +247,11 @@ export function seedExpandedPersonalities(): { added: number; existing: number }
     insertImage.run(
       imageId,
       personId,
-      PLACEHOLDER_IMAGE_URL,
-      PLACEHOLDER_IMAGE_URL,
+      personImageUrl,
+      personImageUrl,
       "local",
       `exp_img_${norm.replace(/\s+/g, "_")}`,
-      PLACEHOLDER_IMAGE_URL,
+      personImageUrl,
       "Public Domain / Expanded Seed",
       null,
       "Stir It Up Expanded Catalog",
@@ -323,8 +330,8 @@ export function bulkAddPersons(input: {
   const insertPerson = db.prepare(`
     INSERT INTO people (
       id, name, normalized_name, gender, category, tags, primary_image_id,
-      provider, external_id, description, aliases, moderation_status, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      provider, external_id, description, aliases, popularity, moderation_status, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `)
 
   const insertImage = db.prepare(`
@@ -383,6 +390,7 @@ export function bulkAddPersons(input: {
       `custom_${norm.replace(/\s+/g, "_")}`,
       `Custom added personality: ${baseName}`,
       JSON.stringify(aliases),
+      95,
       "approved",
       now,
       now
@@ -438,17 +446,36 @@ export function getPeople(params: CatalogSearchParams = {}): PaginatedResult<Per
 
   if (params.category && params.category !== "all") {
     const cat = params.category.toLowerCase().trim()
-    if (cat === "adultstars" || cat === "glamour") {
-      whereClauses.push("p.category IN ('glamour', 'adultstars')")
+    if (cat === "adultstars" || cat === "glamour" || cat === "onlyfans" || cat === "models") {
+      whereClauses.push("p.category IN ('glamour', 'adultstars', 'onlyfans', 'models')")
     } else if (cat === "popstars" || cat === "singers") {
       whereClauses.push("p.category IN ('singers', 'popstars')")
     } else if (cat === "fantasy" || cat === "anime" || cat === "gaming") {
       whereClauses.push("p.category IN ('fantasy', 'anime', 'gaming')")
     } else if (cat === "hollywood" || cat === "actors") {
       whereClauses.push("p.category IN ('hollywood', 'actors')")
+    } else if (cat === "creators" || cat === "youtubers" || cat === "influencers") {
+      whereClauses.push("p.category IN ('creators', 'youtubers', 'influencers')")
+    } else if (cat === "f1" || cat === "racing") {
+      whereClauses.push("(p.category IN ('f1', 'racing') OR p.tags LIKE '%f1%' OR p.tags LIKE '%formula-1%' OR p.tags LIKE '%formula-one%' OR p.tags LIKE '%racing%')")
+    } else if (cat === "combat" || cat === "ufc" || cat === "mma") {
+      whereClauses.push("(p.category IN ('combat', 'ufc', 'mma') OR p.tags LIKE '%ufc%' OR p.tags LIKE '%mma%' OR p.tags LIKE '%martial-arts%' OR p.tags LIKE '%boxer%' OR p.tags LIKE '%boxing%')")
+    } else if (cat === "wwe" || cat === "wrestling") {
+      whereClauses.push("(p.category IN ('wwe', 'wrestling') OR p.tags LIKE '%wwe%' OR p.tags LIKE '%wrestling%' OR p.tags LIKE '%wrestler%' OR p.name IN ('The Rock', 'John Cena', 'Roman Reigns', 'The Undertaker', 'Stone Cold Steve Austin', 'Cody Rhodes', 'Randy Orton', 'Brock Lesnar', 'Rhea Ripley', 'Becky Lynch', 'Triple H', 'CM Punk', 'Hulk Hogan', 'Seth Rollins'))")
+    } else if (cat === "athletes" || cat === "sports") {
+      whereClauses.push("p.category IN ('athletes', 'f1', 'combat', 'wwe')")
+    } else if (cat === "scientists") {
+      whereClauses.push("p.category = 'scientists'")
+    } else if (cat === "history") {
+      whereClauses.push("p.category = 'history'")
     } else {
       whereClauses.push("p.category = ?")
       queryParams.push(cat)
+    }
+  } else {
+    // By default for 'all' / unspecified: exclude scientists and history (only include when clicked explicitly)
+    if (!params.includeHistoricalOrScientific) {
+      whereClauses.push("p.category NOT IN ('scientists', 'history')")
     }
   }
 
@@ -1022,9 +1049,10 @@ export function checkPersonAnswer(guess: string, person: Person): boolean {
 }
 
 /**
- * Permanently prunes unpopular figures from the catalog:
- * Preserves ALL figures in 'scientists' and 'history',
- * and removes figures with popularity < minPopularity (default 40) across all other categories.
+ * Permanently prunes unpopular and obscure figures from the catalog:
+ * - Keeps ONLY A+ tier figures in 'scientists' and 'history',
+ * - Removes obscure 'writers' and 'artists' (popularity < 120),
+ * - Removes non-famous figures with popularity < minPopularity (default 40) across other categories.
  */
 export function pruneUnpopularCatalog(options: { minPopularity?: number } = {}): {
   deletedPeople: number
@@ -1035,6 +1063,9 @@ export function pruneUnpopularCatalog(options: { minPopularity?: number } = {}):
   const db = getDb()
   const minPop = typeof options.minPopularity === "number" ? options.minPopularity : 40
 
+  const placeholdersSci = A_PLUS_SCIENTISTS.map(() => "?").join(",")
+  const placeholdersHist = A_PLUS_HISTORY.map(() => "?").join(",")
+
   db.exec("BEGIN TRANSACTION;")
   try {
     // 1. Delete associated images first
@@ -1042,17 +1073,21 @@ export function pruneUnpopularCatalog(options: { minPopularity?: number } = {}):
       DELETE FROM person_images
       WHERE person_id IN (
         SELECT id FROM people
-        WHERE category NOT IN ('scientists', 'history')
-          AND (popularity < ? OR popularity IS NULL)
+        WHERE (category = 'scientists' AND normalized_name NOT IN (${placeholdersSci}))
+           OR (category = 'history' AND normalized_name NOT IN (${placeholdersHist}))
+           OR (category IN ('writers', 'artists') AND (popularity < 120 OR popularity IS NULL))
+           OR (category NOT IN ('scientists', 'history', 'writers', 'artists') AND (popularity < ? OR popularity IS NULL))
       )
-    `).run(minPop)
+    `).run(...A_PLUS_SCIENTISTS, ...A_PLUS_HISTORY, minPop)
 
     // 2. Delete people
     const peopleDeleteRes = db.prepare(`
       DELETE FROM people
-      WHERE category NOT IN ('scientists', 'history')
-        AND (popularity < ? OR popularity IS NULL)
-    `).run(minPop)
+      WHERE (category = 'scientists' AND normalized_name NOT IN (${placeholdersSci}))
+         OR (category = 'history' AND normalized_name NOT IN (${placeholdersHist}))
+         OR (category IN ('writers', 'artists') AND (popularity < 120 OR popularity IS NULL))
+         OR (category NOT IN ('scientists', 'history', 'writers', 'artists') AND (popularity < ? OR popularity IS NULL))
+    `).run(...A_PLUS_SCIENTISTS, ...A_PLUS_HISTORY, minPop)
 
     db.exec("COMMIT;")
 

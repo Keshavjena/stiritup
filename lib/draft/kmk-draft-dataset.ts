@@ -602,6 +602,458 @@ export const ATHLETE_POOL: KMKPersonalityItem[] = [
   }
 ]
 
+export const CREATOR_POOL: KMKPersonalityItem[] = [
+  {
+    id: "crt_mrbeast",
+    name: "MrBeast",
+    category: "YouTube Kingpin",
+    subtitle: "300M+ Subscribers / Philanthropy Titan",
+    description: "Jimmy Donaldson, undisputed king of digital video production, massive prize giveaways, and viral philanthropy.",
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/MrBeast_2023_%28cropped%29.jpg/440px-MrBeast_2023_%28cropped%29.jpg",
+    baseValuation: 30,
+    stats: { Reach: 100, Production: 100, Virality: 100, Budget: 99, OVR: 99 },
+    tags: ["YouTube", "MrBeast", "Creator", "Viral"]
+  },
+  {
+    id: "crt_speed",
+    name: "IShowSpeed",
+    category: "Chaos Energy Streamer",
+    subtitle: "Darren Watkins Jr / Global Phenomenon",
+    description: "Explosive live streaming sensation, premier CR7 enthusiast, and viral world traveler with unmatched raw energy.",
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a4/IShowSpeed_at_the_2024_Ballon_d%27Or.jpg/440px-IShowSpeed_at_the_2024_Ballon_d%27Or.jpg",
+    baseValuation: 27,
+    stats: { Energy: 100, Virality: 99, Entertainment: 98, Unpredictability: 100, OVR: 97 },
+    tags: ["Speed", "Streamer", "YouTube", "Viral"]
+  },
+  {
+    id: "crt_kai",
+    name: "Kai Cenat",
+    category: "Twitch Record Breaker",
+    subtitle: "2x Streamer of the Year / AMP",
+    description: "All-time Twitch subathon record holder, high-energy cultural tastemaker, and host of A-list celebrity live streams.",
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Kai_Cenat_2024_%28cropped%29.jpg/440px-Kai_Cenat_2024_%28cropped%29.jpg",
+    baseValuation: 28,
+    stats: { Charisma: 99, StarPower: 98, Community: 100, Clout: 98, OVR: 98 },
+    tags: ["Twitch", "AMP", "KaiCenat", "Subathon"]
+  },
+  {
+    id: "crt_pewdiepie",
+    name: "PewDiePie",
+    category: "OG Gaming Emperor",
+    subtitle: "Felix Kjellberg / 111M Subscribers",
+    description: "Legendary Swedish creator who pioneered modern YouTube gaming culture and led the platform for over a decade.",
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/05/PewDiePie_at_PAX_2015.jpg/440px-PewDiePie_at_PAX_2015.jpg",
+    baseValuation: 26,
+    stats: { Longevity: 100, Loyalty: 99, Humour: 96, Influence: 98, OVR: 97 },
+    tags: ["PewDiePie", "OG", "Gaming", "YouTube"]
+  },
+  {
+    id: "crt_loganpaul",
+    name: "Logan Paul",
+    category: "PRIME & Combat Mogul",
+    subtitle: "WWE US Champion / Impaulsive",
+    description: "Multi-hyphenate viral pioneer, WWE high-flyer, Impaulsive podcast host, and billionaire beverage co-founder.",
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Logan_Paul_March_2020.jpg/440px-Logan_Paul_March_2020.jpg",
+    baseValuation: 26,
+    stats: { Marketing: 99, Athleticism: 96, Controversy: 95, Clout: 96, OVR: 96 },
+    tags: ["LoganPaul", "PRIME", "WWE", "Impaulsive"]
+  },
+  {
+    id: "crt_ksi",
+    name: "KSI",
+    category: "Sidemen Commander",
+    subtitle: "JJ Olatunji / Music & Misfits Boxing",
+    description: "Leader of the British digital wave, chart-topping musician, YouTuber, and combat entertainer.",
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/04/KSI_at_the_2024_World_Athletics_Relays.jpg/440px-KSI_at_the_2024_World_Athletics_Relays.jpg",
+    baseValuation: 25,
+    stats: { Drive: 98, Showmanship: 97, Versatility: 98, Audience: 97, OVR: 96 },
+    tags: ["KSI", "Sidemen", "PRIME", "YouTube"]
+  },
+  {
+    id: "crt_xqc",
+    name: "xQc",
+    category: "The Juicer / Grindset",
+    subtitle: "Félix Lengyel / Kick & Twitch",
+    description: "Marathon 16-hour streaming powerhouse, Overwatch pro veteran, and twitch chat kingpin.",
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d1/XQc_at_TwitchCon_2022.jpg/440px-XQc_at_TwitchCon_2022.jpg",
+    baseValuation: 25,
+    stats: { Stamina: 100, Reactions: 98, Degeneracy: 99, Engagement: 97, OVR: 95 },
+    tags: ["xQc", "Juicer", "Twitch", "Kick"]
+  },
+  {
+    id: "crt_pokimane",
+    name: "Pokimane",
+    category: "First Lady of Twitch",
+    subtitle: "Imane Anys / OfflineTV",
+    description: "The most-followed female streamer in live streaming history and digital lifestyle entrepreneur.",
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5e/Pokimane_at_TwitchCon_2019.jpg/440px-Pokimane_at_TwitchCon_2019.jpg",
+    baseValuation: 24,
+    stats: { BrandSafety: 98, Community: 97, Consistency: 96, Longevity: 96, OVR: 94 },
+    tags: ["Pokimane", "Twitch", "Gaming", "Creator"]
+  },
+  {
+    id: "crt_charli",
+    name: "Charli D'Amelio",
+    category: "TikTok Pioneer",
+    subtitle: "150M+ Followers / Dance Icon",
+    description: "First creator to break 100M TikTok followers, redefining modern short-form virality and dance culture.",
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/75/Charli_D%27Amelio_2021.jpg/440px-Charli_D%27Amelio_2021.jpg",
+    baseValuation: 25,
+    stats: { Followers: 100, Virality: 98, Rhythm: 96, Appeal: 96, OVR: 95 },
+    tags: ["TikTok", "Charli", "Dance", "GenZ"]
+  },
+  {
+    id: "crt_rogan",
+    name: "Joe Rogan",
+    category: "Podcast Sovereign",
+    subtitle: "The Joe Rogan Experience / Spotify",
+    description: "Host of the world's most dominant audio broadcast, veteran UFC commentator, and stand-up comic.",
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/53/Joe_Rogan_2020.jpg/440px-Joe_Rogan_2020.jpg",
+    baseValuation: 29,
+    stats: { AudioInfluence: 100, Inquisitiveness: 98, UFCKnowledge: 97, Reach: 99, OVR: 98 },
+    tags: ["JRE", "Podcast", "UFC", "Spotify"]
+  }
+]
+
+export const COMBAT_POOL: KMKPersonalityItem[] = [
+  {
+    id: "cbt_conor",
+    name: "Conor McGregor",
+    category: "The Notorious",
+    subtitle: "First Simultaneous 2-Division UFC Champ",
+    description: "Combat sports cash king, devastating left hand, and razor-sharp psychological warfare maestro.",
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Conor_McGregor_2018.jpg/440px-Conor_McGregor_2018.jpg",
+    baseValuation: 30,
+    stats: { Striking: 99, TrashTalk: 100, StarPower: 100, LeftHand: 99, OVR: 99 },
+    tags: ["UFC", "ChampChamp", "MMA", "Notorious"]
+  },
+  {
+    id: "cbt_khabib",
+    name: "Khabib Nurmagomedov",
+    category: "The Eagle / 29-0",
+    subtitle: "Undefeated UFC Lightweight Champion",
+    description: "Mauler from Dagestan with suffocating sambo wrestling who never bled or lost a round in modern MMA.",
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5a/Khabib_Nurmagomedov_in_2018.jpg/440px-Khabib_Nurmagomedov_in_2018.jpg",
+    baseValuation: 29,
+    stats: { Grappling: 100, Pressure: 100, Smother: 100, Discipline: 99, OVR: 99 },
+    tags: ["UFC", "Undefeated", "Dagestan", "Eagle"]
+  },
+  {
+    id: "cbt_jonjones",
+    name: "Jon Jones",
+    category: "Octagon GOAT",
+    subtitle: "Heavyweight & Light Heavyweight Champion",
+    description: "Unprecedented fight IQ, creative oblique kicks, wrestling domination, and two-decade championship reign.",
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/Jon_Jones_2019.jpg/440px-Jon_Jones_2019.jpg",
+    baseValuation: 29,
+    stats: { FightIQ: 100, Range: 99, Versatility: 99, Ruthlessness: 98, OVR: 99 },
+    tags: ["UFC", "Bones", "GOAT", "Champion"]
+  },
+  {
+    id: "cbt_omalley",
+    name: "Sean O'Malley",
+    category: "Suga Sean",
+    subtitle: "UFC Bantamweight Champion / Sniper",
+    description: "Pinpoint distance management, walk-off right hand knockouts, and vibrant modern superstar flair.",
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7a/Sean_O%27Malley_2023.jpg/440px-Sean_O%27Malley_2023.jpg",
+    baseValuation: 26,
+    stats: { Accuracy: 99, Footwork: 98, Swag: 98, Speed: 96, OVR: 96 },
+    tags: ["UFC", "Suga", "Knockout", "Sniper"]
+  },
+  {
+    id: "cbt_pereira",
+    name: "Alex Pereira",
+    category: "Poatan / Chama",
+    subtitle: "2-Division UFC Champion & Glory Kickboxing Champ",
+    description: "Stone-faced left-hook assassin who conquered middleweight and light heavyweight with ancient power.",
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Alex_Pereira_2023.jpg/440px-Alex_Pereira_2023.jpg",
+    baseValuation: 28,
+    stats: { Power: 100, LeftHook: 100, LowKicks: 99, Aura: 99, OVR: 98 },
+    tags: ["UFC", "Poatan", "Chama", "Kickboxing"]
+  },
+  {
+    id: "cbt_therock",
+    name: "The Rock",
+    category: "The People's Champion",
+    subtitle: "Dwayne Johnson / Most Electrifying Man",
+    description: "The People's Eyebrow, Rock Bottom, unmatched microphone dominance, and global Hollywood alpha.",
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/11/Dwayne_%22The_Rock%22_Johnson_Visits_the_Pentagon_%28cropped%29.jpg/440px-Dwayne_%22The_Rock%22_Johnson_Visits_the_Pentagon_%28cropped%29.jpg",
+    baseValuation: 29,
+    stats: { MicSkills: 100, Electricity: 100, Charisma: 100, Presence: 100, OVR: 99 },
+    tags: ["WWE", "TheRock", "AttitudeEra", "Hollywood"]
+  },
+  {
+    id: "cbt_johncena",
+    name: "John Cena",
+    category: "16x World Champion",
+    subtitle: "Hustle, Loyalty, Respect / Big Match John",
+    description: "Franchise standard-bearer who headlined WrestleMania across decades with unbreakable championship resolve.",
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/60/John_Cena_July_2018.jpg/440px-John_Cena_July_2018.jpg",
+    baseValuation: 28,
+    stats: { Clutch: 99, Resilience: 100, Strength: 98, PopCulture: 99, OVR: 98 },
+    tags: ["WWE", "JohnCena", "16xChamp", "NeverGiveUp"]
+  },
+  {
+    id: "cbt_romanreigns",
+    name: "Roman Reigns",
+    category: "The Tribal Chief",
+    subtitle: "Head of the Table / 1,316 Day Champion",
+    description: "Leader of The Bloodline who carried WWE through a historic multi-year undefeated championship reign.",
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/36/Roman_Reigns_Tribute_to_the_Troops_2016.jpg/440px-Roman_Reigns_Tribute_to_the_Troops_2016.jpg",
+    baseValuation: 28,
+    stats: { Dominance: 99, Aura: 100, Spear: 98, Durability: 98, OVR: 98 },
+    tags: ["WWE", "Bloodline", "TribalChief", "AcknowledgeMe"]
+  },
+  {
+    id: "cbt_undertaker",
+    name: "The Undertaker",
+    category: "The Deadman / 21-0",
+    subtitle: "Phenom of WrestleMania",
+    description: "Three-decade supernatural locker room general, Tombstone Piledriver master, and greatest gimmick in history.",
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/The_Undertaker_in_April_2014.jpg/440px-The_Undertaker_in_April_2014.jpg",
+    baseValuation: 27,
+    stats: { TheStreak: 100, Intimidation: 100, Tombstone: 99, Loyalty: 99, OVR: 98 },
+    tags: ["WWE", "Undertaker", "Deadman", "WrestleMania"]
+  },
+  {
+    id: "cbt_tyson",
+    name: "Mike Tyson",
+    category: "Iron Mike",
+    subtitle: "Youngest Heavyweight Champion in History",
+    description: "Ferocious peek-a-boo style, thunderous combinations, and the most feared heavyweight aura ever seen.",
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e1/Mike_Tyson_2019_by_Glenn_Francis.jpg/440px-Mike_Tyson_2019_by_Glenn_Francis.jpg",
+    baseValuation: 28,
+    stats: { KnockoutPower: 100, Speed: 98, Intimidation: 100, HeadMovement: 97, OVR: 98 },
+    tags: ["Boxing", "Tyson", "IronMike", "Heavyweight"]
+  }
+]
+
+export const F1_POOL: KMKPersonalityItem[] = [
+  {
+    id: "f1_verstappen",
+    name: "Max Verstappen",
+    category: "4x World Champion",
+    subtitle: "Red Bull Racing / Dutch Maestro",
+    description: "Record 19 wins in a single season, ice-cold racecraft, relentless consistency, and devastating pace.",
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/77/Max_Verstappen_2024.jpg/440px-Max_Verstappen_2024.jpg",
+    baseValuation: 30,
+    stats: { Racecraft: 100, Pace: 100, Overtaking: 99, MentalStrength: 99, OVR: 99 },
+    tags: ["F1", "Champion", "RedBull", "Dutch"]
+  },
+  {
+    id: "f1_hamilton",
+    name: "Lewis Hamilton",
+    category: "7x World Champion",
+    subtitle: "Most Wins & Poles in F1 History",
+    description: "103+ Grand Prix victories, qualifying king, wet weather god, and culturally transformative champion.",
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/18/Lewis_Hamilton_2022_Bahrain.jpg/440px-Lewis_Hamilton_2022_Bahrain.jpg",
+    baseValuation: 29,
+    stats: { Racecraft: 99, WetWeather: 100, TireCare: 99, Legacy: 100, OVR: 99 },
+    tags: ["F1", "Champion", "Mercedes", "Ferrari", "GOAT"]
+  },
+  {
+    id: "f1_leclerc",
+    name: "Charles Leclerc",
+    category: "Ferrari Golden Boy",
+    subtitle: "Monaco Grand Prix Winner",
+    description: "Scuderia Ferrari talisman with peerless one-lap qualifying speed and supreme street-circuit bravery.",
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/Charles_Leclerc_2024.jpg/440px-Charles_Leclerc_2024.jpg",
+    baseValuation: 27,
+    stats: { OneLapPace: 100, Braking: 98, Passion: 99, Reflexes: 97, OVR: 97 },
+    tags: ["F1", "Ferrari", "Monaco", "PolePosition"]
+  },
+  {
+    id: "f1_norris",
+    name: "Lando Norris",
+    category: "McLaren Striker",
+    subtitle: "Race Winner / British Star",
+    description: "McLaren franchise driver combining fearless racecraft with massive fan appeal and modern racing speed.",
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/2f/Lando_Norris_2024.jpg/440px-Lando_Norris_2024.jpg",
+    baseValuation: 26,
+    stats: { Speed: 97, Consistency: 96, WheelToWheel: 96, TyreSaving: 95, OVR: 96 },
+    tags: ["F1", "McLaren", "Norris", "Britain"]
+  },
+  {
+    id: "f1_alonso",
+    name: "Fernando Alonso",
+    category: "El Nano / 2x Champ",
+    subtitle: "Aston Martin / Ageless Master",
+    description: "Two-time F1 World Champion, master tactician, legendary race starter, and 400+ Grand Prix veteran.",
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Fernando_Alonso_2023.jpg/440px-Fernando_Alonso_2023.jpg",
+    baseValuation: 26,
+    stats: { RaceStarts: 100, Defending: 100, Adaptability: 99, Grit: 100, OVR: 97 },
+    tags: ["F1", "Alonso", "AstonMartin", "Legend"]
+  },
+  {
+    id: "f1_senna",
+    name: "Ayrton Senna",
+    category: "Brazilian Rain God",
+    subtitle: "3x World Champion / Monaco Master",
+    description: "Spiritual qualifying genius, 6 Monaco GP wins, and the most revered raw driver in motorsport history.",
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/38/Ayrton_Senna_8_%28cropped%29.jpg/440px-Ayrton_Senna_8_%28cropped%29.jpg",
+    baseValuation: 29,
+    stats: { WetWeather: 100, RawSpeed: 100, Commitment: 100, Heart: 100, OVR: 99 },
+    tags: ["F1", "Senna", "Brazil", "McLaren", "Legend"]
+  },
+  {
+    id: "f1_schumacher",
+    name: "Michael Schumacher",
+    category: "The Red Baron",
+    subtitle: "7x World Champion / Ferrari Dynasty",
+    description: "Relentless German workhorse who redefined driver fitness, testing rigor, and won 5 straight titles with Ferrari.",
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Michael_Schumacher_2012.jpg/440px-Michael_Schumacher_2012.jpg",
+    baseValuation: 29,
+    stats: { Fitness: 100, Consistency: 100, Determination: 100, Dominance: 99, OVR: 99 },
+    tags: ["F1", "Ferrari", "Schumacher", "7xChampion"]
+  },
+  {
+    id: "f1_sainz",
+    name: "Carlos Sainz",
+    category: "Smooth Operator",
+    subtitle: "Ferrari / Williams Race Winner",
+    description: "Cerebral racing tactician, master of in-race strategy calls from the cockpit, and Grand Prix winner.",
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1a/Carlos_Sainz_Jr_2024.jpg/440px-Carlos_Sainz_Jr_2024.jpg",
+    baseValuation: 24,
+    stats: { StrategyIQ: 99, Composure: 97, Smoothness: 98, Precision: 95, OVR: 95 },
+    tags: ["F1", "Sainz", "SmoothOperator", "Ferrari"]
+  },
+  {
+    id: "f1_ricciardo",
+    name: "Daniel Ricciardo",
+    category: "The Honey Badger",
+    subtitle: "8x Grand Prix Winner / Shoey King",
+    description: "The late-braking divebomb specialist whose infectious smile and podium shoe celebrations charmed the world.",
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Daniel_Ricciardo_2024.jpg/440px-Daniel_Ricciardo_2024.jpg",
+    baseValuation: 24,
+    stats: { LateBraking: 99, Charisma: 100, Overtakes: 96, Charm: 99, OVR: 95 },
+    tags: ["F1", "Ricciardo", "HoneyBadger", "Shoey"]
+  },
+  {
+    id: "f1_russell",
+    name: "George Russell",
+    category: "Mercedes Precision",
+    subtitle: "Grand Prix Winner / Mr. Consistency",
+    description: "Laser-focused Mercedes factory pilot with textbook racecraft and immense wheel-to-wheel tenacity.",
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/George_Russell_2024.jpg/440px-George_Russell_2024.jpg",
+    baseValuation: 24,
+    stats: { Focus: 97, RawPace: 96, Defense: 96, WorkEthic: 97, OVR: 95 },
+    tags: ["F1", "Russell", "Mercedes", "Speed"]
+  }
+]
+
+export const GLAMOUR_POOL: KMKPersonalityItem[] = [
+  {
+    id: "glm_bhadbhabie",
+    name: "Bhad Bhabie",
+    category: "Record-Breaking Mogul",
+    subtitle: "Danielle Bregoli / $50M+ OnlyFans",
+    description: "Viral meme sensation who shattered creator economy records by generating $1M in six hours on OnlyFans.",
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/eb/Bhad_Bhabie_2018.png/440px-Bhad_Bhabie_2018.png",
+    baseValuation: 28,
+    stats: { Earnings: 100, Virality: 100, Clout: 98, Audacity: 98, OVR: 97 },
+    tags: ["OnlyFans", "Viral", "RecordBreaker", "Rap"]
+  },
+  {
+    id: "glm_corinna",
+    name: "Corinna Kopf",
+    category: "Top-Grossing Creator",
+    subtitle: "Vlog Squad / $60M+ OnlyFans Titan",
+    description: "Digital media star and gaming creator who built one of the highest-revenue subscription empires online.",
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Corinna_Kopf_2019.jpg/440px-Corinna_Kopf_2019.jpg",
+    baseValuation: 27,
+    stats: { Revenue: 100, Appeal: 98, SocialReach: 96, Engagement: 97, OVR: 97 },
+    tags: ["OnlyFans", "CorinnaKopf", "VlogSquad", "Model"]
+  },
+  {
+    id: "glm_amouranth",
+    name: "Amouranth",
+    category: "Livestream Mogul",
+    subtitle: "Kaitlyn Siragusa / Twitch & OnlyFans",
+    description: "Twitch hot-tub category pioneer, savvy real estate investor, gas station owner, and top creator earner.",
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/10/Amouranth_at_Streamer_Awards_2022.jpg/440px-Amouranth_at_Streamer_Awards_2022.jpg",
+    baseValuation: 28,
+    stats: { BusinessIQ: 99, WorkEthic: 100, Disruption: 99, Diversification: 98, OVR: 98 },
+    tags: ["OnlyFans", "Amouranth", "Twitch", "Business"]
+  },
+  {
+    id: "glm_belle",
+    name: "Belle Delphine",
+    category: "GamerGirl Icon",
+    subtitle: "Bath Water Troll & OnlyFans Mogul",
+    description: "Genius internet shock artist who created the iconic GamerGirl Bath Water meme and topped global subscription charts.",
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Belle_Delphine_2020.jpg/440px-Belle_Delphine_2020.jpg",
+    baseValuation: 26,
+    stats: { MemePower: 100, ShockValue: 100, Aesthetics: 97, Virality: 99, OVR: 97 },
+    tags: ["OnlyFans", "BathWater", "Meme", "Cosplay"]
+  },
+  {
+    id: "glm_mia",
+    name: "Mia Khalifa",
+    category: "Pop Culture Phenomenon",
+    subtitle: "Most Searched Star in History",
+    description: "Global viral superstar, media commentator, sports podcaster, and instantly recognizable pop figure.",
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/20/Mia_Khalifa_in_2019.jpg/440px-Mia_Khalifa_in_2019.jpg",
+    baseValuation: 28,
+    stats: { GlobalFame: 100, Recognizability: 100, Outspokenness: 97, MediaPresence: 96, OVR: 98 },
+    tags: ["AdultStar", "Viral", "PopCulture", "Icon"]
+  },
+  {
+    id: "glm_riley",
+    name: "Riley Reid",
+    category: "Hall of Fame Legend",
+    subtitle: "Multi-Time Performer of the Year",
+    description: "Industry hall of fame superstar with an unmatched filmography, multi-award sweep, and mainstream brand.",
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Riley_Reid_2017.jpg/440px-Riley_Reid_2017.jpg",
+    baseValuation: 27,
+    stats: { IndustryStatus: 100, Awards: 99, Popularity: 98, Charisma: 96, OVR: 97 },
+    tags: ["AdultStar", "HallOfFame", "AwardWinner", "Legend"]
+  },
+  {
+    id: "glm_lana",
+    name: "Lana Rhoades",
+    category: "Viral Sensation",
+    subtitle: "Podcaster / Model / 10M+ Followers",
+    description: "Historic video viewership record holder turned lifestyle model, podcaster, and viral internet figure.",
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e6/Lana_Rhoades_2017.jpg/440px-Lana_Rhoades_2017.jpg",
+    baseValuation: 26,
+    stats: { Views: 100, VisualAppeal: 99, SocialImpact: 96, Influence: 95, OVR: 96 },
+    tags: ["AdultStar", "Model", "Viral", "Podcast"]
+  },
+  {
+    id: "glm_angela",
+    name: "Angela White",
+    category: "Director & Hall of Famer",
+    subtitle: "Australian Entertainment Powerhouse",
+    description: "Multi-award-winning producer, director, and performer revered for championing high-end creator autonomy.",
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Angela_White_2019.jpg/440px-Angela_White_2019.jpg",
+    baseValuation: 26,
+    stats: { Directing: 98, IndustryRespect: 100, Longevity: 98, Production: 97, OVR: 96 },
+    tags: ["AdultStar", "Director", "HallOfFame", "Australia"]
+  },
+  {
+    id: "glm_eva",
+    name: "Eva Elfie",
+    category: "Global Gaming Idol",
+    subtitle: "Award Winner & Esports Host",
+    description: "International entertainment sensation, competitive esports ambassador, and digital creator with worldwide acclaim.",
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/67/Eva_Elfie_2022.jpg/440px-Eva_Elfie_2022.jpg",
+    baseValuation: 25,
+    stats: { GlobalAppeal: 98, GamingCulture: 97, Versatility: 95, Charm: 96, OVR: 95 },
+    tags: ["AdultStar", "Esports", "Viral", "Gamer"]
+  },
+  {
+    id: "glm_alix",
+    name: "Alix Earle",
+    category: "TikTok Lifestyle Queen",
+    subtitle: "Hot Mess Podcaster / GRWM Queen",
+    description: "Breakout digital tastemaker whose unfiltered 'Get Ready With Me' videos sell out products globally in seconds.",
+    imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/Alix_Earle_2023.jpg/440px-Alix_Earle_2023.jpg",
+    baseValuation: 26,
+    stats: { ConversionRate: 100, Authenticity: 98, Influence: 97, Trendsetting: 99, OVR: 96 },
+    tags: ["TikTok", "GRWM", "Influencer", "HotMess"]
+  }
+]
+
 /**
  * Maps theme ID to its respective pool
  */
@@ -613,7 +1065,16 @@ export const KMK_POOLS: Record<string, KMKPersonalityItem[]> = {
   popstars: POPSTAR_POOL,
   bollywood: BOLLYWOOD_POOL,
   athletes: ATHLETE_POOL,
-  "football-legends": ATHLETE_POOL
+  "football-legends": ATHLETE_POOL,
+  creators: CREATOR_POOL,
+  "content-creators": CREATOR_POOL,
+  combat: COMBAT_POOL,
+  "ufc-wwe": COMBAT_POOL,
+  f1: F1_POOL,
+  "f1-racing": F1_POOL,
+  glamour: GLAMOUR_POOL,
+  "onlyfans-glamour": GLAMOUR_POOL,
+  adultstars: GLAMOUR_POOL
 }
 
 /**

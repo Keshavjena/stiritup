@@ -124,8 +124,13 @@ export function generateKMKRounds(options: {
   }
 
   if (pool.length < 3) {
-    // If category pool is still too small, fallback to all approved people
-    const fallback = getPeople({ limit: 2000, moderationStatus: "approved", sortBy: "random" })
+    // If category pool is still too small, fallback with same category constraint
+    const fallback = getPeople({
+      category: options.category === "all" ? undefined : options.category,
+      limit: 2000,
+      moderationStatus: "approved",
+      sortBy: "random"
+    })
     pool = fallback.items.filter((p) => !excludeSet.has(p.id))
   }
 
@@ -239,7 +244,12 @@ export function generateWYRRounds(options: {
   }
 
   if (pool.length < 2) {
-    const fallback = getPeople({ limit: 2000, moderationStatus: "approved", sortBy: "random" })
+    const fallback = getPeople({
+      category: options.category === "all" ? undefined : options.category,
+      limit: 2000,
+      moderationStatus: "approved",
+      sortBy: "random"
+    })
     pool = fallback.items.filter((p) => !excludeSet.has(p.id))
   }
 

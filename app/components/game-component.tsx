@@ -1660,6 +1660,7 @@ export function GameComponent({
 
   // Determine active dynamic actions
   const isTurnPlayer = players[currentPlayer] === players[0] || isHost || !roomCode
+  const isImageGame = gameId === "kiss-marry-kill" || gameId === "would-you-rather"
 
   return (
     <div className="min-h-screen bg-neutral-950 text-zinc-100 font-sans selection:bg-zinc-800 selection:text-white flex flex-col justify-between py-3 sm:py-6 px-2 sm:px-4 pt-safe pb-safe overflow-x-hidden">
@@ -1691,7 +1692,9 @@ export function GameComponent({
         onClose={handleChugFinished}
       />
 
-      <div className="container mx-auto px-1 sm:px-6 relative z-10 flex-1 flex flex-col justify-between max-w-4xl w-full">
+      <div className={`container mx-auto px-1 sm:px-6 relative z-10 flex-1 flex flex-col justify-between w-full transition-all duration-300 ${
+        isImageGame ? "max-w-6xl" : "max-w-4xl"
+      }`}>
         {/* Mobile-Optimized Header */}
         <header className="flex items-center justify-between gap-2 mb-3 sm:mb-6 pt-1">
           <Button
@@ -1814,7 +1817,9 @@ export function GameComponent({
 
           {/* Kiss Marry Kill & Would You Rather Customizer Bar */}
           {(gameId === "kiss-marry-kill" || gameId === "would-you-rather") && (
-            <div className="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-3.5 max-w-3xl mx-auto w-full mb-1 space-y-2.5 shadow-xl">
+            <div className={`bg-zinc-900/40 border border-zinc-800 rounded-2xl p-3.5 mx-auto w-full mb-1 space-y-2.5 shadow-xl transition-all duration-300 ${
+              isImageGame ? "max-w-6xl" : "max-w-3xl"
+            }`}>
               <div className="flex flex-col sm:flex-row items-center justify-between gap-2 border-b border-zinc-800/80 pb-2">
                 <span className="text-[10px] font-extrabold uppercase tracking-widest text-amber-400 flex items-center gap-1.5">
                   <Sparkles className="w-3.5 h-3.5 text-amber-400" />
@@ -1865,17 +1870,19 @@ export function GameComponent({
                   <div className="flex overflow-x-auto pb-1 sm:pb-0 sm:flex-wrap gap-1 scrollbar-none touch-pan-x">
                     {[
                       { id: "all", label: "🌟 All" },
-                      { id: "scientists", label: "🔬 Scientists" },
-                      { id: "history", label: "🏛️ History" },
-                      { id: "bollywood", label: "🎬 Bollywood" },
                       { id: "hollywood", label: "📽️ Hollywood" },
-                      { id: "singers", label: "🎤 Singers" },
-                      { id: "athletes", label: "⚽ Athletes" },
-                      { id: "tech", label: "💻 Tech" },
-                      { id: "writers", label: "✍️ Writers" },
-                      { id: "artists", label: "🎨 Artists" },
-                      { id: "adultstars", label: "🌶️ Adult Stars (18+)" },
-                      { id: "fantasy", label: "⚔️ Fantasy" }
+                      { id: "bollywood", label: "🎬 Bollywood" },
+                      { id: "singers", label: "🎤 Singers & Pop" },
+                      { id: "creators", label: "📱 Creators & Influencers" },
+                      { id: "athletes", label: "⚽ Athletes & Sports" },
+                      { id: "f1", label: "🏎️ F1 Racing" },
+                      { id: "combat", label: "🥊 UFC & Combat" },
+                      { id: "wwe", label: "🤼 WWE Wrestling" },
+                      { id: "adultstars", label: "🌶️ OnlyFans & Glamour (18+)" },
+                      { id: "tech", label: "💻 Tech Icons" },
+                      { id: "fantasy", label: "⚔️ Fantasy & Anime" },
+                      { id: "scientists", label: "🔬 Scientists (A+)" },
+                      { id: "history", label: "🏛️ History (A+)" }
                     ].map((c) => (
                       <button
                         key={c.id}
@@ -1896,7 +1903,9 @@ export function GameComponent({
           )}
 
           {/* Game Question Card - ALWAYS SYNCHRONIZED FOR ALL PLAYERS */}
-          <div className="bg-zinc-900/20 border border-zinc-800 rounded-2xl p-6 sm:p-10 min-h-[240px] flex flex-col items-center justify-center text-center shadow-xl relative max-w-3xl mx-auto w-full overflow-hidden">
+          <div className={`bg-zinc-900/20 border border-zinc-800 rounded-2xl p-4 sm:p-8 min-h-[240px] flex flex-col items-center justify-center text-center shadow-xl relative mx-auto w-full overflow-hidden transition-all duration-300 ${
+            isImageGame ? "max-w-6xl" : "max-w-3xl"
+          }`}>
             {isLoading ? (
               <div className="flex flex-col items-center gap-2">
                 <span className="text-xs font-bold uppercase tracking-widest text-zinc-400 animate-pulse">Loading Question...</span>
@@ -1976,7 +1985,7 @@ export function GameComponent({
                     const isAllComplete = kmkSelections.kiss && kmkSelections.marry && kmkSelections.kill
 
                     return (
-                      <div className="mt-6 border-t border-zinc-900 pt-5 w-full max-w-4xl mx-auto space-y-4">
+                      <div className="mt-6 border-t border-zinc-900 pt-5 w-full mx-auto space-y-4">
                         {hasImageCards ? (
                           /* Image-Backed 3-Card KMK Presentation */
                           <KMKImageCards
@@ -2240,7 +2249,9 @@ export function GameComponent({
 
           {/* Quick Sip Tracker / Drink Logger (View-Only Badges + Chug Trigger) */}
           {matureContent && (
-            <div className="bg-zinc-900/20 border border-zinc-800 rounded-2xl p-4 max-w-3xl mx-auto w-full mt-1 text-center">
+            <div className={`bg-zinc-900/20 border border-zinc-800 rounded-2xl p-4 mx-auto w-full mt-1 text-center transition-all duration-300 ${
+              isImageGame ? "max-w-6xl" : "max-w-3xl"
+            }`}>
               <h4 className="text-[9px] font-bold uppercase tracking-wider mb-2.5 text-zinc-500 flex items-center justify-center gap-1.5">
                 <Beer className="w-3.5 h-3.5 text-amber-400" /> Sips Logged This Match
               </h4>

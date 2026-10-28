@@ -1,4 +1,5 @@
 import { DraftPreset } from "./types"
+import { CREATOR_POOL, COMBAT_POOL, F1_POOL, GLAMOUR_POOL } from "./kmk-draft-dataset"
 
 export const DRAFT_PRESETS: DraftPreset[] = [
   // 1. SUPERHEROES (KMK DATABASE: CREATE YOUR OWN SUPERHERO TEAM)
@@ -2686,6 +2687,130 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         tags: ["Heart", "Leverage", "DavyJones", "Relic"]
       }
     ]
+  },
+  // CONTENT CREATORS & STREAMERS
+  {
+    id: "content-creators",
+    title: "Draft Your Dream Content House",
+    name: "Draft Your Dream Content House",
+    description: "Build an unstoppable media empire of top YouTubers, Twitch subathon kings, and viral influencers.",
+    icon: "Tv",
+    theme: "creators",
+    currencySymbol: "💎",
+    currencyName: "Clout Credits",
+    startingBudget: 100,
+    minStartingBid: 1,
+    minBidIncrement: 1,
+    timerSeconds: 0,
+    nominationTimerSeconds: 0,
+    antiSnipingSeconds: 0,
+    rosterSlots: [
+      { id: "slot_anchor", name: "Main Channel Headliner", required: true, isWildcard: true },
+      { id: "slot_streamer", name: "Live Streamer / Grinder", required: true, isWildcard: true },
+      { id: "slot_viral", name: "Short-Form Virality", required: true, isWildcard: true },
+      { id: "slot_podcast", name: "Audio / Podcast Star", required: true, isWildcard: true },
+      { id: "slot_wildcard", name: "House Wildcard", required: true, isWildcard: true }
+    ],
+    scoringConfig: {
+      budgetBonusPerUnit: 0.6,
+      fullRosterBonus: 30,
+      synergyMultiplier: 10,
+      allowAudienceVoting: true
+    },
+    items: CREATOR_POOL
+  },
+  // UFC & WWE COMBAT TITANS
+  {
+    id: "ufc-wwe",
+    title: "Combat Titans: UFC & WWE Roster",
+    name: "Combat Titans: UFC & WWE Roster",
+    description: "Assemble the ultimate combat promotion drafting UFC undisputed champions and WWE WrestleMania headliners.",
+    icon: "Flame",
+    theme: "combat",
+    currencySymbol: "🏆",
+    currencyName: "Fight Purse",
+    startingBudget: 100,
+    minStartingBid: 1,
+    minBidIncrement: 1,
+    timerSeconds: 0,
+    nominationTimerSeconds: 0,
+    antiSnipingSeconds: 0,
+    rosterSlots: [
+      { id: "slot_mainevent", name: "Pay-Per-View Main Event", required: true, isWildcard: true },
+      { id: "slot_striker", name: "Striking / Knockout Artist", required: true, isWildcard: true },
+      { id: "slot_grappler", name: "Grappling / Ground Master", required: true, isWildcard: true },
+      { id: "slot_showman", name: "Mic General / Showman", required: true, isWildcard: true },
+      { id: "slot_wildcard", name: "Cage / Ring Enforcer", required: true, isWildcard: true }
+    ],
+    scoringConfig: {
+      budgetBonusPerUnit: 0.6,
+      fullRosterBonus: 30,
+      synergyMultiplier: 10,
+      allowAudienceVoting: true
+    },
+    items: COMBAT_POOL
+  },
+  // FORMULA 1 SPEED DEMONS
+  {
+    id: "f1-racing",
+    title: "Formula 1: Dream Constructor Grid",
+    name: "Formula 1: Dream Constructor Grid",
+    description: "Sign World Champions, qualifying masters, and fearless racecraft titans into your championship team.",
+    icon: "Car",
+    theme: "f1",
+    currencySymbol: "🏁",
+    currencyName: "Constructor Millions",
+    startingBudget: 100,
+    minStartingBid: 1,
+    minBidIncrement: 1,
+    timerSeconds: 0,
+    nominationTimerSeconds: 0,
+    antiSnipingSeconds: 0,
+    rosterSlots: [
+      { id: "slot_lead", name: "Lead Championship Driver", required: true, isWildcard: true },
+      { id: "slot_qualifying", name: "One-Lap Qualifying Specialist", required: true, isWildcard: true },
+      { id: "slot_rain", name: "Wet Weather Master", required: true, isWildcard: true },
+      { id: "slot_tactician", name: "Smooth Race Tactician", required: true, isWildcard: true },
+      { id: "slot_wildcard", name: "Reserve / Overtaking Gunner", required: true, isWildcard: true }
+    ],
+    scoringConfig: {
+      budgetBonusPerUnit: 0.6,
+      fullRosterBonus: 30,
+      synergyMultiplier: 10,
+      allowAudienceVoting: true
+    },
+    items: F1_POOL
+  },
+  // ONLYFANS & GLAMOUR STARS
+  {
+    id: "onlyfans-glamour",
+    title: "OnlyFans & Glamour Mega-Stars",
+    name: "OnlyFans & Glamour Mega-Stars",
+    description: "Draft top-earning subscription moguls, viral glamour queens, and entertainment trailblazers.",
+    icon: "Sparkles",
+    theme: "glamour",
+    currencySymbol: "💋",
+    currencyName: "VIP Tokens",
+    startingBudget: 100,
+    minStartingBid: 1,
+    minBidIncrement: 1,
+    timerSeconds: 0,
+    nominationTimerSeconds: 0,
+    antiSnipingSeconds: 0,
+    rosterSlots: [
+      { id: "slot_topgrossing", name: "Top-Grossing Headliner", required: true, isWildcard: true },
+      { id: "slot_viral", name: "Internet Virality Star", required: true, isWildcard: true },
+      { id: "slot_hof", name: "Industry Hall of Famer", required: true, isWildcard: true },
+      { id: "slot_crossover", name: "Mainstream Crossover", required: true, isWildcard: true },
+      { id: "slot_wildcard", name: "Glamour Wildcard", required: true, isWildcard: true }
+    ],
+    scoringConfig: {
+      budgetBonusPerUnit: 0.6,
+      fullRosterBonus: 30,
+      synergyMultiplier: 10,
+      allowAudienceVoting: true
+    },
+    items: GLAMOUR_POOL
   }
 ]
 
