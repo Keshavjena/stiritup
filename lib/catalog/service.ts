@@ -18,7 +18,7 @@ import {
   PLACEHOLDER_IMAGE_URL
 } from "./providers/wikimedia"
 import { FEMALE_CELEBRITIES, MALE_CELEBRITIES } from "../game-data/celebrities"
-import { EXPANDED_PERSONALITIES, A_PLUS_SCIENTISTS, A_PLUS_HISTORY } from "./expanded-dataset"
+import { EXPANDED_PERSONALITIES } from "./expanded-dataset"
 import { seed32kCatalog } from "./seed-32k"
 import crypto from "node:crypto"
 
@@ -464,19 +464,13 @@ export function getPeople(params: CatalogSearchParams = {}): PaginatedResult<Per
       whereClauses.push("(p.category IN ('wwe', 'wrestling') OR p.tags LIKE '%wwe%' OR p.tags LIKE '%wrestling%' OR p.tags LIKE '%wrestler%' OR p.name IN ('The Rock', 'John Cena', 'Roman Reigns', 'The Undertaker', 'Stone Cold Steve Austin', 'Cody Rhodes', 'Randy Orton', 'Brock Lesnar', 'Rhea Ripley', 'Becky Lynch', 'Triple H', 'CM Punk', 'Hulk Hogan', 'Seth Rollins'))")
     } else if (cat === "athletes" || cat === "sports") {
       whereClauses.push("p.category IN ('athletes', 'f1', 'combat', 'wwe')")
-    } else if (cat === "scientists") {
-      whereClauses.push("p.category = 'scientists'")
-    } else if (cat === "history") {
-      whereClauses.push("p.category = 'history'")
     } else {
       whereClauses.push("p.category = ?")
       queryParams.push(cat)
     }
   } else {
-    // By default for 'all' / unspecified: exclude scientists and history (only include when clicked explicitly)
-    if (!params.includeHistoricalOrScientific) {
-      whereClauses.push("p.category NOT IN ('scientists', 'history')")
-    }
+    // Pure pop-culture & entertainment catalog: always exclude intellectual/historical/niche categories
+    whereClauses.push("p.category NOT IN ('scientists', 'history', 'writers', 'artists', 'tech')")
   }
 
   if (params.gender && params.gender !== "all" && params.gender !== "mixed") {
@@ -1063,8 +1057,8 @@ export function pruneUnpopularCatalog(options: { minPopularity?: number } = {}):
   const db = getDb()
   const minPop = typeof options.minPopularity === "number" ? options.minPopularity : 40
 
-  const placeholdersSci = A_PLUS_SCIENTISTS.map(() => "?").join(",")
-  const placeholdersHist = A_PLUS_HISTORY.map(() => "?").join(",")
+  const forbidden = ["scientists", "history", "writers", "artists", "tech"]
+  const placeholders = forbidden.map(() => "?").join(",")
 
   db.exec("BEGIN TRANSACTION;")
   try {
@@ -1073,21 +1067,17 @@ export function pruneUnpopularCatalog(options: { minPopularity?: number } = {}):
       DELETE FROM person_images
       WHERE person_id IN (
         SELECT id FROM people
-        WHERE (category = 'scientists' AND normalized_name NOT IN (${placeholdersSci}))
-           OR (category = 'history' AND normalized_name NOT IN (${placeholdersHist}))
-           OR (category IN ('writers', 'artists') AND (popularity < 120 OR popularity IS NULL))
-           OR (category NOT IN ('scientists', 'history', 'writers', 'artists') AND (popularity < ? OR popularity IS NULL))
+        WHERE category IN (${placeholders})
+           OR (popularity < ? OR popularity IS NULL)
       )
-    `).run(...A_PLUS_SCIENTISTS, ...A_PLUS_HISTORY, minPop)
+    `).run(...forbidden, minPop)
 
     // 2. Delete people
     const peopleDeleteRes = db.prepare(`
       DELETE FROM people
-      WHERE (category = 'scientists' AND normalized_name NOT IN (${placeholdersSci}))
-         OR (category = 'history' AND normalized_name NOT IN (${placeholdersHist}))
-         OR (category IN ('writers', 'artists') AND (popularity < 120 OR popularity IS NULL))
-         OR (category NOT IN ('scientists', 'history', 'writers', 'artists') AND (popularity < ? OR popularity IS NULL))
-    `).run(...A_PLUS_SCIENTISTS, ...A_PLUS_HISTORY, minPop)
+      WHERE category IN (${placeholders})
+         OR (popularity < ? OR popularity IS NULL)
+    `).run(...forbidden, minPop)
 
     db.exec("COMMIT;")
 

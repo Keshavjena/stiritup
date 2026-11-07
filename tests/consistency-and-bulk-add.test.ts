@@ -10,24 +10,24 @@ test("Consistency, Expanded Catalog (100s/1000s) & Bulk Comma-Separated Values",
   resetDbForTesting()
   seedInitialCatalog()
 
-  await t.test("Catalog expands to hundreds of figures across scientists, tech, and anime", () => {
+  await t.test("Catalog expands to hundreds of figures across creators, popstars, and athletes", () => {
     const db = getDb()
     const countRow = db.prepare("SELECT count(*) as total FROM people").get() as any
     // Total should now be > 200 personalities!
     assert.ok(countRow.total >= 200, `Expected at least 200 personalities, got ${countRow.total}`)
 
-    // Check specific scientists and tech icons exist
-    const einstein = db.prepare("SELECT * FROM people WHERE normalized_name = 'albert einstein'").get() as any
-    assert.ok(einstein, "Albert Einstein should exist in catalog")
-    assert.equal(einstein.category, "scientists")
+    // Check specific popular creators and athletes exist
+    const mrbeast = db.prepare("SELECT * FROM people WHERE normalized_name = 'mrbeast'").get() as any
+    assert.ok(mrbeast, "MrBeast should exist in catalog")
+    assert.equal(mrbeast.category, "creators")
 
-    const curie = db.prepare("SELECT * FROM people WHERE normalized_name = 'marie curie'").get() as any
-    assert.ok(curie, "Marie Curie should exist in catalog")
-    assert.equal(curie.category, "scientists")
+    const ronaldo = db.prepare("SELECT * FROM people WHERE normalized_name = 'cristiano ronaldo'").get() as any
+    assert.ok(ronaldo, "Cristiano Ronaldo should exist in catalog")
+    assert.equal(ronaldo.category, "athletes")
 
-    const jobs = db.prepare("SELECT * FROM people WHERE normalized_name = 'steve jobs'").get() as any
-    assert.ok(jobs, "Steve Jobs should exist in catalog")
-    assert.equal(jobs.category, "tech")
+    const messi = db.prepare("SELECT * FROM people WHERE normalized_name = 'lionel messi'").get() as any
+    assert.ok(messi, "Lionel Messi should exist in catalog")
+    assert.equal(messi.category, "athletes")
   })
 
   await t.test("KMK and WYR generators draw from entire expanded pool with huge variety", () => {
@@ -47,14 +47,14 @@ test("Consistency, Expanded Catalog (100s/1000s) & Bulk Comma-Separated Values",
   })
 
   await t.test("bulkAddPersons adds comma-separated names and safely skips duplicates", () => {
-    // 1. Add fresh batch of comma-separated names
+    // 1. Add fresh batch of comma-separated names with existing celebrities
     const result1 = bulkAddPersons({
-      rawNames: "Nikola Tesla, J. Robert Oppenheimer, Ada Lovelace, Walter White, Heisenberg (Breaking Bad), Shrek",
-      category: "scientists",
+      rawNames: "MrBeast, Lionel Messi, Cristiano Ronaldo, Walter White, Heisenberg (Breaking Bad), Shrek",
+      category: "creators",
       addedBy: "PartyHost"
     })
 
-    // Tesla, Oppenheimer, Lovelace, Shrek, Walter White are already in expanded catalog,
+    // MrBeast, Messi, Ronaldo, Shrek, Walter White are already in catalog,
     // so they should be detected as duplicates and skipped!
     assert.ok(result1.skippedDuplicates.length >= 3, "Known names should be identified as duplicates")
 

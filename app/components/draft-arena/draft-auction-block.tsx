@@ -234,7 +234,7 @@ export function DraftAuctionBlock({
                         : "text-amber-300"
                     }`}
                   >
-                    {!isPostRound && <span className="w-1.5 h-1.5 rounded-full bg-amber-400 animate-ping" />}
+                    {!isPostRound && <span className="w-1.5 h-1.5 rounded-full bg-amber-400" />}
                     {isPostRound ? (phase === "sold" ? "✓ Sold" : "Passed") : "Active"}
                   </span>
                 ) : isCompleted ? (
@@ -262,7 +262,7 @@ export function DraftAuctionBlock({
         <div
           className={`sm:col-span-5 p-3.5 sm:p-4 rounded-2xl border transition-all flex items-center gap-3.5 shadow-lg ${
             isTensionTimer
-              ? "bg-gradient-to-r from-red-950/80 via-red-900/60 to-zinc-900 border-red-500 shadow-red-500/30 animate-pulse"
+              ? "bg-red-950/40 border-red-500/80 shadow-red-500/10"
               : "bg-[#0B0F17]/90 border-zinc-800"
           }`}
         >
@@ -271,18 +271,18 @@ export function DraftAuctionBlock({
               isUntimed
                 ? "bg-emerald-500/15 border-emerald-500/40 text-emerald-400"
                 : isTensionTimer
-                ? "bg-red-500 text-white border-red-300 shadow-lg shadow-red-500/50"
+                ? "bg-red-500 text-white border-red-300 shadow-md shadow-red-500/30"
                 : "bg-amber-500/15 border-amber-500/40 text-amber-400"
             }`}
           >
             {isUntimed ? (
-              <Activity className="w-6 h-6 animate-pulse text-emerald-400" />
+              <Activity className="w-6 h-6 text-emerald-400" />
             ) : (
               `${timeLeft}s`
             )}
           </div>
           <div>
-            <span className="text-[10px] font-extrabold tracking-widest uppercase text-zinc-400 block">
+            <span className="text-[10px] font-bold tracking-wider uppercase text-zinc-400 block">
               {isUntimed ? "Auction Pace" : "Auction Clock"}
             </span>
             <span

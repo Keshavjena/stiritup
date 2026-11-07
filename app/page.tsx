@@ -8,7 +8,21 @@ import { games } from "@/lib/game-data/games"
 import { GameRoom, RoomSettings } from "./components/game-room"
 import { GameComponent } from "./components/game-component"
 import { useSocket } from "@/hooks/useSocket"
-import { FlameIcon as Fire, Sparkles, UserPlus, Play, Trophy, Users, Clock, Compass } from "lucide-react"
+import { CatalogExplorer } from "./components/catalog-explorer"
+import {
+  FlameIcon as Fire,
+  Sparkles,
+  UserPlus,
+  Play,
+  Trophy,
+  Users,
+  Clock,
+  Compass,
+  BookOpen,
+  X,
+  ShieldCheck,
+  CheckCircle2
+} from "lucide-react"
 
 export default function Home() {
   const [currentView, setCurrentView] = useState<"home" | "setup" | "room" | "game">("home")
@@ -20,6 +34,9 @@ export default function Home() {
   const [isHost, setIsHost] = useState(false)
   const [matureContent, setMatureContent] = useState(true) // Default to spicy
   const [activeTab, setActiveTab] = useState<"all" | "classic" | "spicy" | "creative">("all")
+  const [isCatalogOpen, setIsCatalogOpen] = useState(false)
+  const [isRulesOpen, setIsRulesOpen] = useState(false)
+  const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [roomSettings, setRoomSettings] = useState<RoomSettings>({
     category: "all",
     gender: "female",
@@ -170,6 +187,15 @@ export default function Home() {
     }
   }
 
+  const startQuickPlay = () => {
+    const cleanName = playerName.trim() || "Player 1"
+    setPlayerName(cleanName)
+    setPlayers([cleanName, "Pass & Play"])
+    setIsHost(true)
+    setRoomCode("LOCAL")
+    setCurrentView("game")
+  }
+
   // Filter games based on tab
   const filteredGames = games.filter(game => {
     if (activeTab === "all") return true
@@ -244,11 +270,25 @@ export default function Home() {
             Stir It Up
           </h1>
         </div>
-        <div className="flex gap-1.5 sm:gap-2">
-          <Button variant="ghost" className="rounded-lg border border-zinc-800 hover:bg-zinc-900 hover:text-white text-zinc-400 font-bold uppercase text-[9px] tracking-wider px-2 sm:px-3 h-8 hidden sm:inline-flex">
+        <div className="flex items-center gap-1.5 sm:gap-2">
+          <Button
+            variant="ghost"
+            onClick={() => setIsRulesOpen(true)}
+            className="rounded-lg border border-zinc-800 hover:bg-zinc-900 hover:text-white text-zinc-400 font-bold uppercase text-[9px] tracking-wider px-2 sm:px-3 h-8 hidden sm:inline-flex"
+          >
             Rules
           </Button>
-          <Button className="rounded-lg bg-zinc-100 hover:bg-zinc-200 text-black font-bold uppercase text-[9px] tracking-wider px-2.5 sm:px-3 h-8 border-0">
+          <Button
+            variant="ghost"
+            onClick={() => setIsCatalogOpen(true)}
+            className="rounded-lg border border-zinc-800 hover:bg-zinc-900 hover:text-white text-zinc-400 font-bold uppercase text-[9px] tracking-wider px-2 sm:px-3 h-8 hidden sm:inline-flex"
+          >
+            Catalog
+          </Button>
+          <Button
+            onClick={() => setIsMenuOpen(true)}
+            className="rounded-lg bg-zinc-100 hover:bg-zinc-200 text-black font-bold uppercase text-[9px] tracking-wider px-2.5 sm:px-3 h-8 border-0"
+          >
             Menu
           </Button>
         </div>
@@ -264,8 +304,8 @@ export default function Home() {
             transition={{ duration: 0.6 }}
           >
             <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-zinc-900/80 border border-zinc-800 mb-4 backdrop-blur-sm">
-              <img src="/StirItUp.png" alt="Stir It Up" className="w-5 h-5 object-contain" />
-              <span className="text-[10px] font-black uppercase tracking-widest text-amber-400">Official Party Engine</span>
+              <span className="w-2 h-2 rounded-full bg-emerald-400"></span>
+              <span className="text-[10px] font-bold uppercase tracking-wider text-zinc-300">Live Party Lounge</span>
             </div>
             <h2 className="text-3xl xs:text-4xl sm:text-5xl lg:text-6xl font-extrabold tracking-tight uppercase mb-3 sm:mb-4 text-white leading-none">
               Stir up the vibe. <br/>
@@ -296,9 +336,12 @@ export default function Home() {
                 />
               </div>
               
-              <div className="flex gap-4">
-                <Button onClick={createRoom} className="flex-grow h-11 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-black font-bold uppercase tracking-wider text-xs border-0 transition-colors active:scale-98">
+              <div className="grid grid-cols-2 gap-2">
+                <Button onClick={createRoom} className="h-11 rounded-xl bg-zinc-100 hover:bg-zinc-200 text-black font-bold uppercase tracking-wider text-xs border-0 transition-colors active:scale-98">
                   Create Room
+                </Button>
+                <Button onClick={startQuickPlay} variant="outline" className="h-11 rounded-xl border-zinc-800 bg-zinc-900/60 hover:bg-zinc-850 text-zinc-200 font-bold uppercase tracking-wider text-xs transition-colors active:scale-98">
+                  Pass & Play
                 </Button>
               </div>
               
@@ -443,14 +486,14 @@ export default function Home() {
               </h2>
               <p className="text-xs text-zinc-400 mb-6 leading-relaxed">
                 Stir It Up contains adult party games, spicy dares, and drinking challenges. 
-                By entering, you confirm you are <strong className="text-amber-400">at least 18 years old</strong> and consent to viewing 18+ content. Please drink and playN0N-RESPONSIBLY (know your limits)!
+                By entering, you confirm you are <strong className="text-amber-400">at least 18 years old</strong> and consent to viewing 18+ content. Please drink responsibly and know your personal limits.
               </p>
               <div className="space-y-3">
                 <Button
                   onClick={handleConsent18}
-                  className="w-full h-12 bg-amber-500 hover:bg-amber-400 text-black font-extrabold uppercase tracking-wider text-xs rounded-xl border-0 shadow-lg shadow-amber-500/20 transition-all"
+                  className="w-full h-12 bg-amber-400 hover:bg-amber-300 text-black font-bold uppercase tracking-wider text-xs rounded-xl border-0 shadow-lg shadow-amber-500/20 transition-all"
                 >
-                  I am 18+ & I Agree 🍻
+                  Enter Party (18+)
                 </Button>
               </div>
             </motion.div>
@@ -458,6 +501,158 @@ export default function Home() {
         )}
       </AnimatePresence>
 
+      {/* Catalog Explorer Modal */}
+      <CatalogExplorer
+        isOpen={isCatalogOpen}
+        onClose={() => setIsCatalogOpen(false)}
+      />
+
+      {/* Rules & House Safety Modal */}
+      <RulesModal
+        isOpen={isRulesOpen}
+        onClose={() => setIsRulesOpen(false)}
+      />
+
+      {/* Quick Menu Sheet / Modal */}
+      <MenuModal
+        isOpen={isMenuOpen}
+        onClose={() => setIsMenuOpen(false)}
+        onOpenRules={() => {
+          setIsMenuOpen(false)
+          setIsRulesOpen(true)
+        }}
+        onOpenCatalog={() => {
+          setIsMenuOpen(false)
+          setIsCatalogOpen(true)
+        }}
+        onQuickPlay={() => {
+          setIsMenuOpen(false)
+          startQuickPlay()
+        }}
+      />
+
     </div>
+  )
+}
+
+function RulesModal({ isOpen, onClose }: { isOpen: boolean; onClose: () => void }) {
+  if (!isOpen) return null
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4"
+      >
+        <motion.div
+          initial={{ scale: 0.95, y: 15 }}
+          animate={{ scale: 1, y: 0 }}
+          exit={{ scale: 0.95, y: 15 }}
+          className="bg-zinc-950 border border-zinc-800 rounded-3xl max-w-lg w-full max-h-[85vh] flex flex-col shadow-2xl overflow-hidden"
+        >
+          <div className="flex items-center justify-between p-5 border-b border-zinc-800">
+            <div className="flex items-center gap-2">
+              <BookOpen className="w-5 h-5 text-amber-400" />
+              <h3 className="font-bold text-base uppercase tracking-tight text-white">Party Rules & Safety</h3>
+            </div>
+            <button
+              onClick={onClose}
+              className="p-1.5 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-900 transition"
+            >
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <div className="p-5 overflow-y-auto space-y-4 text-xs text-zinc-300 leading-relaxed">
+            <div className="p-3.5 rounded-xl bg-zinc-900/60 border border-zinc-800 space-y-1">
+              <span className="font-bold text-amber-400 uppercase tracking-wide block text-[11px]">House Rule #1: Personal Limits & Consent</span>
+              <p className="text-zinc-400 text-[11px] leading-relaxed">
+                Stir It Up is strictly 18+. Alcohol is completely optional — non-alcoholic drinks, water, or point systems count equally. Any player can freely pass on any question or dare without penalty.
+              </p>
+            </div>
+            <div>
+              <h4 className="font-bold text-white uppercase text-[11px] mb-2 tracking-wider">Game Flow Overview</h4>
+              <ul className="space-y-2.5 text-zinc-400 text-[11px]">
+                <li><strong className="text-zinc-200">Kiss, Marry, Kill:</strong> 3 distinct celebrities are presented on stage with uncropped portraits. The player or room assigns one Kiss, one Marry, and one Kill before revealing results.</li>
+                <li><strong className="text-zinc-200">Would You Rather:</strong> Two high-stakes options or celebrity dilemmas. Vote and see what percentage of the party agrees.</li>
+                <li><strong className="text-zinc-200">Draft Arena:</strong> Manage team budgets, bid on mystery lots or nominated stars, and build a winning 5-star franchise.</li>
+                <li><strong className="text-zinc-200">Never Have I Ever:</strong> Confess by putting a finger down or taking a sip if you have done the prompt.</li>
+                <li><strong className="text-zinc-200">Pass & Play:</strong> No multiple phones needed! Tap Pass & Play to run the entire party on a single phone.</li>
+              </ul>
+            </div>
+          </div>
+          <div className="p-4 border-t border-zinc-800 flex justify-end bg-zinc-950">
+            <Button onClick={onClose} className="bg-zinc-100 hover:bg-zinc-200 text-black font-bold uppercase tracking-wider text-xs px-5 h-9 rounded-xl">
+              Got It
+            </Button>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
+  )
+}
+
+function MenuModal({
+  isOpen,
+  onClose,
+  onOpenRules,
+  onOpenCatalog,
+  onQuickPlay
+}: {
+  isOpen: boolean
+  onClose: () => void
+  onOpenRules: () => void
+  onOpenCatalog: () => void
+  onQuickPlay: () => void
+}) {
+  if (!isOpen) return null
+
+  return (
+    <AnimatePresence>
+      <motion.div
+        initial={{ opacity: 0 }}
+        animate={{ opacity: 1 }}
+        exit={{ opacity: 0 }}
+        className="fixed inset-0 z-50 bg-black/85 backdrop-blur-sm flex items-center justify-center p-4"
+      >
+        <motion.div
+          initial={{ scale: 0.95, y: 15 }}
+          animate={{ scale: 1, y: 0 }}
+          exit={{ scale: 0.95, y: 15 }}
+          className="bg-zinc-950 border border-zinc-800 rounded-3xl max-w-sm w-full p-5 space-y-3 shadow-2xl"
+        >
+          <div className="flex items-center justify-between pb-2 border-b border-zinc-800">
+            <h3 className="font-bold text-sm uppercase tracking-tight text-white">Menu & Navigation</h3>
+            <button onClick={onClose} className="p-1 rounded-lg text-zinc-400 hover:text-white hover:bg-zinc-900 transition">
+              <X className="w-5 h-5" />
+            </button>
+          </div>
+          <div className="space-y-2 pt-1">
+            <button
+              onClick={onQuickPlay}
+              className="w-full text-left p-3.5 rounded-xl bg-zinc-900/60 hover:bg-zinc-850 border border-zinc-800 text-white font-bold text-xs uppercase tracking-wider transition flex items-center justify-between"
+            >
+              <span>Pass & Play (Single Device)</span>
+              <Play className="w-4 h-4 text-amber-400" />
+            </button>
+            <button
+              onClick={onOpenCatalog}
+              className="w-full text-left p-3.5 rounded-xl bg-zinc-900/60 hover:bg-zinc-850 border border-zinc-800 text-white font-bold text-xs uppercase tracking-wider transition flex items-center justify-between"
+            >
+              <span>Catalog Explorer (4,100+)</span>
+              <Sparkles className="w-4 h-4 text-zinc-400" />
+            </button>
+            <button
+              onClick={onOpenRules}
+              className="w-full text-left p-3.5 rounded-xl bg-zinc-900/60 hover:bg-zinc-850 border border-zinc-800 text-white font-bold text-xs uppercase tracking-wider transition flex items-center justify-between"
+            >
+              <span>Rules & Party Safety</span>
+              <BookOpen className="w-4 h-4 text-zinc-400" />
+            </button>
+          </div>
+        </motion.div>
+      </motion.div>
+    </AnimatePresence>
   )
 }

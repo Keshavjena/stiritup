@@ -1,7 +1,7 @@
 export interface Celebrity {
   name: string
   gender: "female" | "male"
-  category: "bollywood" | "hollywood" | "popstars" | "adultstars" | "fantasy" | "creators" | "athletes" | "f1" | "combat" | "wwe" | "viral" | "tech" | "scientists" | "history"
+  category: "bollywood" | "hollywood" | "popstars" | "adultstars" | "fantasy" | "creators" | "athletes" | "f1" | "combat" | "wwe" | "viral"
   tags?: string[]
 }
 

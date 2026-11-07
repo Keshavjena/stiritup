@@ -12,11 +12,6 @@ export type KMKCategory =
   | "f1"
   | "combat"
   | "wwe"
-  | "scientists"
-  | "history"
-  | "tech"
-  | "writers"
-  | "artists"
   | "actors"
   | "fantasy" 
   | "glamour"
@@ -60,14 +55,12 @@ export function generateKMKQuestions(
       if (filtered.length >= 3) {
         pool = filtered
       }
-    } else {
-      // Exclude scientists and history by default in 'all'
-      pool = pool.filter((c) => c.category !== "scientists" && c.category !== "history")
     }
   }
 
   const questions: string[] = []
   const usedTrios = new Set<string>()
+  let lastRoundNames = new Set<string>()
 
   const shuffleArray = <T,>(arr: T[]): T[] => {
     const copy = [...arr]
@@ -79,16 +72,20 @@ export function generateKMKQuestions(
   }
 
   let attempts = 0
-  while (questions.length < count && attempts < 200) {
+  while (questions.length < count && attempts < 400) {
     attempts++
     const shuffledPool = shuffleArray(pool)
     if (shuffledPool.length < 3) break
 
-    const [a, b, c] = shuffledPool.slice(0, 3)
+    // Filter out names from the immediate previous round to guarantee no consecutive overlap
+    const nonConsecutive = shuffledPool.filter((c) => !lastRoundNames.has(c.name))
+    const trio = nonConsecutive.length >= 3 ? nonConsecutive.slice(0, 3) : shuffledPool.slice(0, 3)
+    const [a, b, c] = trio
     const key = [a.name, b.name, c.name].sort().join("|")
 
     if (usedTrios.has(key)) continue
     usedTrios.add(key)
+    lastRoundNames = new Set([a.name, b.name, c.name])
 
     const flavor = FLAVOR_SCENARIOS[Math.floor(Math.random() * FLAVOR_SCENARIOS.length)]
     questions.push(`Choose between: ${a.name}, ${b.name}, and ${c.name} for Kiss, Marry, and Kill${flavor}`)

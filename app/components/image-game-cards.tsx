@@ -109,8 +109,8 @@ export function KMKImageCards({
     <div className="w-full mx-auto space-y-4 my-2">
       {/* Top Header / Player Prompt */}
       <div className="flex items-center justify-between px-1">
-        <span className="text-[11px] sm:text-xs font-black uppercase tracking-widest text-zinc-300 flex items-center gap-2 truncate">
-          <Sparkles className="w-4 h-4 text-amber-400 flex-shrink-0 animate-pulse" />
+        <span className="text-xs font-bold uppercase tracking-wider text-zinc-300 flex items-center gap-2 truncate">
+          <Sparkles className="w-4 h-4 text-amber-400 flex-shrink-0" />
           <span className="truncate">Assign Each Personality a Fate ({playerName})</span>
         </span>
         {hasSubmitted && (

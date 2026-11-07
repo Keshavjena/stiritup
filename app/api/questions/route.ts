@@ -81,7 +81,7 @@ export async function GET(req: NextRequest) {
       }
     }
 
-    // Shuffle only for text-only games (KMK and WYR already come randomly sampled from catalog)
+    // High-entropy deck shuffle with random offset cut so every session starts uniquely
     if (!personRounds && questions.length > 1) {
       for (let i = questions.length - 1; i > 0; i--) {
         const j = Math.floor(Math.random() * (i + 1));
@@ -89,6 +89,8 @@ export async function GET(req: NextRequest) {
         questions[i] = questions[j];
         questions[j] = temp;
       }
+      const cut = Math.floor(Math.random() * questions.length);
+      questions = [...questions.slice(cut), ...questions.slice(0, cut)];
     }
 
     const slicedQuestions = questions.slice(0, limit);
@@ -96,16 +98,23 @@ export async function GET(req: NextRequest) {
       personRounds = personRounds.slice(0, slicedQuestions.length);
     }
 
-    return NextResponse.json({
-      success: true,
-      gameId,
-      mode,
-      mature,
-      questions: slicedQuestions,
-      personRounds,
-      totalAvailable: questions.length,
-      source: useAI && apiKey ? "groq-ai" : "local-db"
-    });
+    return NextResponse.json(
+      {
+        success: true,
+        gameId,
+        mode,
+        mature,
+        questions: slicedQuestions,
+        personRounds,
+        totalAvailable: questions.length,
+        source: useAI && apiKey ? "groq-ai" : "local-db"
+      },
+      {
+        headers: {
+          "Cache-Control": "no-store, no-cache, must-revalidate, proxy-revalidate"
+        }
+      }
+    );
   } catch (error: any) {
     console.error("Error in /api/questions API route:", error);
     return NextResponse.json(

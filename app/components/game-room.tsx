@@ -27,18 +27,17 @@ interface GameRoomProps {
 }
 
 export const ROOM_CATEGORIES = [
-  { id: "all", label: "🌟 All (Mixed)", desc: "Wild combination of everyone" },
-  { id: "scientists", label: "🔬 Scientists", desc: "Einstein, Newton, Lovelock, Curie" },
-  { id: "history", label: "🏛️ History", desc: "Caesar, Cleopatra, Napoleon" },
-  { id: "bollywood", label: "🎬 Bollywood", desc: "SRK, Deepika, Amitabh, Salman" },
-  { id: "hollywood", label: "📽️ Hollywood", desc: "DiCaprio, Scarlett, Pitt, Zendaya" },
-  { id: "singers", label: "🎤 Singers & Pop", desc: "Taylor Swift, Drake, Beyoncé, Weeknd" },
-  { id: "athletes", label: "⚽ Athletes", desc: "Messi, Ronaldo, LeBron, Serena" },
-  { id: "tech", label: "💻 Tech & Founders", desc: "Elon Musk, Steve Jobs, Bill Gates" },
-  { id: "writers", label: "✍️ Writers & Thinkers", desc: "Shakespeare, Nietzsche, Tolkien" },
-  { id: "artists", label: "🎨 Artists & Directors", desc: "Da Vinci, Picasso, Tarantino" },
-  { id: "adultstars", label: "🌶️ Adult Stars (18+)", desc: "Mia Khalifa, Riley Reid, Johnny Sins" },
-  { id: "fantasy", label: "⚔️ Fantasy & Anime", desc: "Goku, Naruto, Geralt, Hermione" },
+  { id: "all", label: "All Personalities", desc: "Top-tier stars across all categories" },
+  { id: "hollywood", label: "Hollywood", desc: "DiCaprio, Scarlett, Pitt, Zendaya" },
+  { id: "bollywood", label: "Bollywood", desc: "SRK, Deepika, Amitabh, Salman" },
+  { id: "singers", label: "Singers & Pop", desc: "Taylor Swift, Drake, Beyoncé, Weeknd" },
+  { id: "creators", label: "Creators & Streamers", desc: "MrBeast, Speed, Kai Cenat, KSI" },
+  { id: "athletes", label: "Athletes", desc: "Messi, Ronaldo, LeBron, Serena" },
+  { id: "f1", label: "Formula 1", desc: "Hamilton, Verstappen, Leclerc, Norris" },
+  { id: "combat", label: "UFC & Combat", desc: "Conor McGregor, Jon Jones, Khabib" },
+  { id: "wwe", label: "WWE Superstars", desc: "The Rock, Roman Reigns, Undertaker" },
+  { id: "adultstars", label: "OnlyFans & Glamour (18+)", desc: "Mia Khalifa, Riley Reid, Corinna Kopf" },
+  { id: "fantasy", label: "Fantasy & Anime", desc: "Goku, Naruto, Batman, Iron Man" },
 ]
 
 export function GameRoom({

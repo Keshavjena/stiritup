@@ -12,8 +12,7 @@ export function personToCelebrity(person: Person): Celebrity {
 
   const allowedCategories = [
     "bollywood", "hollywood", "popstars", "singers", "adultstars", "glamour",
-    "fantasy", "athletes", "scientists", "history", "tech", "writers",
-    "artists", "actors", "creators", "models", "icons", "f1", "combat", "wwe", "viral"
+    "fantasy", "athletes", "actors", "creators", "models", "icons", "f1", "combat", "wwe", "viral"
   ] as const
   const category = (allowedCategories.includes(person.category as any)
     ? person.category

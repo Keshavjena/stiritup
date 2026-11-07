@@ -339,17 +339,14 @@ export function CatalogExplorer({ isOpen, onClose }: CatalogExplorerProps) {
     { id: "hollywood", label: "Hollywood" },
     { id: "bollywood", label: "Bollywood" },
     { id: "popstars", label: "Pop Stars" },
-    { id: "creators", label: "Creators & Influencers" },
+    { id: "creators", label: "Creators & Streamers" },
     { id: "athletes", label: "Athletes" },
     { id: "f1", label: "Formula 1" },
     { id: "combat", label: "UFC & Combat" },
     { id: "wwe", label: "WWE Wrestling" },
     { id: "adultstars", label: "OnlyFans & Glamour" },
-    { id: "tech", label: "Tech Icons" },
     { id: "fantasy", label: "Fantasy & Heroes" },
-    { id: "anime", label: "Anime" },
-    { id: "scientists", label: "Scientists (A+)" },
-    { id: "history", label: "History (A+)" }
+    { id: "anime", label: "Anime" }
   ]
 
   return (

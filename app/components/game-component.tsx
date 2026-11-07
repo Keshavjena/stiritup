@@ -187,7 +187,7 @@ export function GameComponent({
   // Spice Up Deck / Custom Bulk Names State
   const [isSpiceModalOpen, setIsSpiceModalOpen] = useState(false)
   const [spiceNamesInput, setSpiceNamesInput] = useState("")
-  const [spiceCategory, setSpiceCategory] = useState("scientists")
+  const [spiceCategory, setSpiceCategory] = useState("creators")
   const [isAddingSpice, setIsAddingSpice] = useState(false)
   const [spiceMessage, setSpiceMessage] = useState<{ text: string; isError?: boolean } | null>(null)
 
@@ -1866,28 +1866,25 @@ export function GameComponent({
 
                 {/* Category / Genre Filter */}
                 <div className="flex flex-col gap-1 min-w-0">
-                  <label className="text-[8px] font-bold uppercase tracking-wider text-zinc-500">Industry / Genre:</label>
-                  <div className="flex overflow-x-auto pb-1 sm:pb-0 sm:flex-wrap gap-1 scrollbar-none touch-pan-x">
+                  <label className="text-[9px] font-semibold uppercase tracking-wider text-zinc-500">Industry / Genre:</label>
+                  <div className="flex overflow-x-auto pb-1 sm:pb-0 sm:flex-wrap gap-1.5 scrollbar-none touch-pan-x">
                     {[
-                      { id: "all", label: "🌟 All" },
-                      { id: "hollywood", label: "📽️ Hollywood" },
-                      { id: "bollywood", label: "🎬 Bollywood" },
-                      { id: "singers", label: "🎤 Singers & Pop" },
-                      { id: "creators", label: "📱 Creators & Influencers" },
-                      { id: "athletes", label: "⚽ Athletes & Sports" },
-                      { id: "f1", label: "🏎️ F1 Racing" },
-                      { id: "combat", label: "🥊 UFC & Combat" },
-                      { id: "wwe", label: "🤼 WWE Wrestling" },
-                      { id: "adultstars", label: "🌶️ OnlyFans & Glamour (18+)" },
-                      { id: "tech", label: "💻 Tech Icons" },
-                      { id: "fantasy", label: "⚔️ Fantasy & Anime" },
-                      { id: "scientists", label: "🔬 Scientists (A+)" },
-                      { id: "history", label: "🏛️ History (A+)" }
+                      { id: "all", label: "All" },
+                      { id: "hollywood", label: "Hollywood" },
+                      { id: "bollywood", label: "Bollywood" },
+                      { id: "singers", label: "Singers & Pop" },
+                      { id: "creators", label: "Creators & Streamers" },
+                      { id: "athletes", label: "Athletes" },
+                      { id: "f1", label: "F1 Racing" },
+                      { id: "combat", label: "UFC & Combat" },
+                      { id: "wwe", label: "WWE Wrestling" },
+                      { id: "adultstars", label: "OnlyFans & Glamour (18+)" },
+                      { id: "fantasy", label: "Fantasy & Anime" }
                     ].map((c) => (
                       <button
                         key={c.id}
                         onClick={() => changeKMKCategory(c.id)}
-                        className={`py-1 px-2.5 rounded-lg text-[8px] font-bold uppercase whitespace-nowrap transition-colors flex-shrink-0 sm:flex-shrink ${
+                        className={`py-1 px-2.5 rounded-lg text-[9px] font-bold uppercase whitespace-nowrap transition-colors flex-shrink-0 sm:flex-shrink ${
                           kmkCategory === c.id
                             ? "bg-amber-400 text-black font-extrabold shadow-sm"
                             : "bg-zinc-900 border border-zinc-800 text-zinc-400 hover:bg-zinc-850 hover:text-zinc-200"
@@ -2628,14 +2625,16 @@ export function GameComponent({
                   onChange={(e) => setSpiceCategory(e.target.value)}
                   className="w-full bg-zinc-900 border border-zinc-800 text-zinc-200 text-xs rounded-xl px-3 py-2 outline-none focus:border-zinc-700"
                 >
-                  <option value="scientists">🔬 Famous Scientists & Thinkers</option>
-                  <option value="tech">💻 Tech Pioneers & Innovators</option>
-                  <option value="anime">⚡ Anime & Fantasy Figures</option>
-                  <option value="bollywood">🎬 Bollywood Celebrities</option>
-                  <option value="hollywood">🌟 Hollywood Celebrities</option>
-                  <option value="athletes">🏆 World Athletes</option>
-                  <option value="history">👑 Historical Icons</option>
-                  <option value="other">🎭 Wild / Custom Names</option>
+                  <option value="creators">Creators & Streamers</option>
+                  <option value="hollywood">Hollywood Celebrities</option>
+                  <option value="bollywood">Bollywood Celebrities</option>
+                  <option value="athletes">Athletes & Sports Icons</option>
+                  <option value="f1">F1 Racing Drivers</option>
+                  <option value="combat">UFC & Combat Stars</option>
+                  <option value="wwe">WWE Wrestling Superstars</option>
+                  <option value="adultstars">OnlyFans & Glamour</option>
+                  <option value="anime">Anime & Fantasy Heroes</option>
+                  <option value="other">Wild / Custom Names</option>
                 </select>
               </div>
 
@@ -2646,7 +2645,7 @@ export function GameComponent({
                 <textarea
                   value={spiceNamesInput}
                   onChange={(e) => setSpiceNamesInput(e.target.value)}
-                  placeholder="e.g. Albert Einstein, Marie Curie, Nikola Tesla, Oppenheimer, Shrek, Walter White"
+                  placeholder="e.g. Kai Cenat, IShowSpeed, MrBeast, Sydney Sweeney, Margot Robbie"
                   rows={4}
                   className="w-full bg-zinc-900 border border-zinc-800 rounded-2xl p-3 text-xs text-white placeholder-zinc-500 outline-none focus:border-amber-500/50 resize-none font-mono"
                 />
@@ -2660,22 +2659,32 @@ export function GameComponent({
                   <button
                     type="button"
                     onClick={() => {
-                      setSpiceCategory("scientists")
-                      setSpiceNamesInput("Albert Einstein, Marie Curie, Nikola Tesla, J. Robert Oppenheimer, Isaac Newton")
+                      setSpiceCategory("creators")
+                      setSpiceNamesInput("MrBeast, IShowSpeed, Kai Cenat, Logan Paul, KSI")
                     }}
                     className="text-[9px] font-bold uppercase bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 text-zinc-300 px-2.5 py-1 rounded-lg transition-colors"
                   >
-                    + Scientists Pack
+                    + Creators Pack
                   </button>
                   <button
                     type="button"
                     onClick={() => {
-                      setSpiceCategory("tech")
-                      setSpiceNamesInput("Steve Jobs, Elon Musk, Sam Altman, Jensen Huang, Bill Gates")
+                      setSpiceCategory("f1")
+                      setSpiceNamesInput("Lewis Hamilton, Max Verstappen, Charles Leclerc, Lando Norris, Fernando Alonso")
                     }}
                     className="text-[9px] font-bold uppercase bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 text-zinc-300 px-2.5 py-1 rounded-lg transition-colors"
                   >
-                    + Tech Visionaries
+                    + F1 Racing Pack
+                  </button>
+                  <button
+                    type="button"
+                    onClick={() => {
+                      setSpiceCategory("combat")
+                      setSpiceNamesInput("Conor McGregor, Jon Jones, Khabib Nurmagomedov, Israel Adesanya, Alex Pereira")
+                    }}
+                    className="text-[9px] font-bold uppercase bg-zinc-900 hover:bg-zinc-850 border border-zinc-800 text-zinc-300 px-2.5 py-1 rounded-lg transition-colors"
+                  >
+                    + UFC & Combat Pack
                   </button>
                   <button
                     type="button"

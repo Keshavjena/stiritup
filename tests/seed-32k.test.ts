@@ -4,12 +4,11 @@ import { resetDbForTesting, getDb } from "../lib/catalog/db.ts"
 import { seed32kCatalog } from "../lib/catalog/seed-32k.ts"
 import { getPeople, checkPersonAnswer, pruneUnpopularCatalog } from "../lib/catalog/service.ts"
 import { generateKMKRounds, generateWYRRounds } from "../lib/catalog/game-generator.ts"
-import { A_PLUS_SCIENTISTS, A_PLUS_HISTORY } from "../lib/catalog/expanded-dataset.ts"
 
-test("Personality Seed Dataset & Smart A-Tier Filtering (Scientists + History A+ Only & Explicit Inclusion)", async (t) => {
+test("Personality Seed Dataset & Pure Pop-Culture Catalog (Scientists, History, Tech & Writers Purged + Anti-Consecutive Randomisation)", async (t) => {
   const db = resetDbForTesting()
 
-  await t.test("seed32kCatalog ingests popular figures while strictly filtering scientists & history to A+ tier", () => {
+  await t.test("seed32kCatalog ingests popular figures while completely skipping non-entertainment categories", () => {
     const result = seed32kCatalog({ logProgress: false })
     assert.ok(result.totalProcessed >= 30000, `Expected >= 30,000 raw records parsed, got ${result.totalProcessed}`)
     assert.ok(result.insertedPeople >= 4000, `Expected >= 4,000 popular people inserted, got ${result.insertedPeople}`)
@@ -20,14 +19,14 @@ test("Personality Seed Dataset & Smart A-Tier Filtering (Scientists + History A+
     assert.ok(countPeople.c >= 4000)
   })
 
-  await t.test("All primary dataset categories are represented and indexed", () => {
+  await t.test("All primary pop-culture categories are represented and indexed", () => {
     const categoriesRow = db.prepare("SELECT DISTINCT category FROM people ORDER BY category ASC").all() as any[]
     const categories = categoriesRow.map((r) => r.category)
 
     const expectedCategories = [
       "actors", "athletes", "bollywood", "creators",
       "fantasy", "glamour", "hollywood", "icons",
-      "models", "scientists", "singers", "tech"
+      "models", "singers"
     ]
 
     for (const exp of expectedCategories) {
@@ -35,53 +34,65 @@ test("Personality Seed Dataset & Smart A-Tier Filtering (Scientists + History A+
     }
   })
 
-  await t.test("Filter rule verified: Scientists & History ONLY contain A+ tiers", () => {
-    // 1. Check all scientists in DB belong to A_PLUS_SCIENTISTS
-    const scientists = db.prepare("SELECT normalized_name FROM people WHERE category = 'scientists'").all() as any[]
-    assert.ok(scientists.length > 0, "A+ scientists should exist")
-    for (const s of scientists) {
-      assert.ok(
-        A_PLUS_SCIENTISTS.includes(s.normalized_name),
-        `Scientist ${s.normalized_name} must be in A_PLUS_SCIENTISTS`
-      )
-    }
-
-    // 2. Check all history figures in DB belong to A_PLUS_HISTORY
-    const history = db.prepare("SELECT normalized_name FROM people WHERE category = 'history'").all() as any[]
-    assert.ok(history.length > 0, "A+ history figures should exist")
-    for (const h of history) {
-      assert.ok(
-        A_PLUS_HISTORY.includes(h.normalized_name),
-        `History figure ${h.normalized_name} must be in A_PLUS_HISTORY`
-      )
+  await t.test("Forbidden non-entertainment categories (scientists, history, tech, writers, artists) are completely absent", () => {
+    const forbidden = ["scientists", "history", "tech", "writers", "artists"]
+    for (const f of forbidden) {
+      const count = db.prepare("SELECT count(*) as c FROM people WHERE category = ?").get(f) as any
+      assert.equal(count.c, 0, `Category ${f} must have 0 people in active catalog`)
     }
   })
 
-  await t.test("Scientists and History are EXCLUDED by default and included ONLY when explicitly clicked/requested", () => {
-    // Default 'all' query should NOT include scientists or history
-    const allPeople = getPeople({ limit: 100 })
-    const hasSciOrHistInAll = allPeople.items.some(
-      (p) => p.category === "scientists" || p.category === "history"
-    )
-    assert.equal(hasSciOrHistInAll, false, "Scientists and History must NOT be present in default/all queries")
+  await t.test("Anti-consecutive randomisation: KMK rounds NEVER contain identical personalities in consecutive rounds", () => {
+    const kmkRounds = generateKMKRounds({ count: 20, category: "all" })
+    assert.ok(kmkRounds.length >= 10, "Should generate rounds successfully")
 
-    // Default KMK rounds should NOT include scientists or history
-    const kmkRounds = generateKMKRounds({ count: 10, category: "all" })
-    for (const round of kmkRounds) {
-      for (const p of round.persons) {
-        assert.notEqual(p.category, "scientists", "Default KMK round must not contain scientists")
-        assert.notEqual(p.category, "history", "Default KMK round must not contain history")
+    for (let i = 0; i < kmkRounds.length; i++) {
+      const round = kmkRounds[i]
+      const ids = round.persons.map((p) => p.id)
+      const names = round.persons.map((p) => p.name)
+
+      // 3 distinct persons inside each round
+      assert.equal(new Set(ids).size, 3, `Round ${i} must have 3 distinct person IDs`)
+      assert.equal(new Set(names).size, 3, `Round ${i} must have 3 distinct person names`)
+
+      // STRICT anti-consecutive: ZERO overlap between round i and round i - 1
+      if (i > 0) {
+        const prevRound = kmkRounds[i - 1]
+        const prevIds = new Set(prevRound.persons.map((p) => p.id))
+        const prevNames = new Set(prevRound.persons.map((p) => p.name))
+
+        for (const p of round.persons) {
+          assert.equal(
+            prevIds.has(p.id),
+            false,
+            `Person ${p.name} (id: ${p.id}) in round ${i} MUST NOT appear in immediate previous round ${i - 1}`
+          )
+          assert.equal(
+            prevNames.has(p.name),
+            false,
+            `Person ${p.name} in round ${i} MUST NOT appear in immediate previous round ${i - 1}`
+          )
+        }
       }
     }
+  })
 
-    // When explicitly clicked/requested, they ARE returned:
-    const sciExplicit = getPeople({ category: "scientists", limit: 10 })
-    assert.ok(sciExplicit.items.length > 0, "Explicit scientists category query must return A+ scientists")
-    assert.ok(sciExplicit.items.every((p) => p.category === "scientists"))
+  await t.test("Anti-consecutive randomisation: WYR rounds NEVER contain identical personalities in consecutive rounds", () => {
+    const wyrRounds = generateWYRRounds({ count: 20, category: "all" })
+    assert.ok(wyrRounds.length >= 10, "Should generate WYR rounds successfully")
 
-    const histExplicit = getPeople({ category: "history", limit: 10 })
-    assert.ok(histExplicit.items.length > 0, "Explicit history category query must return A+ history")
-    assert.ok(histExplicit.items.every((p) => p.category === "history"))
+    for (let i = 0; i < wyrRounds.length; i++) {
+      const round = wyrRounds[i]
+      assert.notEqual(round.optionA.id, round.optionB.id, `Round ${i} Option A and B must be distinct`)
+
+      // STRICT anti-consecutive: ZERO overlap with previous round
+      if (i > 0) {
+        const prev = wyrRounds[i - 1]
+        const prevIds = new Set([prev.optionA.id, prev.optionB.id])
+        assert.equal(prevIds.has(round.optionA.id), false, `Option A (${round.optionA.name}) in round ${i} was in round ${i-1}`)
+        assert.equal(prevIds.has(round.optionB.id), false, `Option B (${round.optionB.name}) in round ${i} was in round ${i-1}`)
+      }
+    }
   })
 
   await t.test("pruneUnpopularCatalog cleans up obscure figures while preserving A-tier", () => {
@@ -135,8 +146,8 @@ test("Personality Seed Dataset & Smart A-Tier Filtering (Scientists + History A+
     assert.equal(wyrRounds.length, 5)
     for (const round of wyrRounds) {
       assert.ok(round.optionA.id !== round.optionB.id)
-      assert.equal(round.optionA.category, "singers")
-      assert.equal(round.optionB.category, "singers")
+      assert.ok(["singers", "popstars"].includes(round.optionA.category))
+      assert.ok(["singers", "popstars"].includes(round.optionB.category))
     }
   })
 })

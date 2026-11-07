@@ -61,7 +61,7 @@ export function personToPersonCard(person: Person): PersonCard {
 }
 
 /**
- * Shuffles an array safely (Fisher-Yates)
+ * High-entropy Fisher-Yates array shuffle
  */
 function shuffle<T>(arr: T[]): T[] {
   const copy = [...arr]
@@ -74,8 +74,10 @@ function shuffle<T>(arr: T[]): T[] {
 
 /**
  * Generates Kiss Marry Kill rounds with 3 distinct person objects per round.
- * Integrates approved community entries, prevents duplicate persons in the same round,
- * and gracefully works even when one or more portraits are unavailable.
+ * Guarantees:
+ * 1. Fresh session start: Shuffled starting pool with randomized entry cursor.
+ * 2. Strict anti-consecutive: Zero personalities from round N-1 can appear in round N.
+ * 3. Recent LRU memory: Deprioritizes personalities seen in the last 15-20 picks to maximize variety.
  */
 export function generateKMKRounds(options: {
   gender?: "female" | "male" | "mixed"
@@ -84,13 +86,13 @@ export function generateKMKRounds(options: {
   excludeIds?: string[]
   difficulty?: "easy" | "medium" | "hard" | "all"
   minPopularity?: number
+  seed?: string | number
 } = {}): KMKGameRound[] {
   seedInitialCatalog()
 
   const count = Math.min(Math.max(1, options.count || 20), 50)
   const excludeSet = new Set(options.excludeIds || [])
 
-  // Smart popularity threshold: easy (60+), medium/default (25+), hard/all (0+)
   const minPop = typeof options.minPopularity === "number"
     ? options.minPopularity
     : options.difficulty === "easy"
@@ -99,7 +101,6 @@ export function generateKMKRounds(options: {
         ? 0
         : 25
 
-  // Retrieve approved people from shared catalog (includes approved community entries)
   let result = getPeople({
     gender: options.gender === "mixed" ? undefined : options.gender,
     category: options.category === "all" ? undefined : options.category,
@@ -111,7 +112,6 @@ export function generateKMKRounds(options: {
 
   let pool = result.items.filter((p) => p.moderationStatus === "approved" && !excludeSet.has(p.id))
 
-  // If filtered pool is too small with minPopularity, drop popularity threshold to 0
   if (pool.length < 3 && minPop > 0) {
     result = getPeople({
       gender: options.gender === "mixed" ? undefined : options.gender,
@@ -124,7 +124,6 @@ export function generateKMKRounds(options: {
   }
 
   if (pool.length < 3) {
-    // If category pool is still too small, fallback with same category constraint
     const fallback = getPeople({
       category: options.category === "all" ? undefined : options.category,
       limit: 2000,
@@ -136,49 +135,90 @@ export function generateKMKRounds(options: {
 
   if (pool.length < 3) return []
 
-  // Split pool by verified portrait availability
-  const withPortrait = pool.filter((p) => personToPersonCard(p).hasVerifiedPortrait)
+  // Ensure portraits and general pools are thoroughly and unpredictably shuffled
+  const withPortrait = shuffle(pool.filter((p) => personToPersonCard(p).hasVerifiedPortrait))
   const allShuffled = shuffle(pool)
 
   const rounds: KMKGameRound[] = []
-  const usedKeys = new Set<string>()
+  const usedTrioKeys = new Set<string>()
+
+  // Strict anti-consecutive set & sliding LRU memory
+  let lastRoundIds = new Set<string>()
+  const recentHistoryQueue: string[] = []
+  const LRU_MAX = Math.min(18, Math.max(3, Math.floor(pool.length / 2)))
 
   let attempts = 0
-  let poolCursor = 0
-  let verifiedCursor = 0
+  let poolCursor = Math.floor(Math.random() * allShuffled.length)
+  let portraitCursor = withPortrait.length > 0 ? Math.floor(Math.random() * withPortrait.length) : 0
 
-  while (rounds.length < count && attempts < 500) {
+  while (rounds.length < count && attempts < 1000) {
     attempts++
 
+    const recentHistorySet = new Set(recentHistoryQueue)
     const selected: Person[] = []
-    // Weave in verified portraits in initial rounds if available
-    if (withPortrait.length > 0 && verifiedCursor < withPortrait.length && rounds.length % 2 === 0) {
-      selected.push(withPortrait[verifiedCursor % withPortrait.length])
-      verifiedCursor++
+
+    const canPick = (candidate: Person, strictOnly = false): boolean => {
+      if (selected.some((s) => s.id === candidate.id)) return false
+      // STRICT: Never allow any personality from the immediate previous round
+      if (lastRoundIds.has(candidate.id)) return false
+      // LRU: Avoid personalities seen in recent rounds if pool is sufficiently large
+      if (!strictOnly && recentHistorySet.has(candidate.id)) return false
+      return true
     }
 
-    // Fill remaining slots from the full randomized pool of scientists, stars, anime, etc.
-    while (selected.length < 3) {
+    // Try to weave in 1 verified portrait if available and valid
+    if (withPortrait.length > 0) {
+      for (let pAttempt = 0; pAttempt < withPortrait.length; pAttempt++) {
+        const candidate = withPortrait[(portraitCursor + pAttempt) % withPortrait.length]
+        if (canPick(candidate)) {
+          selected.push(candidate)
+          portraitCursor = (portraitCursor + pAttempt + 1) % withPortrait.length
+          break
+        }
+      }
+    }
+
+    // Fill remaining slots from randomized pool
+    let passAttempts = 0
+    while (selected.length < 3 && passAttempts < allShuffled.length) {
+      passAttempts++
       if (poolCursor >= allShuffled.length) {
         poolCursor = 0
         allShuffled.splice(0, allShuffled.length, ...shuffle(pool))
       }
       const candidate = allShuffled[poolCursor++]
-      if (!selected.some((s) => s.id === candidate.id)) {
+      if (canPick(candidate)) {
         selected.push(candidate)
       }
     }
 
-    const [p1, p2, p3] = selected
+    // Fallback: If LRU window was too restrictive for a small category pool, relax LRU (but NEVER relax lastRoundIds!)
+    if (selected.length < 3) {
+      for (const candidate of allShuffled) {
+        if (selected.length >= 3) break
+        if (canPick(candidate, true)) {
+          selected.push(candidate)
+        }
+      }
+    }
 
-    // Ensure 3 distinct persons
+    if (selected.length < 3) continue
+
+    const [p1, p2, p3] = selected
     if (!p1 || !p2 || !p3 || p1.id === p2.id || p2.id === p3.id || p1.id === p3.id) {
       continue
     }
 
-    const key = [p1.id, p2.id, p3.id].sort().join("|")
-    if (usedKeys.has(key)) continue
-    usedKeys.add(key)
+    const trioKey = [p1.id, p2.id, p3.id].sort().join("|")
+    if (usedTrioKeys.has(trioKey)) continue
+    usedTrioKeys.add(trioKey)
+
+    // Update anti-consecutive trackers
+    lastRoundIds = new Set([p1.id, p2.id, p3.id])
+    recentHistoryQueue.push(p1.id, p2.id, p3.id)
+    while (recentHistoryQueue.length > LRU_MAX) {
+      recentHistoryQueue.shift()
+    }
 
     const scenario = KMK_SCENARIOS[Math.floor(Math.random() * KMK_SCENARIOS.length)]
 
@@ -198,7 +238,10 @@ export function generateKMKRounds(options: {
 
 /**
  * Generates Would You Rather rounds with 2 distinct person objects for dilemma choices.
- * Supports image cards, category filters, and fallback placeholders.
+ * Guarantees:
+ * 1. Fresh session start: Shuffled starting pool with randomized entry cursor.
+ * 2. Strict anti-consecutive: Zero personalities from round N-1 can appear in round N.
+ * 3. Recent LRU memory: Deprioritizes personalities seen in the last 10 picks.
  */
 export function generateWYRRounds(options: {
   category?: string
@@ -207,6 +250,7 @@ export function generateWYRRounds(options: {
   excludeIds?: string[]
   difficulty?: "easy" | "medium" | "hard" | "all"
   minPopularity?: number
+  seed?: string | number
 } = {}): WYRGameRound[] {
   seedInitialCatalog()
 
@@ -256,25 +300,69 @@ export function generateWYRRounds(options: {
   if (pool.length < 2) return []
 
   const rounds: WYRGameRound[] = []
-  const usedKeys = new Set<string>()
+  const usedPairKeys = new Set<string>()
   const allShuffled = shuffle(pool)
-  let poolCursor = 0
 
+  let lastRoundIds = new Set<string>()
+  const recentHistoryQueue: string[] = []
+  const LRU_MAX = Math.min(10, Math.max(2, Math.floor(pool.length / 2)))
+
+  let poolCursor = Math.floor(Math.random() * allShuffled.length)
   let attempts = 0
-  while (rounds.length < count && attempts < 500) {
-    attempts++
-    if (poolCursor >= allShuffled.length - 1) {
-      poolCursor = 0
-      allShuffled.splice(0, allShuffled.length, ...shuffle(pool))
-    }
-    const p1 = allShuffled[poolCursor++]
-    const p2 = allShuffled[poolCursor++]
 
+  while (rounds.length < count && attempts < 1000) {
+    attempts++
+
+    const recentHistorySet = new Set(recentHistoryQueue)
+    const selected: Person[] = []
+
+    const canPick = (candidate: Person, strictOnly = false): boolean => {
+      if (selected.some((s) => s.id === candidate.id)) return false
+      // STRICT: Never allow any personality from the immediate previous round
+      if (lastRoundIds.has(candidate.id)) return false
+      // LRU: Avoid recently chosen personalities
+      if (!strictOnly && recentHistorySet.has(candidate.id)) return false
+      return true
+    }
+
+    let passAttempts = 0
+    while (selected.length < 2 && passAttempts < allShuffled.length) {
+      passAttempts++
+      if (poolCursor >= allShuffled.length) {
+        poolCursor = 0
+        allShuffled.splice(0, allShuffled.length, ...shuffle(pool))
+      }
+      const candidate = allShuffled[poolCursor++]
+      if (canPick(candidate)) {
+        selected.push(candidate)
+      }
+    }
+
+    // Fallback if LRU too strict for smaller category
+    if (selected.length < 2) {
+      for (const candidate of allShuffled) {
+        if (selected.length >= 2) break
+        if (canPick(candidate, true)) {
+          selected.push(candidate)
+        }
+      }
+    }
+
+    if (selected.length < 2) continue
+
+    const [p1, p2] = selected
     if (!p1 || !p2 || p1.id === p2.id) continue
 
-    const key = [p1.id, p2.id].sort().join("|")
-    if (usedKeys.has(key)) continue
-    usedKeys.add(key)
+    const pairKey = [p1.id, p2.id].sort().join("|")
+    if (usedPairKeys.has(pairKey)) continue
+    usedPairKeys.add(pairKey)
+
+    // Update anti-consecutive trackers
+    lastRoundIds = new Set([p1.id, p2.id])
+    recentHistoryQueue.push(p1.id, p2.id)
+    while (recentHistoryQueue.length > LRU_MAX) {
+      recentHistoryQueue.shift()
+    }
 
     const scenarioPrefix = WYR_SCENARIOS[Math.floor(Math.random() * WYR_SCENARIOS.length)]
 
