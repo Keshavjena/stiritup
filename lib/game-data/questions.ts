@@ -1,3 +1,6 @@
+import { authoredQuestions } from "./authored-questions"
+import { mergeExpansion } from "./party-expansion"
+
 export function getGameContent(
   gameId: string,
   matureContent: boolean,
@@ -654,8 +657,8 @@ export function getGameContent(
   }
 
   if (!matureContent) {
-    return gameContent.standard || gameContent[Object.keys(gameContent)[0]];
+    return mergeExpansion(gameId, "standard", [...(authoredQuestions[gameId]?.standard || []), ...(gameContent.standard || gameContent[Object.keys(gameContent)[0]])]);
   }
 
-  return gameContent[gameMode] || gameContent.standard || gameContent[Object.keys(gameContent)[0]];
+  return mergeExpansion(gameId, gameMode, [...(authoredQuestions[gameId]?.[gameMode] || []), ...(gameContent[gameMode] || gameContent.standard || gameContent[Object.keys(gameContent)[0]])]);
 }

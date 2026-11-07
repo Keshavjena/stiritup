@@ -52,3 +52,11 @@ You can still run the entire application locally on a single machine just like b
 1. Run `npm run dev`.
 2. Open `http://localhost:3000`.
 3. In local development (where `NEXT_PUBLIC_SOCKET_SERVER_URL` is not set in `.env`), the client will automatically default to the local host and port, routing Socket.io connections directly to the local dev server.
+
+## Question bank storage
+
+The text question API uses the same SQLite database as the people catalog (Node 22+ is required for `node:sqlite`). Migration `004_question_bank.sql` creates the tables; on first use the app transactionally seeds the bundled legacy, written, and generated cards. Set `CATALOG_DB_PATH` to a file on a persistent writable volume if changes must survive restarts. Do not commit that database file. Back up the volume before upgrades.
+
+The bundled source files are the reproducible seed, not a shared hosted database. On serverless or ephemeral filesystems each instance can have a separate, temporary database, so local edits and inventory counts are not guaranteed to persist or synchronize between instances. If SQLite cannot be opened, gameplay falls back to bundled content; the inventory endpoint reports an error. Use a persistent single-instance service (or replace this store with a shared database) if consistent multi-instance editorial management is required.
+
+Run `npm run questions:inventory` to initialize the local bank and inspect exact per-game, per-mode and per-source counts, or visit `/question-bank` in the app. The API at `/api/questions/inventory` returns those counts as JSON. Counts are deck rows, not unique independently authored questions. No public write/admin endpoint is exposed.

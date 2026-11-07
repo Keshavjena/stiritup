@@ -1,0 +1,53 @@
+/** Original modular prompts. Each combination is a playable card, not a random word salad. */
+type Mode = "standard" | "challenge" | "spicy"
+const topics: Record<Mode, string[]> = {
+  standard: ["a disastrous meal", "a surprise party", "a road trip", "a family celebration", "a school memory", "a terrible haircut", "an awkward introduction", "a forgotten birthday", "a karaoke night", "a lost suitcase", "a childhood obsession", "a bad purchase", "a surprising compliment", "a ridiculous argument", "a pet's mischief", "a memorable festival", "a rainy day", "a missed train", "a group project", "a fashion mistake", "an unexpected guest", "a late-night snack", "a job interview", "a confusing text", "a wedding dance", "a long queue", "a neighborhood rumor", "a first day somewhere new", "a disastrous gift", "a holiday tradition"],
+  challenge: ["a first date", "an awkward crush", "a mixed signal", "a dating app bio", "a bad pickup line", "an unexpected compliment", "a romantic misunderstanding", "a harmless jealousy moment", "a friendship breakup", "a secret admirer", "a date that went sideways", "an ex's unexpected message", "a relationship dealbreaker", "a confusing flirtation", "a grand romantic gesture", "a crush on a fictional character", "an embarrassing rejection", "an accidental double text", "a date with no chemistry", "a wedding plus-one", "a Valentine's Day surprise", "a love song", "a questionable dating trend", "a romantic comedy ending", "a friend playing matchmaker", "an unforgettable first impression", "a mysterious stranger", "a relationship green flag", "a harmless celebrity crush", "a date-night disaster"],
+  spicy: ["a flirtatious message", "a particularly bold compliment", "a date with undeniable chemistry", "a mischievous wink", "a tempting invitation", "a steamy fictional romance", "a midnight conversation", "a daring outfit", "a memorable kiss", "a teasing nickname", "a surprising attraction", "a fantasy date", "a flirtatious dance", "a cheeky confession", "a crush that caught you off guard", "a romantic cliffhanger", "a seductive movie scene", "a secret rendezvous in a movie", "a passionate love song", "a slow-burn romance", "a playful double meaning", "a date that lasted until sunrise", "a scandalous fictional rumor", "an irresistible voice", "a flirtation at a party", "a date with a mysterious stranger", "a bold first move", "a romantic dare", "a spicy fictional plot twist", "a chemistry-filled conversation"],
+}
+const interview = [
+  "What is your funniest story involving", "What is your most surprising memory of", "What did you learn from", "How would your best friend describe your reaction to", "What song would be the soundtrack to", "What title would you give a movie about", "What would you do differently if you could revisit", "What tiny detail do you remember most about", "What would make a great comedy sketch about", "What advice would you give someone dealing with",
+]
+const likely = ["write a dramatic song about", "turn into a legendary story about", "accidentally start a group chat about", "make a documentary about", "forget an important detail during", "have the funniest reaction to", "turn into an elaborate costume inspired by", "make a meme about", "give surprisingly good advice about", "write a wildly exaggerated review of"]
+const scenes = ["a detective who takes everything too seriously", "a game-show host with a terrible secret", "an overconfident travel guide", "a villain who is actually very polite", "a celebrity at a chaotic press conference", "a royal adviser on their first day", "a stressed wedding planner", "a fortune teller who keeps getting distracted", "a news anchor breaking ridiculous news", "a film director on a tiny budget", "a chef with a dramatic rival", "a ghost trying to be helpful", "a magician whose trick went wrong", "a salesperson selling the impossible", "a reality-show contestant", "an overly enthusiastic museum guide", "a robot learning human emotions", "a lawyer defending a ridiculous case", "a superhero on their day off", "a cricket commentator"]
+const situations = ["a missing birthday cake", "a mysteriously empty fridge", "a surprise wedding", "a lost shoe", "an elevator that keeps stopping", "an unexpected talent show", "a dramatic weather forecast", "a late train", "a disastrous dinner party", "a questionable fashion show", "a very important cup of tea", "a suspiciously quiet group chat", "a haunted karaoke machine", "a runaway shopping trolley", "a forgotten anniversary", "a mysterious invitation", "a disastrous audition", "a surprise visitor", "a neighborhood talent contest", "a missing remote control"]
+const actions = ["give a dramatic acceptance speech", "perform a silent movie scene", "deliver a weather report", "invent a movie trailer", "make up a short song", "give a terrible sales pitch", "perform a dramatic monologue", "invent a bedtime story", "deliver a breaking-news report", "do a slow-motion reenactment", "give an overly serious review", "make up a conspiracy theory", "perform an interpretive dance", "invent a superhero origin story", "give an impassioned apology", "host a pretend talk show", "pitch a reality TV show", "make a dramatic courtroom argument", "create a fake advertisement", "give a sports commentary"]
+const objects = ["a missing sock", "a cup of chai", "the last slice of pizza", "a broken umbrella", "a suspicious houseplant", "a forgotten password", "a karaoke machine", "an overstuffed suitcase", "a mysterious parcel", "a very slow internet connection", "a squeaky chair", "a traffic jam", "a dancing pigeon", "a group chat", "an empty refrigerator", "a late delivery", "a tangled charger", "a stubborn door", "a surprise rainstorm", "a burnt piece of toast"]
+const choices = ["sing every sentence", "speak only in rhyme", "have a theme song follow you", "wear a crown every day", "narrate your own life", "dance into every room", "only communicate in movie quotes", "have an audience laugh track", "live in a treehouse", "travel everywhere by train", "eat breakfast for dinner", "have a personal chef", "be famous for a ridiculous talent", "have a talking pet", "always arrive ten minutes early", "always know when someone is joking", "spend a year at the beach", "spend a year in the mountains", "have unlimited concert tickets", "master every board game"]
+const emoji = ["🌧️🐈🐕 — Raining cats and dogs", "⏰✈️ — Time flies", "🍰🚶 — Piece of cake", "🐘🏠 — Elephant in the room", "❄️🧊🔨 — Break the ice", "🌙⬆️ — Over the moon", "🐝💼 — Busy as a bee", "💔 — Broken heart", "🌞🌻 — Sunflower", "📚🐛 — Bookworm", "🔥🚒 — Fire engine", "🌟🐟 — Starfish", "🦋🪰 — Butterfly", "🌧️🌈 — Rainbow", "👻🏠 — Haunted house", "🍿🎬 — Movie night", "🏖️🏐 — Beach volleyball", "🧀🎂 — Cheesecake", "❄️👨 — Snowman", "🐱🐟 — Catfish", "🌍🏆 — World Cup", "🚀🌙 — Rocket to the moon", "🕷️👨 — Spider-Man", "🦁👑 — The Lion King", "🧊👸 — Frozen", "🦖🏞️ — Jurassic Park", "🚢🧊 — Titanic", "🧙💍 — The Lord of the Rings", "🐼🥋 — Kung Fu Panda", "👻🚫 — Ghostbusters"]
+
+const unique = (items: string[]) => [...new Set(items)]
+export function expansion(game: string, mode: Mode): string[] {
+  const t = topics[mode]
+  switch (game) {
+    case "hot-seat": return t.flatMap(topic => interview.map(q => `${q} ${topic}?`))
+    case "paranoia": return t.flatMap(topic => likely.map(q => `Who in this room would be most likely to ${q} ${topic}?`))
+    case "whos-most-likely": return t.flatMap(topic => likely.map(q => `Who is most likely to ${q} ${topic}?`))
+    case "truth-or-dare": return [...t.flatMap(topic => interview.map(q => `Truth: ${q} ${topic}?`)), ...actions.flatMap(action => objects.map(object => `Dare: ${action} about ${object}.`))]
+    case "spin-the-bottle": return actions.flatMap(action => objects.map(object => `${action[0].toUpperCase() + action.slice(1)} about ${object}. The selected player may pass.`))
+    case "strip-or-sip": return actions.flatMap(action => objects.map(object => `Choose: ${action} about ${object}, sip a drink of your choice, or pass.`))
+    case "role-roulette": return scenes.flatMap(scene => situations.map(situation => `Play ${scene} dealing with ${situation}.`))
+    case "if-you-had-to": return scenes.flatMap(scene => situations.map(situation => `If you had to play ${scene} in a story about ${situation}, what would your character do first?`))
+    case "rapid-fire": return choices.flatMap((a, i) => choices.slice(i + 1).map(b => `${a[0].toUpperCase() + a.slice(1)} or ${b}? Answer in one second.`))
+    case "would-you-rather": return choices.flatMap((a, i) => choices.slice(i + 1).map(b => `Would you rather ${a} or ${b}?`))
+    case "never-have-i-ever": return t.map(topic => `Never have I ever had a memorable experience involving ${topic}.`)
+    case "drink-if": return t.map(topic => `Take a sip of any drink if you have a story about ${topic}. Passing is always okay.`)
+    case "emoji-decode": return emoji.map(card => `Guess the phrase or title: ${card}`)
+    default: return []
+  }
+}
+
+export function mergeExpansion(game: string, mode: Mode, existing: string[]): string[] {
+  return unique([...existing, ...expansion(game, mode)])
+}
+
+export const performanceDecks = {
+  classic: scenes.flatMap(scene => situations.map(situation => `Play ${scene} dealing with ${situation}.`)),
+  wild: actions.flatMap(action => objects.map(object => `${action[0].toUpperCase() + action.slice(1)} about ${object} as if it were a dramatic romance.`)),
+  extreme: actions.flatMap(action => objects.map(object => `${action[0].toUpperCase() + action.slice(1)} about ${object} as a hilariously over-the-top villain.`)),
+}
+export const indianDecks = {
+  bollywood: ["a dramatic interval reveal", "a monsoon dance", "a train-station farewell", "a wedding entrance", "a surprise family reunion", "a villain's grand entrance", "a filmi love confession", "a cricket victory", "a mistaken identity", "a dramatic award speech"].flatMap(scene => ["Mime", "Improvise", "Narrate", "Turn into a movie trailer:", "Perform as a silent film:", "Perform as a soap opera:", "Reimagine as a comedy:", "Reimagine as a thriller:"].map(verb => `${verb} ${scene}.`)),
+  desi: ["a crowded wedding buffet", "a cricket match", "a chai break", "a festival celebration", "a delayed train", "a family group chat", "a market bargain", "a monsoon downpour", "a neighborhood talent show", "a long road trip"].flatMap(scene => ["Mime", "Improvise", "Narrate", "Make a news report about", "Make up a song about", "Give a dramatic speech about", "Invent a film trailer about", "Perform a comedy sketch about"].map(verb => `${verb} ${scene}.`)),
+  masala: topics.spicy.flatMap(topic => interview.map(q => `${q} ${topic}? You may pass.`)),
+}

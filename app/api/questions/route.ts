@@ -1,4 +1,7 @@
 import { NextRequest, NextResponse } from "next/server";
+import { authoredQuestions } from "@/lib/game-data/authored-questions";
+import { mergeExpansion } from "@/lib/game-data/party-expansion";
+import { getQuestionDb, readQuestionDeck, type QuestionMode } from "@/lib/questions/bank";
 import questionsDb from "@/lib/game-data/questions-db.json";
 import { getGameContent } from "@/lib/game-data/questions";
 import { generateKMKQuestions, KMKGender, KMKCategory } from "@/lib/game-data/kmk-generator";
@@ -17,7 +20,18 @@ export async function GET(req: NextRequest) {
     const kmkCategory = (searchParams.get("kmkCategory") || "all") as KMKCategory;
 
     // Load static database
-    const limit = parseInt(searchParams.get("limit") || "100", 10);
+    const requestedLimit = Number(searchParams.get("limit") || "100");
+    const limit = Number.isFinite(requestedLimit) ? Math.max(1, Math.min(1000, Math.floor(requestedLimit))) : 100;
+    const selectedMode: QuestionMode = mature && ["standard", "challenge", "spicy"].includes(mode) ? mode : "standard";
+    let usedDatabase = false;
+    const loadDeck = () => {
+      try {
+        const deck = readQuestionDeck(getQuestionDb(), gameId, selectedMode);
+        if (deck.length) { usedDatabase = true; return deck; }
+      } catch (error) { console.warn("Question bank unavailable; using bundled content:", error); }
+      const db = questionsDb as Record<string, Record<string, string[]>>;
+      return mergeExpansion(gameId, selectedMode, [...(authoredQuestions[gameId]?.[selectedMode] || []), ...(db[gameId]?.[selectedMode] || db[gameId]?.standard || getGameContent(gameId, mature, mode))]);
+    };
     let questions: string[] = [];
     let personRounds: any = undefined;
 
@@ -53,28 +67,22 @@ export async function GET(req: NextRequest) {
         console.warn("Could not generate WYR person rounds:", err);
       }
       if (questions.length === 0) {
-        const db = questionsDb as Record<string, Record<string, string[]>>;
-        const selectedMode = mature ? mode : "standard";
-        questions = db[gameId]?.[selectedMode] || db[gameId]?.standard || getGameContent(gameId, mature, mode);
+        personRounds = undefined;
+        questions = loadDeck();
       }
     } else {
-      const db = questionsDb as Record<string, Record<string, string[]>>;
-      if (db[gameId]) {
-        const selectedMode = mature ? mode : "standard";
-        questions = db[gameId][selectedMode] || db[gameId].standard || [];
-      }
-      if (questions.length === 0) {
-        questions = getGameContent(gameId, mature, mode);
-      }
+      questions = loadDeck();
     }
 
     // Call Groq API if AI is requested and we have the API key
     const apiKey = process.env.GROQ_API_KEY;
+    let usedAI = false;
     if (useAI && apiKey && gameId !== "kiss-marry-kill" && gameId !== "would-you-rather") {
       try {
         const aiQuestions = await generateQuestionsWithAI(apiKey, gameId, mode, mature, kmkGender, kmkCategory);
         if (aiQuestions && aiQuestions.length > 0) {
           questions = [...aiQuestions, ...questions];
+          usedAI = true;
         }
       } catch (aiError) {
         console.error("Failed to generate questions using Groq API:", aiError);
@@ -107,7 +115,7 @@ export async function GET(req: NextRequest) {
         questions: slicedQuestions,
         personRounds,
         totalAvailable: questions.length,
-        source: useAI && apiKey ? "groq-ai" : "local-db"
+        source: usedAI ? "groq-ai" : personRounds ? "person-catalog" : usedDatabase ? "sqlite" : "bundled"
       },
       {
         headers: {
