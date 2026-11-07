@@ -1,5 +1,6 @@
 "use client"
 
+import { performanceDecks } from "@/lib/game-data/party-expansion"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -40,34 +41,13 @@ export function DramaDol({
   const [playerScores, setPlayerScores] = useState<Record<string, number>>({})
   const [drinkPenalty, setDrinkPenalty] = useState(1)
 
-  const challengeContent = {
-    classic: [
-      "Act out 'Romeo and Juliet' balcony scene with exaggerated emotions",
-      "Perform a dramatic death scene from any movie",
-      "Act like you're in a soap opera discovering a family secret",
-      "Perform a Shakespearean soliloquy about pizza",
-      "Act out a dramatic breakup scene with an imaginary partner",
-      "Pretend to be a dramatic cooking show host making toast",
-      "Do an overly emotional weather forecast",
-      "Act like you're in a war movie, but the war is against mosquitoes",
-    ],
-    wild: [
-      "Act out a seductive scene from a romance novel with a chair as co-star",
-      "Perform a romantic scene with the sexiest voice you can manage",
-      "Do a dramatic monologue about your most embarrassing intimate moment",
-      "Perform like you're seducing someone through interpretive dance",
-      "Do a sultry reading of Terms and Conditions",
-    ],
-    extreme: [
-      "Perform a lap dance for someone while reciting Shakespeare OR take 3 sips",
-      "Act out your orgasm face dramatically OR finish your drink",
-      "Do a dramatic masturbation scene (clothed) OR take 3 sips",
-      "Perform like you're a phone sex operator OR take 3 sips",
-    ],
-  }
-
   useEffect(() => {
-    const content = challengeContent[gameMode]
+    const content = [...performanceDecks[gameMode]]
+    for (let i = content.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[content[i], content[j]] = [content[j], content[i]]
+    }
+    setChallengeIndex(0)
     setChallenges(content)
     setCurrentChallenge(content[0])
 

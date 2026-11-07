@@ -1,5 +1,6 @@
 "use client"
 
+import { indianDecks } from "@/lib/game-data/party-expansion"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -39,42 +40,13 @@ export function IndianDrinkingGame({
   const [challengeIndex, setChallengeIndex] = useState(0)
   const [playerScores, setPlayerScores] = useState<Record<string, number>>({})
 
-  const challengeContent = {
-    bollywood: [
-      "Act out a famous Bollywood movie scene without speaking - others guess!",
-      "Sing Kal Ho Naa Ho in the most dramatic way possible",
-      "Do the signature dance move from Nagada Sang Dhol",
-      "Recreate the train scene from DDLJ with another player",
-      "Perform Shah Rukh Khan's signature pose for 30 seconds",
-      "Name 5 movies with Deepika Padukone in 30 seconds",
-      "Do the Lungi Dance with maximum energy",
-      "Quote 3 famous dialogues from 3 Idiots",
-      "Sing any Kishore Kumar song in your worst voice",
-      "Act like Rajinikanth for the next 2 rounds",
-    ],
-    desi: [
-      "Pretend to be a cricket commentator for an imaginary match",
-      "Describe your favorite Indian dish in the most poetic way",
-      "Act out a typical Indian wedding scene",
-      "Eat something spicy and maintain a poker face",
-      "Do an impression of your Indian mom when she's angry",
-      "Act like you're bargaining at a local market",
-      "Do the typical Indian head nod for 30 seconds",
-      "Act like an Indian rickshaw driver negotiating fare",
-    ],
-    masala: [
-      "Take a shot and then recite the alphabet backwards",
-      "Kiss the person to your left on the cheek or take 2 sips",
-      "Take two sips and tell everyone your most embarrassing desi moment",
-      "Tell someone in the room why you find them attractive",
-      "Drink and then tell your worst dating story",
-      "Do a sexy dance for 1 minute or take 4 sips",
-      "Truth: What's your biggest turn-on? Or take 2 shots",
-    ],
-  }
-
   useEffect(() => {
-    const content = challengeContent[gameMode]
+    const content = [...indianDecks[gameMode]]
+    for (let i = content.length - 1; i > 0; i--) {
+      const j = Math.floor(Math.random() * (i + 1))
+      ;[content[i], content[j]] = [content[j], content[i]]
+    }
+    setChallengeIndex(0)
     setChallenges(content)
     setCurrentChallenge(content[0])
 

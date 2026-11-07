@@ -271,6 +271,7 @@ export default function Home() {
           </h1>
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2">
+          <a href="/question-bank" className="rounded-lg border border-zinc-800 hover:bg-zinc-900 text-zinc-400 font-bold uppercase text-[9px] tracking-wider px-2 sm:px-3 h-8 inline-flex items-center">Question bank</a>
           <Button
             variant="ghost"
             onClick={() => setIsRulesOpen(true)}

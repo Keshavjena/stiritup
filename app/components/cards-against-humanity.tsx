@@ -1,5 +1,6 @@
 "use client"
 
+import { extraBlackCards, extraWhiteCards } from "@/lib/game-data/comedy-cards"
 import { useState, useEffect } from "react"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
@@ -49,6 +50,7 @@ export function CardsAgainstHumanity({
   const [roundNumber, setRoundNumber] = useState(1)
 
   const blackCards: BlackCard[] = [
+    ...extraBlackCards,
     { text: "What's that smell?", blanks: 1 },
     { text: "I got 99 problems but _ ain't one.", blanks: 1 },
     { text: "Maybe she's born with it. Maybe it's _.", blanks: 1 },
@@ -73,6 +75,7 @@ export function CardsAgainstHumanity({
   ]
 
   const whiteCards: WhiteCard[] = [
+    ...extraWhiteCards,
     { text: "Being on fire" },
     { text: "Grandma's ashes" },
     { text: "Puppies!" },

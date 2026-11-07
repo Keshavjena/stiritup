@@ -11,7 +11,8 @@
     "refresh-catalog": "tsx scripts/refresh-catalog.ts",
     "seed:32k": "tsx scripts/seed-32k-catalog.ts",
     "test": "tsx --test tests/**/*.test.ts",
-    "start": "NODE_ENV=production node server.js"
+    "start": "NODE_ENV=production node server.js",
+    "questions:inventory": "tsx scripts/question-inventory.ts"
   },
   "dependencies": {
     "@hookform/resolvers": "^3.10.0",
