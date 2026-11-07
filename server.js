@@ -398,10 +398,19 @@ app.prepare().then(() => {
         } else if (action.type === "sync-questions") {
           room.gameContent = action.payload.gameContent || [];
           room.personRounds = action.payload.personRounds || [];
+          room.customCards = action.payload.customCards || [];
           room.contentIndex = action.payload.contentIndex ?? 0;
           room.currentContent = action.payload.currentContent || (room.gameContent[0] || "");
           if (action.payload.currentPlayer !== undefined) {
             room.currentPlayer = action.payload.currentPlayer;
+          }
+        } else if (action.type === "update-custom-deck") {
+          room.customCards = action.payload.customCards || [];
+          room.customDeckTitle = action.payload.title;
+        } else if (action.type === "player-suggest-card") {
+          if (!room.customCards) room.customCards = [];
+          if (action.payload?.card) {
+            room.customCards.push(action.payload.card);
           }
         } else if (action.type === "next-turn") {
           room.currentPlayer = action.payload.currentPlayer;
@@ -523,7 +532,9 @@ app.prepare().then(() => {
           timerDuration: room.timerDuration,
           settings: room.settings,
           gameHistory: room.gameHistory,
-          draftState: room.draftState
+          draftState: room.draftState,
+          customCards: room.customCards || [],
+          customDeckTitle: room.customDeckTitle
         });
       }
     });

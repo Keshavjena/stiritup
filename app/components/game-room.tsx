@@ -183,36 +183,52 @@ export function GameRoom({
                 </span>
               </div>
 
-              {/* 1. Category / Genre Selection */}
-              <div>
-                <label className="text-[9px] font-bold uppercase tracking-wider text-zinc-400 block mb-1.5 flex items-center gap-1">
-                  <Sparkles className="w-3 h-3 text-amber-400" /> Catalog Category:
-                </label>
-                <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
-                  {ROOM_CATEGORIES.map((c) => {
-                    const isSelected = currentSettings.category === c.id
-                    return (
-                      <button
-                        key={c.id}
-                        onClick={() => updateSetting("category", c.id)}
-                        className={`p-2 rounded-xl text-left transition-all border ${
-                          isSelected
-                            ? "bg-amber-500/15 border-amber-400/80 text-white shadow-sm"
-                            : "bg-zinc-900/40 border-zinc-800/70 text-zinc-400 hover:bg-zinc-850 hover:text-zinc-200"
-                        }`}
-                      >
-                        <div className="font-bold text-[10px] uppercase tracking-wide truncate flex items-center justify-between">
-                          <span>{c.label}</span>
-                          {isSelected && <Check className="w-3 h-3 text-amber-400 ml-1 flex-shrink-0" />}
-                        </div>
-                        <span className="text-[8px] text-zinc-500 line-clamp-1 font-normal mt-0.5">
-                          {c.desc}
-                        </span>
-                      </button>
-                    )
-                  })}
+              {/* 1. Category / Genre Selection OR Custom Game Banner */}
+              {selectedGame === "custom-game" ? (
+                <div className="p-3.5 rounded-xl bg-zinc-950/70 border border-zinc-800 space-y-2">
+                  <div className="flex items-center justify-between">
+                    <span className="text-[10px] font-bold uppercase tracking-wider text-amber-400 flex items-center gap-1.5">
+                      <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Custom Game Engine Active
+                    </span>
+                    <Badge className="bg-amber-400 text-black text-[8.5px] font-black uppercase px-2 py-0.5">
+                      5 Prebuilt Templates
+                    </Badge>
+                  </div>
+                  <p className="text-[11px] text-zinc-300 leading-relaxed">
+                    Build custom cards, import prompts in bulk, load curated party templates (Wild House Party, Late Night 18+, Kangaroo Court, Office SFW), and configure sips with real-time multiplayer synchronization!
+                  </p>
                 </div>
-              </div>
+              ) : (
+                <div>
+                  <label className="text-[9px] font-bold uppercase tracking-wider text-zinc-400 block mb-1.5 flex items-center gap-1">
+                    <Sparkles className="w-3.5 h-3.5 text-amber-400" /> Catalog Category:
+                  </label>
+                  <div className="grid grid-cols-2 sm:grid-cols-3 gap-1.5">
+                    {ROOM_CATEGORIES.map((c) => {
+                      const isSelected = currentSettings.category === c.id
+                      return (
+                        <button
+                          key={c.id}
+                          onClick={() => updateSetting("category", c.id)}
+                          className={`p-2 rounded-xl text-left transition-all border ${
+                            isSelected
+                              ? "bg-amber-500/15 border-amber-400/80 text-white shadow-sm"
+                              : "bg-zinc-900/40 border-zinc-800/70 text-zinc-400 hover:bg-zinc-850 hover:text-zinc-200"
+                          }`}
+                        >
+                          <div className="font-bold text-[10px] uppercase tracking-wide truncate flex items-center justify-between">
+                            <span>{c.label}</span>
+                            {isSelected && <Check className="w-3 h-3 text-amber-400 ml-1 flex-shrink-0" />}
+                          </div>
+                          <span className="text-[8px] text-zinc-500 line-clamp-1 font-normal mt-0.5">
+                            {c.desc}
+                          </span>
+                        </button>
+                      )
+                    })}
+                  </div>
+                </div>
+              )}
 
               {/* 2. Target Gender & 3. Round Timer */}
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3 pt-1">

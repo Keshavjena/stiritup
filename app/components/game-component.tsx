@@ -39,6 +39,13 @@ import { useSocket } from "@/hooks/useSocket"
 import { motion, AnimatePresence } from "framer-motion"
 import { KMKImageCards, WYRImageCards } from "./image-game-cards"
 import { LivePlayersSidebar } from "./live-players-sidebar"
+import { CustomGameCard } from "@/lib/custom-game/types"
+import { CustomGameBuilder } from "./custom-game/custom-game-builder"
+import { CustomCardStage } from "./custom-game/custom-card-stage"
+import {
+  loadActiveDeckFromStorage,
+  convertCustomCardsToGameContent
+} from "@/lib/custom-game/engine"
 
 interface GameComponentProps {
   roomCode?: string
@@ -158,6 +165,15 @@ export function GameComponent({
   const [wyrChoice, setWyrChoice] = useState<"A" | "B" | null>(null)
   const [customDeck, setCustomDeck] = useState<string[]>([])
   const [newCustomPrompt, setNewCustomPrompt] = useState("")
+  const [customDeckCards, setCustomDeckCards] = useState<CustomGameCard[]>(() => {
+    return loadActiveDeckFromStorage().cards
+  })
+  const [customDeckTitle, setCustomDeckTitle] = useState<string>("Wild House Party")
+  const customDeckCardsRef = useRef(customDeckCards)
+
+  useEffect(() => {
+    customDeckCardsRef.current = customDeckCards
+  }, [customDeckCards])
 
   const [sips, setSips] = useState<Record<string, number>>({})
   const [showLeaderboard, setShowLeaderboard] = useState(false)
@@ -269,7 +285,9 @@ export function GameComponent({
       }
 
       if (gameId === "custom-game") {
-        setCustomDeck(fetchedQuestions)
+        const converted = convertCustomCardsToGameContent(customDeckCardsRef.current)
+        fetchedQuestions = converted.questions
+        setCustomDeck(converted.questions)
       }
 
       setGameContent(fetchedQuestions)
@@ -285,6 +303,7 @@ export function GameComponent({
           payload: {
             gameContent: fetchedQuestions,
             personRounds: fetchedRounds,
+            customCards: customDeckCardsRef.current,
             currentContent: fetchedQuestions[0],
             contentIndex: 0,
             currentPlayer: 0
@@ -314,6 +333,7 @@ export function GameComponent({
             payload: {
               gameContent,
               currentContent: currentContentRef.current,
+              customCards: customDeckCardsRef.current,
               contentIndex,
               currentPlayer: currentPlayerRef.current
             }
@@ -468,9 +488,19 @@ export function GameComponent({
         if (action.payload.personRounds) {
           setPersonRounds(action.payload.personRounds)
         }
+        if (action.payload.customCards && Array.isArray(action.payload.customCards)) {
+          setCustomDeckCards(action.payload.customCards)
+        }
         if (action.payload.contentIndex !== undefined) setContentIndex(action.payload.contentIndex)
         if (action.payload.currentPlayer !== undefined) setCurrentPlayer(action.payload.currentPlayer)
         setIsLoading(false)
+      } else if (action.type === "update-custom-deck") {
+        if (action.payload.customCards && Array.isArray(action.payload.customCards)) {
+          setCustomDeckCards(action.payload.customCards)
+        }
+        if (action.payload.title) {
+          setCustomDeckTitle(action.payload.title)
+        }
       } else if (action.type === "custom-persons-added") {
         if (action.payload?.personRounds && Array.isArray(action.payload.personRounds)) {
           setPersonRounds((prev) => [...action.payload.personRounds, ...prev])
@@ -492,6 +522,12 @@ export function GameComponent({
       }
       if (state.personRounds && state.personRounds.length > 0) {
         setPersonRounds(state.personRounds)
+      }
+      if (state.customCards && Array.isArray(state.customCards)) {
+        setCustomDeckCards(state.customCards)
+      }
+      if (state.customDeckTitle) {
+        setCustomDeckTitle(state.customDeckTitle)
       }
       if (state.currentContent) {
         setCurrentContent(state.currentContent)
@@ -665,10 +701,11 @@ export function GameComponent({
     
     let activeContent = gameContent
     if (gameId === "custom-game") {
-      activeContent = customDeck
-      setGameContent(customDeck)
-      if (customDeck.length > 0) {
-        setCurrentContent(customDeck[0])
+      const converted = convertCustomCardsToGameContent(customDeckCards)
+      activeContent = converted.questions
+      setGameContent(converted.questions)
+      if (converted.questions.length > 0) {
+        setCurrentContent(converted.questions[0])
       }
     }
     
@@ -689,6 +726,7 @@ export function GameComponent({
           payload: {
             gameContent: activeContent,
             personRounds: personRounds,
+            customCards: customDeckCards,
             currentContent: activeContent[0],
             contentIndex: 0,
             currentPlayer: 0
@@ -911,7 +949,36 @@ export function GameComponent({
 
   const shuffleContent = () => {
     playSound("click")
-    if (gameContent.length === 0 && personRounds.length === 0) return
+    if (gameContent.length === 0 && personRounds.length === 0 && customDeckCards.length === 0) return
+
+    if (gameId === "custom-game" && customDeckCards.length > 0) {
+      const indices = Array.from({ length: customDeckCards.length }, (_, i) => i)
+      for (let i = indices.length - 1; i > 0; i--) {
+        const j = Math.floor(Math.random() * (i + 1))
+        const temp = indices[i]
+        indices[i] = indices[j]
+        indices[j] = temp
+      }
+      const shuffledCards = indices.map((idx) => customDeckCards[idx])
+      const converted = convertCustomCardsToGameContent(shuffledCards)
+      const shuffledQuestions = converted.questions
+      setCustomDeckCards(shuffledCards)
+      setGameContent(shuffledQuestions)
+      setCurrentContent(shuffledQuestions[0])
+      setContentIndex(0)
+
+      if (socket && roomCode) {
+        socket.emit("game-action", roomCode, {
+          type: "shuffle-content",
+          payload: {
+            gameContent: shuffledQuestions,
+            customCards: shuffledCards,
+            currentContent: shuffledQuestions[0]
+          }
+        })
+      }
+      return
+    }
 
     let shuffledQuestions: string[] = []
     let shuffledRounds: any[] = []
@@ -1325,53 +1392,35 @@ export function GameComponent({
             </div>
 
             {gameId === "custom-game" && (
-              <div className="bg-zinc-900/30 border border-zinc-800 rounded-2xl p-6 mb-6 text-left w-full shadow-lg">
-                <h3 className="font-bold uppercase tracking-wider text-xs border-b border-zinc-900 pb-3 mb-4 text-zinc-300">
-                  Custom Game Deck Builder
-                </h3>
-                <div className="space-y-4">
-                  <div className="flex gap-2">
-                    <input
-                      type="text"
-                      placeholder="Type a custom prompt, rule, or action..."
-                      value={newCustomPrompt}
-                      onChange={(e) => setNewCustomPrompt(e.target.value)}
-                      className="flex-1 bg-zinc-900 border border-zinc-800 rounded-xl px-4 h-10 text-xs text-white placeholder-zinc-650 focus:outline-none focus:border-zinc-700 bg-transparent"
-                      onKeyDown={(e) => {
-                        if (e.key === "Enter") {
-                          handleAddCustomPrompt()
-                        }
-                      }}
-                    />
-                    <Button
-                      onClick={handleAddCustomPrompt}
-                      className="bg-zinc-100 hover:bg-zinc-200 text-black font-bold uppercase text-[10px] px-4 rounded-xl border-0 h-10 transition-colors"
-                    >
-                      Add Prompt
-                    </Button>
-                  </div>
-                  
-                  <div className="space-y-2 max-h-40 overflow-y-auto pr-1">
-                    {customDeck.length === 0 ? (
-                      <p className="text-zinc-650 text-xs font-semibold">Deck is empty. Add custom prompts to start!</p>
-                    ) : (
-                      customDeck.map((promptText, idx) => (
-                        <div key={idx} className="flex justify-between items-center bg-zinc-900/50 p-2.5 rounded-lg border border-zinc-800 text-[11px] font-semibold text-zinc-300">
-                          <span className="truncate flex-1 pr-3 text-left">{promptText}</span>
-                          <Button
-                            variant="ghost"
-                            size="sm"
-                            onClick={() => handleRemoveCustomPrompt(idx)}
-                            className="text-red-500 hover:text-red-400 hover:bg-transparent h-7 px-2 border-0"
-                          >
-                            Remove
-                          </Button>
-                        </div>
-                      ))
-                    )}
-                  </div>
-                  <span className="text-[9px] text-zinc-500 uppercase tracking-wider font-bold block mt-1">Total prompts in deck: {customDeck.length}</span>
-                </div>
+              <div className="mb-6 w-full text-left">
+                <CustomGameBuilder
+                  initialDeck={{
+                    id: "deck_active",
+                    title: customDeckTitle,
+                    description: "Custom user-crafted party game rules and challenges.",
+                    isMature: matureContent,
+                    defaultTimerDuration: timerDuration,
+                    cards: customDeckCards,
+                    createdAt: new Date().toISOString(),
+                    updatedAt: new Date().toISOString()
+                  }}
+                  isHost={isHost}
+                  players={players}
+                  myPlayerName={myPlayerName}
+                  roomCode={roomCode}
+                  socket={socket}
+                  onDeckChange={(newDeck) => {
+                    setCustomDeckCards(newDeck.cards)
+                    setCustomDeckTitle(newDeck.title)
+                    const converted = convertCustomCardsToGameContent(newDeck.cards)
+                    setCustomDeck(converted.questions)
+                    setGameContent(converted.questions)
+                    if (converted.questions.length > 0) {
+                      setCurrentContent(converted.questions[0])
+                    }
+                  }}
+                  onStartGame={startGame}
+                />
               </div>
             )}
 
@@ -1909,30 +1958,44 @@ export function GameComponent({
               </div>
             ) : (
               <>
-                <AnimatePresence mode="wait">
-                  <motion.div
-                    key={currentContent}
-                    initial={{ opacity: 0, scale: 0.94, y: 15 }}
-                    animate={{ opacity: 1, scale: 1, y: 0 }}
-                    exit={{ opacity: 0, scale: 0.94, y: -15 }}
-                    transition={{ duration: 0.3 }}
-                    className="w-full flex flex-col items-center justify-center"
-                  >
+                {gameId === "custom-game" && customDeckCards && customDeckCards[contentIndex] ? (
+                  <CustomCardStage
+                    card={customDeckCards[contentIndex]}
+                    players={players}
+                    currentPlayerIndex={currentPlayer}
+                    myPlayerName={myPlayerName}
+                    isHost={isHost}
+                    onAddSip={(player, count) => updateSips(player, count)}
+                    onCastVote={castVote}
+                    votes={votes}
+                    soundEnabled={soundEnabled}
+                  />
+                ) : (
+                  <AnimatePresence mode="wait">
                     <motion.div
-                      initial={{ scale: 0.8, opacity: 0 }}
-                      animate={{ scale: 1, opacity: 1 }}
-                      transition={{ delay: 0.05, duration: 0.2 }}
-                      className="mb-4 inline-flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/30 text-amber-300 font-extrabold text-[10px] uppercase px-3.5 py-1 rounded-full tracking-widest shadow-sm"
+                      key={currentContent}
+                      initial={{ opacity: 0, scale: 0.94, y: 15 }}
+                      animate={{ opacity: 1, scale: 1, y: 0 }}
+                      exit={{ opacity: 0, scale: 0.94, y: -15 }}
+                      transition={{ duration: 0.3 }}
+                      className="w-full flex flex-col items-center justify-center"
                     >
-                      <Sparkles className="w-3.5 h-3.5 text-amber-400" />
-                      <span>Question #{contentIndex + 1}</span>
-                    </motion.div>
+                      <motion.div
+                        initial={{ scale: 0.8, opacity: 0 }}
+                        animate={{ scale: 1, opacity: 1 }}
+                        transition={{ delay: 0.05, duration: 0.2 }}
+                        className="mb-4 inline-flex items-center gap-1.5 bg-amber-500/10 border border-amber-500/30 text-amber-300 font-extrabold text-[10px] uppercase px-3.5 py-1 rounded-full tracking-widest shadow-sm"
+                      >
+                        <Sparkles className="w-3.5 h-3.5 text-amber-400" />
+                        <span>Question #{contentIndex + 1}</span>
+                      </motion.div>
 
-                    <div className="text-lg sm:text-xl md:text-2xl font-black text-white tracking-tight uppercase max-w-2xl leading-relaxed">
-                      {currentContent || "Get ready for the next round!"}
-                    </div>
-                  </motion.div>
-                </AnimatePresence>
+                      <div className="text-lg sm:text-xl md:text-2xl font-black text-white tracking-tight uppercase max-w-2xl leading-relaxed">
+                        {currentContent || "Get ready for the next round!"}
+                      </div>
+                    </motion.div>
+                  </AnimatePresence>
+                )}
 
                 {/* Interactive Truth or Dare choice step */}
                 {gameId === "truth-or-dare" && (

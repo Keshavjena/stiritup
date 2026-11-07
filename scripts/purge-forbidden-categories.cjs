@@ -38,3 +38,4 @@ console.log('[Purge] Total people after purge:', afterCount);
 console.log('[Purge] Remaining category breakdown:');
 const cats = db.prepare('SELECT category, count(*) as count FROM people GROUP BY category ORDER BY count DESC').all();
 console.log(cats);
+
