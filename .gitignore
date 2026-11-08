@@ -27,6 +27,9 @@ yarn-error.log*
 *.tsbuildinfo
 next-env.d.ts
 
+# logs
+*.log
+
 # local sqlite database
 /data/
 *.db

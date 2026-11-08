@@ -78,7 +78,7 @@ export function CustomGameBuilder({
   })
 
   // Builder tabs
-  const [activeTab, setActiveTab] = useState<"create" | "bulk" | "templates" | "saved">("create")
+  const [activeTab, setActiveTab] = useState<"create" | "bulk" | "templates" | "personalities" | "saved">("create")
 
   // Single card form state
   const [promptContent, setPromptContent] = useState("")
@@ -88,6 +88,13 @@ export function CustomGameBuilder({
   const [dilemmaOptA, setDilemmaOptA] = useState("")
   const [dilemmaOptB, setDilemmaOptB] = useState("")
   const [isCurse, setIsCurse] = useState(false)
+
+  // 18k+ Personality generator state
+  const [persCategory, setPersCategory] = useState("all")
+  const [persStyle, setPersStyle] = useState<"all" | "quirky" | "dark" | "spicy">("all")
+  const [persCount, setPersCount] = useState<number>(10)
+  const [isGeneratingPers, setIsGeneratingPers] = useState(false)
+  const [persSuccessMessage, setPersSuccessMessage] = useState<string | null>(null)
 
   // Bulk paste state
   const [bulkInput, setBulkInput] = useState("")
@@ -221,6 +228,31 @@ export function CustomGameBuilder({
     updateDeck(updatedDeck)
     setBulkInput("")
     setActiveTab("create")
+  }
+
+  // Handle generating dynamic cards from the 18k+ personality database
+  const handleGeneratePersonalityCards = async () => {
+    setIsGeneratingPers(true)
+    try {
+      const res = await fetch(
+        `/api/catalog/games/round?gameId=custom-cards&category=${persCategory}&style=${persStyle}&count=${persCount}`
+      )
+      const data = await res.json()
+      if (data.success && Array.isArray(data.cards) && data.cards.length > 0) {
+        const updatedDeck = {
+          ...deck,
+          cards: [...deck.cards, ...data.cards],
+          updatedAt: new Date().toISOString()
+        }
+        updateDeck(updatedDeck)
+        setPersSuccessMessage(`Added ${data.cards.length} pop-culture star cards to your deck!`)
+        setTimeout(() => setPersSuccessMessage(null), 3000)
+      }
+    } catch (err) {
+      console.error("Failed to generate personality cards:", err)
+    } finally {
+      setIsGeneratingPers(false)
+    }
   }
 
   // Handle player prompt contribution (for non-hosts)
@@ -484,6 +516,17 @@ export function CustomGameBuilder({
             Templates ({CUSTOM_GAME_TEMPLATES.length})
           </button>
           <button
+            onClick={() => setActiveTab("personalities")}
+            className={`px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all flex items-center gap-1 ${
+              activeTab === "personalities"
+                ? "bg-zinc-800 text-white shadow-sm"
+                : "text-zinc-500 hover:text-zinc-300"
+            }`}
+          >
+            <Flame className="w-3.5 h-3.5 text-pink-400" />
+            Stars & Chaos (18k+)
+          </button>
+          <button
             onClick={() => setActiveTab("bulk")}
             className={`px-3.5 py-1.5 rounded-xl text-xs font-bold uppercase tracking-wider transition-all ${
               activeTab === "bulk"
@@ -734,7 +777,145 @@ export function CustomGameBuilder({
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 3: BULK PASTE                                                         */}
+      {/* TAB 3: POP CULTURE & 18K+ STARS GENERATOR                                 */}
+      {/* ========================================================================= */}
+      {isHost && activeTab === "personalities" && (
+        <div className="bg-zinc-900/30 border border-zinc-800 rounded-3xl p-5 sm:p-6 space-y-5 shadow-xl">
+          <div className="space-y-1">
+            <div className="flex items-center gap-2">
+              <span className="text-xl">🌟</span>
+              <h4 className="text-xs font-black uppercase tracking-wider text-white">
+                18,000+ Pop-Culture & Celebrity Card Generator
+              </h4>
+              <Badge className="bg-pink-500/20 border-pink-500/40 text-pink-300 font-black text-[8px] uppercase">
+                18k Catalog
+              </Badge>
+            </div>
+            <p className="text-[11px] text-zinc-400 leading-relaxed">
+              Dynamically generate celebrity dilemmas, room vibe-checks, speed roast challenges, and apocalyptic Kiss Marry Kill trios with Hollywood icons, Bollywood stars, YouTubers, athletes, and anime legends.
+            </p>
+          </div>
+
+          {persSuccessMessage && (
+            <motion.div
+              initial={{ opacity: 0, y: -8 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="p-3 bg-emerald-950/60 border border-emerald-800 rounded-2xl text-xs font-bold text-emerald-300 flex items-center gap-2"
+            >
+              <Check className="w-4 h-4 text-emerald-400" />
+              {persSuccessMessage}
+            </motion.div>
+          )}
+
+          {/* Category Picker */}
+          <div className="space-y-1.5">
+            <label className="text-[9px] font-bold uppercase tracking-wider text-zinc-400 block">
+              1. Choose Star Category:
+            </label>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+              {[
+                { id: "all", label: "🔥 All Stars" },
+                { id: "hollywood", label: "🎬 Hollywood & TV" },
+                { id: "bollywood", label: "✨ Bollywood" },
+                { id: "creators", label: "📱 Streamers / YouTube" },
+                { id: "singers", label: "🎵 Music & Pop" },
+                { id: "athletes", label: "⚽ Athletes & Sports" },
+                { id: "glamour", label: "💎 Glamour & Models" },
+                { id: "fantasy", label: "⚔️ Anime & Fantasy" }
+              ].map((c) => (
+                <button
+                  key={c.id}
+                  type="button"
+                  onClick={() => setPersCategory(c.id)}
+                  className={`p-2 rounded-xl text-[10px] font-extrabold uppercase tracking-wide border transition-all text-center ${
+                    persCategory === c.id
+                      ? "bg-zinc-100 text-black border-white shadow-md"
+                      : "bg-zinc-950/80 border-zinc-800 text-zinc-400 hover:bg-zinc-800 hover:text-white"
+                  }`}
+                >
+                  {c.label}
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Scenario & Dilemma Style Picker */}
+          <div className="space-y-1.5">
+            <label className="text-[9px] font-bold uppercase tracking-wider text-zinc-400 block">
+              2. Scenario & Question Mood:
+            </label>
+            <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
+              {[
+                { id: "all" as const, label: "🎲 Wild Mix (All)", desc: "Dilemmas, votes & KMK" },
+                { id: "quirky" as const, label: "🎪 Quirky & Absurd", desc: "Awkward elevator scenarios" },
+                { id: "dark" as const, label: "💀 Dark & Apocalyptic", desc: "Zombies, bunker pacts & mafia" },
+                { id: "spicy" as const, label: "🌶️ Spicy & Unhinged", desc: "High drama & savage roasts" }
+              ].map((s) => (
+                <button
+                  key={s.id}
+                  type="button"
+                  onClick={() => setPersStyle(s.id)}
+                  className={`p-2.5 rounded-xl border transition-all text-left flex flex-col justify-between ${
+                    persStyle === s.id
+                      ? "bg-amber-400 text-black border-amber-300 shadow-md"
+                      : "bg-zinc-950/80 border-zinc-800 text-zinc-300 hover:bg-zinc-850"
+                  }`}
+                >
+                  <span className="text-[10px] font-black uppercase tracking-wide block">
+                    {s.label}
+                  </span>
+                  <span className={`text-[8.5px] font-medium block mt-0.5 ${persStyle === s.id ? "text-zinc-900" : "text-zinc-500"}`}>
+                    {s.desc}
+                  </span>
+                </button>
+              ))}
+            </div>
+          </div>
+
+          {/* Cards Count & CTA Row */}
+          <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3 pt-2 border-t border-zinc-850">
+            <div className="flex items-center gap-2">
+              <span className="text-[9px] font-bold uppercase tracking-wider text-zinc-400">
+                Number of Cards:
+              </span>
+              <div className="flex gap-1">
+                {[5, 10, 20].map((num) => (
+                  <button
+                    key={num}
+                    type="button"
+                    onClick={() => setPersCount(num)}
+                    className={`px-3 py-1 rounded-lg text-[9px] font-extrabold uppercase border transition-all ${
+                      persCount === num
+                        ? "bg-white text-black border-white"
+                        : "bg-zinc-950 border-zinc-800 text-zinc-400 hover:text-white"
+                    }`}
+                  >
+                    {num} Cards
+                  </button>
+                ))}
+              </div>
+            </div>
+
+            <Button
+              onClick={handleGeneratePersonalityCards}
+              disabled={isGeneratingPers}
+              className="bg-gradient-to-r from-amber-400 to-pink-500 hover:from-amber-300 hover:to-pink-400 text-black font-black uppercase tracking-wider text-xs px-6 h-10 rounded-xl border-0 shadow-lg shadow-pink-500/20 active:scale-95 transition-all"
+            >
+              {isGeneratingPers ? (
+                "Summoning Stars..."
+              ) : (
+                <>
+                  <Sparkles className="w-3.5 h-3.5 mr-1.5" />
+                  Generate & Add +{persCount} Cards
+                </>
+              )}
+            </Button>
+          </div>
+        </div>
+      )}
+
+      {/* ========================================================================= */}
+      {/* TAB 4: BULK PASTE                                                         */}
       {/* ========================================================================= */}
       {isHost && activeTab === "bulk" && (
         <div className="bg-zinc-900/30 border border-zinc-800 rounded-3xl p-5 sm:p-6 space-y-4 shadow-xl">
@@ -771,7 +952,7 @@ export function CustomGameBuilder({
       )}
 
       {/* ========================================================================= */}
-      {/* TAB 4: SAVED DECKS                                                        */}
+      {/* TAB 5: SAVED DECKS                                                        */}
       {/* ========================================================================= */}
       {isHost && activeTab === "saved" && (
         <div className="space-y-4">

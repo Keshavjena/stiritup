@@ -518,5 +518,213 @@ export const CUSTOM_GAME_TEMPLATES: CustomTemplatePreset[] = [
         tags: ["confession", "stan"]
       }
     ]
+  },
+
+  // 6. CELEBRITY CHAOS & KISS MARRY KILL (18k+ Personality Powered)
+  {
+    id: "celebrity-chaos",
+    title: "Celebrity Chaos & Kiss Marry Kill",
+    name: "Celebrity Chaos & Kiss Marry Kill",
+    description: "Unhinged pop-culture party deck featuring real celebrities, influencers, YouTubers, F1/UFC stars, and anime heroes.",
+    icon: "🌟",
+    isMature: true,
+    category: "Pop Culture",
+    defaultTimerDuration: 30,
+    cards: [
+      {
+        content: "Apocalyptic KMK: The world is ending and you have one spot in your bunker. Choose between Leonardo DiCaprio, Margot Robbie, and Cristiano Ronaldo. Who do you kiss, marry, and throw to the zombies?",
+        type: "action",
+        sips: 3,
+        target: "current",
+        tags: ["personality", "kmk", "celebrity"]
+      },
+      {
+        content: "Would you rather have Gordon Ramsay scream at you for 10 minutes every morning OR have Snoop Dogg be your personal life coach?",
+        type: "dilemma",
+        sips: 2,
+        target: "current",
+        options: ["Ramsay Wake-Up", "Snoop Life Coach"],
+        tags: ["personality", "dilemma"]
+      },
+      {
+        content: "Who in this room has the biggest main-character energy? Point on the count of 3. Most voted drinks 2 sips!",
+        type: "vote",
+        sips: 2,
+        target: "point",
+        tags: ["vote", "vibe-check"]
+      },
+      {
+        content: "Give your best 20-second dramatic impression of a famous YouTuber or Twitch streamer. If nobody guesses who it is, take 2 sips.",
+        type: "action",
+        sips: 2,
+        target: "current",
+        timerSeconds: 20,
+        tags: ["personality", "creators", "acting"]
+      },
+      {
+        content: "VIP Penthouse KMK: At a wild Monaco yacht after-party: Shah Rukh Khan, Zendaya, and Conor McGregor. Choose your Kiss, Marry, Kill!",
+        type: "action",
+        sips: 3,
+        target: "current",
+        tags: ["personality", "kmk"]
+      },
+      {
+        content: "Would you rather have your browser history leaked to Elon Musk OR let Kim Kardashian style your wardrobe for a year?",
+        type: "dilemma",
+        sips: 2,
+        target: "current",
+        options: ["Musk Search Leak", "Kardashian Wardrobe"],
+        tags: ["personality", "dilemma"]
+      },
+      {
+        content: "Standing Curse: Every time someone says the word 'famous', 'celebrity', or 'like', they must take a sip for the next 3 rounds.",
+        type: "rule",
+        sips: 1,
+        target: "all",
+        isCurse: true,
+        tags: ["curse", "rule"]
+      },
+      {
+        content: "Anime & Superhero KMK: Gojo Satoru, Batman, and Spider-Man. Choose your Kiss, Marry, and Kill aloud!",
+        type: "action",
+        sips: 3,
+        target: "current",
+        tags: ["personality", "fantasy", "kmk"]
+      },
+      {
+        content: "Confess: Which celebrity or influencer do you secretly have a crush on that you'd be embarrassed to admit to this room? Speak up or drink 2 sips!",
+        type: "confession",
+        sips: 2,
+        target: "current",
+        tags: ["personality", "confession"]
+      },
+      {
+        content: "Speed Roast: Roast a popular influencer or celebrity trend in 15 seconds. If nobody laughs, drink 2 sips!",
+        type: "action",
+        sips: 2,
+        target: "current",
+        timerSeconds: 15,
+        tags: ["personality", "roast", "action"]
+      },
+      {
+        content: "Who in this room is most likely to end up on a reality TV dating show? Point on 3. Most voted takes 2 sips!",
+        type: "vote",
+        sips: 2,
+        target: "point",
+        tags: ["personality", "vote"]
+      },
+      {
+        content: "Would you rather have Taylor Swift write a brutal breakup anthem about you OR have Drake send you unsolicited emotional 3 AM DMs?",
+        type: "dilemma",
+        sips: 2,
+        target: "current",
+        options: ["Swift Anthem", "Drake 3 AM DMs"],
+        tags: ["personality", "dilemma"]
+      }
+    ]
+  },
+
+  // 7. DARK DILEMMAS & APOCALYPTIC PACTS
+  {
+    id: "dark-dilemmas",
+    title: "Dark Dilemmas & Apocalyptic Pacts",
+    name: "Dark Dilemmas & Apocalyptic Pacts",
+    description: "Gritty survival pacts, mobster alibis, high-stakes hypothetical betrayals, and dark psychological choices.",
+    icon: "💀",
+    isMature: true,
+    category: "Dark Humor",
+    defaultTimerDuration: 30,
+    cards: [
+      {
+        content: "Survival Pact: The person to your left is your designated zombie apocalypse partner. If they drink, you must drink half their sips.",
+        type: "rule",
+        sips: 1,
+        target: "two_players",
+        isCurse: true,
+        tags: ["curse", "survival"]
+      },
+      {
+        content: "Would you rather sign a 10-year blood contract for unlimited wealth with a demon OR be haunted by your ex's ghost for the rest of your life?",
+        type: "dilemma",
+        sips: 2,
+        target: "current",
+        options: ["Demon Wealth Contract", "Ex Ghost Curse"],
+        tags: ["dark", "dilemma"]
+      },
+      {
+        content: "Who in this room would crack first under interrogation by Interpol? Point on the count of 3. Most voted drinks 3 sips!",
+        type: "vote",
+        sips: 3,
+        target: "point",
+        tags: ["vote", "interrogation"]
+      },
+      {
+        content: "Confess: What is the most chaotic or petty lie you've ever told to get out of trouble? Confess honestly or take a shot (5 sips).",
+        type: "confession",
+        sips: 5,
+        target: "current",
+        tags: ["confession", "dark"]
+      },
+      {
+        content: "Would you rather have all your text messages from the last 2 years published in the Sunday newspaper OR be stuck in an elevator for 48 hours with your biggest enemy?",
+        type: "dilemma",
+        sips: 3,
+        target: "current",
+        options: ["Texts in Newspaper", "Elevator with Enemy"],
+        tags: ["dark", "dilemma"]
+      },
+      {
+        content: "Hostage Negotiation: You must convince the player across from you to take a sip on your behalf within 15 seconds. If they refuse, you drink double (4 sips)!",
+        type: "action",
+        sips: 4,
+        target: "rival",
+        timerSeconds: 15,
+        tags: ["action", "persuasion"]
+      },
+      {
+        content: "Blackout Survival KMK: A sudden global blackout hits. Choose between a corrupt cartel boss, an unstable rogue hacker, and a doomsday prepper who doesn't trust you. Kiss, Marry, Kill aloud!",
+        type: "action",
+        sips: 3,
+        target: "current",
+        tags: ["dark", "kmk"]
+      },
+      {
+        content: "Point at the person in this room you would trust the LEAST to hold your life savings during a crisis. Most voted drinks 3 sips!",
+        type: "vote",
+        sips: 3,
+        target: "point",
+        tags: ["dark", "vote"]
+      },
+      {
+        content: "Would you rather know the exact date of your demise OR know the exact truth behind every lie ever told to you?",
+        type: "dilemma",
+        sips: 2,
+        target: "current",
+        options: ["Know the Date", "Know Every Lie"],
+        tags: ["dark", "dilemma"]
+      },
+      {
+        content: "Secret Vendetta: Confess the pettiest thing you have ever done to get revenge on someone, or take a shot (5 sips)!",
+        type: "confession",
+        sips: 5,
+        target: "current",
+        tags: ["dark", "confession"]
+      },
+      {
+        content: "The Silence Rule: The current player cannot make eye contact with anyone while drinking. Anyone who catches them looking drinks 1 sip.",
+        type: "rule",
+        sips: 1,
+        target: "current",
+        isCurse: true,
+        tags: ["rule", "dark"]
+      },
+      {
+        content: "Who in this room is most likely to survive a horror movie by sacrificing another player first? Point on 3!",
+        type: "vote",
+        sips: 2,
+        target: "point",
+        tags: ["dark", "vote"]
+      }
+    ]
   }
 ]

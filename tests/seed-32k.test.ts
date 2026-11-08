@@ -3,20 +3,20 @@ import assert from "node:assert/strict"
 import { resetDbForTesting, getDb } from "../lib/catalog/db.ts"
 import { seed32kCatalog } from "../lib/catalog/seed-32k.ts"
 import { getPeople, checkPersonAnswer, pruneUnpopularCatalog } from "../lib/catalog/service.ts"
-import { generateKMKRounds, generateWYRRounds } from "../lib/catalog/game-generator.ts"
+import { generateKMKRounds, generateWYRRounds, generatePersonalityCustomCards } from "../lib/catalog/game-generator.ts"
 
-test("Personality Seed Dataset & Pure Pop-Culture Catalog (Scientists, History, Tech & Writers Purged + Anti-Consecutive Randomisation)", async (t) => {
+test("Personality Seed Dataset & Pure Pop-Culture Catalog (18k+ Stars, Opt-In Filtering & Anti-Consecutive Randomisation)", async (t) => {
   const db = resetDbForTesting()
 
-  await t.test("seed32kCatalog ingests popular figures while completely skipping non-entertainment categories", () => {
+  await t.test("seed32kCatalog ingests 18,000+ personalities with portraits, tiers, and opt-in tags", () => {
     const result = seed32kCatalog({ logProgress: false })
-    assert.ok(result.totalProcessed >= 30000, `Expected >= 30,000 raw records parsed, got ${result.totalProcessed}`)
-    assert.ok(result.insertedPeople >= 4000, `Expected >= 4,000 popular people inserted, got ${result.insertedPeople}`)
-    assert.ok(result.insertedImages >= 4000, `Expected >= 4,000 portraits inserted, got ${result.insertedImages}`)
+    assert.ok(result.totalProcessed >= 18000, `Expected >= 18,000 raw records parsed, got ${result.totalProcessed}`)
+    assert.ok(result.insertedPeople >= 15000, `Expected >= 15,000 people inserted, got ${result.insertedPeople}`)
+    assert.ok(result.insertedImages >= 15000, `Expected >= 15,000 portraits inserted, got ${result.insertedImages}`)
 
     // Check database counts
     const countPeople = db.prepare("SELECT count(*) as c FROM people").get() as any
-    assert.ok(countPeople.c >= 4000)
+    assert.ok(countPeople.c >= 15000)
   })
 
   await t.test("All primary pop-culture categories are represented and indexed", () => {
@@ -34,12 +34,30 @@ test("Personality Seed Dataset & Pure Pop-Culture Catalog (Scientists, History, 
     }
   })
 
-  await t.test("Forbidden non-entertainment categories (scientists, history, tech, writers, artists) are completely absent", () => {
-    const forbidden = ["scientists", "history", "tech", "writers", "artists"]
-    for (const f of forbidden) {
-      const count = db.prepare("SELECT count(*) as c FROM people WHERE category = ?").get(f) as any
-      assert.equal(count.c, 0, `Category ${f} must have 0 people in active catalog`)
+  await t.test("Opt-in categories (scientists, history, tech, writers, artists) are isolated from default pop-culture rounds", () => {
+    const optInCategories = ["scientists", "history", "tech", "writers", "artists"]
+
+    for (const cat of optInCategories) {
+      const count = db.prepare("SELECT count(*) as c FROM people WHERE category = ? AND opt_in = 1").get(cat) as any
+      assert.ok(count.c > 0, `Category ${cat} must be stored with opt_in = 1`)
     }
+
+    // Default getPeople({ category: "all" }) MUST NOT include any opt_in figures
+    const defaultPeople = getPeople({ category: "all", limit: 300 }).items
+    for (const person of defaultPeople) {
+      assert.equal(
+        optInCategories.includes(person.category),
+        false,
+        `Default pool must not return ${person.category} figure ${person.name}`
+      )
+      assert.equal(Boolean(person.optIn), false, "Default pool person must not have optIn = true")
+    }
+
+    // Specific category query allows retrieving opt-in figures
+    const explicitScientists = getPeople({ category: "scientists", limit: 50 }).items
+    assert.ok(explicitScientists.length > 0, "Explicit category query for scientists should return items")
+    const explicitTech = getPeople({ category: "tech", limit: 50 }).items
+    assert.ok(explicitTech.length > 0, "Explicit category query for tech should return items")
   })
 
   await t.test("Anti-consecutive randomisation: KMK rounds NEVER contain identical personalities in consecutive rounds", () => {
@@ -149,5 +167,27 @@ test("Personality Seed Dataset & Pure Pop-Culture Catalog (Scientists, History, 
       assert.ok(["singers", "popstars"].includes(round.optionA.category))
       assert.ok(["singers", "popstars"].includes(round.optionB.category))
     }
+  })
+
+  await t.test("Personality Custom Game Cards Generator produces diverse quirky, dark, and spicy cards", () => {
+    // Generate quirky cards
+    const quirkyCards = generatePersonalityCustomCards({ count: 8, style: "quirky" })
+    assert.equal(quirkyCards.length, 8)
+    const types = new Set(quirkyCards.map((c) => c.type))
+    assert.ok(types.size >= 2, "Must produce multiple card mechanisms")
+    assert.ok(quirkyCards.every((c) => c.id && c.content && c.sips >= 0))
+
+    // Generate dark cards
+    const darkCards = generatePersonalityCustomCards({ count: 6, style: "dark" })
+    assert.equal(darkCards.length, 6)
+
+    // Verify KMK scenario injection
+    const kmkDark = generateKMKRounds({ count: 5, scenarioMode: "dark" })
+    assert.equal(kmkDark.length, 5)
+    assert.ok(kmkDark.every((r) => r.scenario && r.scenario.length > 5))
+
+    const kmkSpicy = generateKMKRounds({ count: 5, scenarioMode: "spicy" })
+    assert.equal(kmkSpicy.length, 5)
+    assert.ok(kmkSpicy.every((r) => r.scenario && r.scenario.length > 5))
   })
 })

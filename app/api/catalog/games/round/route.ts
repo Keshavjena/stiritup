@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server"
-import { generateKMKRounds, generateWYRRounds } from "@/lib/catalog/game-generator"
+import { generateKMKRounds, generateWYRRounds, generatePersonalityCustomCards } from "@/lib/catalog/game-generator"
 
 export const dynamic = "force-dynamic"
 
@@ -10,12 +10,14 @@ export async function GET(req: NextRequest) {
     const category = searchParams.get("category") || "all"
     const gender = (searchParams.get("gender") || "female") as any
     const count = parseInt(searchParams.get("count") || "10", 10)
+    const scenarioMode = (searchParams.get("scenarioMode") || "all") as any
 
     if (gameId === "kiss-marry-kill") {
       const rounds = generateKMKRounds({
         category,
         gender,
-        count
+        count,
+        scenarioMode
       })
 
       return NextResponse.json({
@@ -30,7 +32,8 @@ export async function GET(req: NextRequest) {
       const rounds = generateWYRRounds({
         category,
         gender,
-        count
+        count,
+        scenarioMode
       })
 
       return NextResponse.json({
@@ -41,8 +44,25 @@ export async function GET(req: NextRequest) {
       })
     }
 
+    if (gameId === "custom-cards" || gameId === "custom") {
+      const style = (searchParams.get("style") || scenarioMode || "all") as any
+      const cards = generatePersonalityCustomCards({
+        category,
+        gender,
+        count,
+        style
+      })
+
+      return NextResponse.json({
+        success: true,
+        gameId,
+        count: cards.length,
+        cards
+      })
+    }
+
     return NextResponse.json(
-      { success: false, error: `Unsupported gameId: '${gameId}'. Expected 'kiss-marry-kill' or 'would-you-rather'.` },
+      { success: false, error: `Unsupported gameId: '${gameId}'. Expected 'kiss-marry-kill', 'would-you-rather', or 'custom-cards'.` },
       { status: 400 }
     )
   } catch (error: any) {

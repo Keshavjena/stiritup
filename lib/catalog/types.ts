@@ -20,6 +20,11 @@ export type Category =
   | "anime"
   | "gaming"
   | "icons"
+  | "scientists"
+  | "history"
+  | "writers"
+  | "artists"
+  | "tech"
   | "other"
 
 export type ModerationStatus = "pending" | "approved" | "rejected" | "flagged" | "removed"
@@ -76,6 +81,8 @@ export interface Person {
   externalId?: string | null
   description?: string | null
   popularity?: number
+  tier?: "A+" | "A"
+  optIn?: boolean
   country?: string | null
   birthYear?: number | null
   occupations?: string[]
@@ -149,6 +156,8 @@ export interface CatalogSearchParams {
   sortOrder?: "asc" | "desc"
   page?: number
   limit?: number
+  tier?: "A+" | "A" | "all"
+  includeOptIn?: boolean
   includeHistoricalOrScientific?: boolean
 }
 

@@ -53,6 +53,8 @@ function mapPersonRow(row: any, images: PersonImage[] = []): Person {
     externalId: row.external_id || null,
     description: row.description || null,
     popularity: row.popularity != null ? Number(row.popularity) : 0,
+    tier: row.tier || (row.popularity >= 80 ? "A+" : "A"),
+    optIn: Boolean(row.opt_in),
     country: row.country || null,
     birthYear: row.birth_year != null ? Number(row.birth_year) : null,
     occupations: parseJsonSafe<string[]>(row.occupations, []),
@@ -469,8 +471,15 @@ export function getPeople(params: CatalogSearchParams = {}): PaginatedResult<Per
       queryParams.push(cat)
     }
   } else {
-    // Pure pop-culture & entertainment catalog: always exclude intellectual/historical/niche categories
-    whereClauses.push("p.category NOT IN ('scientists', 'history', 'writers', 'artists', 'tech')")
+    // Default rounds: exclude opt-in categories (scientists, history) unless explicitly requested
+    if (!params.includeOptIn && !params.includeHistoricalOrScientific) {
+      whereClauses.push("COALESCE(p.opt_in, 0) = 0")
+    }
+  }
+
+  if (params.tier && params.tier !== "all") {
+    whereClauses.push("p.tier = ?")
+    queryParams.push(params.tier)
   }
 
   if (params.gender && params.gender !== "all" && params.gender !== "mixed") {

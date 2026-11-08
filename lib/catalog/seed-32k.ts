@@ -16,6 +16,12 @@ export interface Seed32kRecord {
   birthYear: number | null
   occupations: string[]
   aliases: string[]
+  workFame?: number
+  deathYear?: number | null
+  age?: number | null
+  beauty?: number | null
+  tier?: "A+" | "A"
+  optIn?: boolean
 }
 
 export function seed32kCatalog(options: {
@@ -54,6 +60,8 @@ export function seed32kCatalog(options: {
       birth_year = COALESCE(birth_year, ?),
       occupations = CASE WHEN occupations = '[]' OR occupations IS NULL THEN ? ELSE occupations END,
       primary_image_id = COALESCE(primary_image_id, ?),
+      tier = COALESCE(?, tier),
+      opt_in = ?,
       updated_at = ?
     WHERE id = ?
   `)
@@ -62,8 +70,8 @@ export function seed32kCatalog(options: {
     INSERT INTO people (
       id, name, normalized_name, gender, category, tags, primary_image_id,
       provider, external_id, description, popularity, country, birth_year,
-      occupations, aliases, moderation_status, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, 'wikidata', ?, ?, ?, ?, ?, ?, ?, 'approved', ?, ?)
+      occupations, aliases, tier, opt_in, moderation_status, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, 'wikidata', ?, ?, ?, ?, ?, ?, ?, ?, ?, 'approved', ?, ?)
     ON CONFLICT(id) DO UPDATE SET
       name = excluded.name,
       normalized_name = excluded.normalized_name,
@@ -77,6 +85,8 @@ export function seed32kCatalog(options: {
       birth_year = excluded.birth_year,
       occupations = excluded.occupations,
       aliases = excluded.aliases,
+      tier = excluded.tier,
+      opt_in = excluded.opt_in,
       updated_at = excluded.updated_at
   `)
 
@@ -95,7 +105,8 @@ export function seed32kCatalog(options: {
 
   const now = new Date().toISOString()
   const batchSize = options.batchSize || 2000
-  const minPopThreshold = options.minPopularity !== undefined ? options.minPopularity : 40
+  const minPopThreshold = options.minPopularity !== undefined ? options.minPopularity : 0
+  const OPT_IN_CATEGORIES = new Set(["scientists", "history", "tech", "writers", "artists"])
   let insertedPeople = 0
   let insertedImages = 0
 
@@ -106,23 +117,13 @@ export function seed32kCatalog(options: {
     for (const item of chunk) {
       const normName = normalizePersonName(item.name)
 
-      // Strict Pop-Culture & Entertainment Catalog Rule:
-      // Completely exclude non-entertainment categories: scientists, history, writers, artists, tech
-      if (
-        item.category === "scientists" ||
-        item.category === "history" ||
-        item.category === "writers" ||
-        item.category === "artists" ||
-        item.category === "tech"
-      ) {
-        continue
-      }
-
       if ((item.popularity || 0) < minPopThreshold) continue
       const existing = findExisting.get(normName) as any
 
       let targetPersonId = `p_${item.id}`
       const imageId = item.image ? `img_${item.id}` : null
+      const isOptIn = item.optIn === true || OPT_IN_CATEGORIES.has(item.category) ? 1 : 0
+      const tier = item.tier || (item.popularity >= 80 ? "A+" : "A")
 
       if (existing) {
         targetPersonId = existing.id
@@ -133,6 +134,8 @@ export function seed32kCatalog(options: {
           item.birthYear != null ? item.birthYear : null,
           JSON.stringify(item.occupations || []),
           imageId,
+          tier,
+          isOptIn,
           now,
           existing.id
         )
@@ -152,6 +155,8 @@ export function seed32kCatalog(options: {
           item.birthYear != null ? item.birthYear : null,
           JSON.stringify(item.occupations || []),
           JSON.stringify(item.aliases || []),
+          tier,
+          isOptIn,
           now,
           now
         )

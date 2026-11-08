@@ -87,6 +87,40 @@ TECH_OCCS = {"entrepreneur", "businessperson", "chief executive officer", "inves
              "engineer", "computer scientist"}
 POLITIC_OCCS = {"politician", "monarch", "military officer", "diplomat", "revolutionary", "activist"}
 
+# ---------------------------------------------------------------
+# Fame pruning: keep only genuinely recognisable names.
+# A record survives if it is
+#   * in a "keep everything" category (science / history), or
+#   * one of the hand-picked names in data/pick_titles.txt, or
+#   * its own fame, or the fame of the work it is known for, clears FAME_RULES.
+# Lower those numbers and re-run export.py
+# to get a bigger list back - no re-fetching needed.
+# ---------------------------------------------------------------
+OPT_IN_CATEGORIES = {"scientists", "history"}   # A+ only, excluded from default pools
+
+# A record is kept when EITHER its own fame clears the bar, OR it is attached to something
+# famous (the show / film / song / band / team that made it recognisable).
+#   solo      -> minimum sitelinks of the person
+#   with_work -> lower personal bar, allowed only if `work` (best attached work) clears its bar
+FAME_RULES = {
+    "scientists":  dict(solo=80, with_work=None, work=None),   # A+ only
+    "history":     dict(solo=80, with_work=None, work=None),   # A+ only
+    "athletes":    dict(solo=40, with_work=15, work=40),
+    "creators":    dict(solo=6,  with_work=4,  work=8),
+    "glamour":     dict(solo=6,  with_work=3,  work=8),
+    "models":      dict(solo=10, with_work=6,  work=12),
+    "fantasy":     dict(solo=30, with_work=12, work=30),
+    "bollywood":   dict(solo=40, with_work=15, work=25),
+    "hollywood":   dict(solo=40, with_work=15, work=25),
+    "actors":      dict(solo=40, with_work=15, work=25),
+    "singers":     dict(solo=40, with_work=15, work=25),
+    "writers":     dict(solo=40, with_work=15, work=25),
+    "artists":     dict(solo=40, with_work=15, work=25),
+    "tech":        dict(solo=40, with_work=15, work=25),
+    "icons":       dict(solo=40, with_work=15, work=25),
+}
+FAME_RULE_DEFAULT = dict(solo=40, with_work=15, work=25)
+
 EXTRA_ALIASES = {
     "napoleon": ["Napoleon Bonaparte"],
     "batman": ["Bruce Wayne"],
@@ -99,6 +133,45 @@ EXTRA_ALIASES = {
     "msdhoni": ["Mahendra Singh Dhoni", "M.S. Dhoni"],
     "abdulkalam": ["A. P. J. Abdul Kalam", "APJ Abdul Kalam"],
 }
+
+MAX_AGE = 70
+CURRENT_YEAR = 2026
+
+# Looks signal: "is this person's appeal partly/entirely visual?"
+BEAUTY_STRONG = {"model", "fashion model", "erotic photography model", "glamour model",
+                 "Playboy Playmate", "OnlyFans model", "pornographic film actor",
+                 "beauty pageant contestant", "vedette", "pin-up girl", "bikini model"}
+BEAUTY_SOME = {"actor", "actress", "film actor", "television actor", "stage actor", "voice actor",
+               "singer", "rapper", "singer-songwriter", "musician", "dancer", "ballet dancer",
+               "television presenter", "presenter", "comedian", "YouTuber", "TikToker",
+               "online streamer", "Internet celebrity", "professional gamer", "influencer",
+               "association football player", "cricketer", "basketball player", "tennis player",
+               "boxer", "racing driver", "racing automobile driver", "Formula One driver",
+               "athlete", "swimmer", "gymnast", "volleyball player", "badminton player",
+               "amateur wrestler", "mixed martial arts fighter", "professional wrestler",
+               "golfer", "field hockey player", "sprinter", "figure skater", "model"}
+BEAUTY_CATEGORY = {"models": 2, "glamour": 2, "bollywood": 1, "hollywood": 1, "actors": 1,
+                   "singers": 1, "athletes": 1, "creators": 1, "fantasy": 1}
+
+
+def beauty_score(kept, occs, category):
+    o = set(kept) | set(occs)
+    if o & BEAUTY_STRONG or category in ("models", "glamour"):
+        return 2
+    if o & BEAUTY_SOME or category in BEAUTY_CATEGORY:
+        return 1
+    return 0
+
+
+def age_of(birth_year, death_year):
+    """Age now (living) or at death, or None when the dates are unusable (fiction, BCE, ...)."""
+    if not birth_year or birth_year < 1000:
+        return None
+    if death_year and death_year > birth_year:
+        return death_year - birth_year
+    age = CURRENT_YEAR - birth_year
+    return age if 0 <= age <= 120 else None
+
 
 ACTOR_OCCS = {"actor", "actress", "film actor", "television actor", "stage actor", "voice actor"}
 SPORT_OCCS = {"association football player", "cricketer", "basketball player", "tennis player", "boxer",
@@ -113,8 +186,9 @@ CREATOR_OCCS = {"YouTuber", "online streamer", "TikToker", "Internet celebrity"}
 ARTIST_OCCS = {"painter", "architect", "photographer", "comedian", "film director", "fashion designer",
                "cook", "sculptor", "illustrator", "cartoonist"}
 WRITER_OCCS = {"writer", "poet", "novelist", "journalist", "screenwriter", "essayist"}
-HISTORY_OCCS = {"politician", "monarch", "military officer", "revolutionary", "philosopher", "diplomat",
-                "activist", "explorer", "astronaut"}
+HISTORY_OCCS = {"politician", "monarch", "military officer", "army officer", "revolutionary",
+                "philosopher", "diplomat", "activist", "explorer", "astronaut", "statesperson",
+                "theologian", "priest", "reformer", "saint", "nobleman", "noblewoman"}
 US_UK_NAMES = {"United States of America", "United States", "United Kingdom", "England", "Canada",
                "Australia", "Ireland", "Scotland", "Wales", "New Zealand"}
 
@@ -163,8 +237,21 @@ POLYMATH = ("polymath", "renaissance man", "renaissance humanist")
 
 
 def best_category(desc, kept, occs, country):
-    """Category from a Wikidata one-liner, which is far more reliable than raw occupations."""
-    d = " " + (desc or "").lower() + " "
+    """Category from a Wikidata one-liner, which is far more reliable than raw occupations.
+
+    Wikidata descriptions read "<nationality> <main job>, <other jobs>", so the first clause is
+    the strongest signal - that keeps "German priest, theologian, hymnwriter" out of *singers*.
+    """
+    full = " " + (desc or "").lower() + " "
+    head = " " + (desc or "").split(",")[0].lower() + " "
+    for scope in (head, full):
+        cat = _match_category(scope, country)
+        if cat:
+            return cat
+    return None
+
+
+def _match_category(d, country):
     if any(k in d for k in POLYMATH):
         return "icons"
     if any(re.search(r"\b" + re.escape(w) + r"\b", d) for w in MODEL_WORDS) and \
@@ -191,20 +278,20 @@ def derive_category(kept, occs, country):
         return "hollywood" if country in US_UK_NAMES else "actors"
     if o & SPORT_OCCS:
         return "athletes"
-    if o & SINGER_OCCS:
-        return "singers"
-    if o & SCIENTIST_OCCS:
-        return "scientists"
     if o & MODEL_OCCS:
         return "models"
     if o & CREATOR_OCCS:
         return "creators"
-    if o & TECH_OCCS:
-        return "tech"
+    if o & SCIENTIST_OCCS:
+        return "scientists"
     if o & HISTORY_OCCS:
         return "history"
     if o & WRITER_OCCS:
         return "writers"
+    if o & SINGER_OCCS:
+        return "singers"
+    if o & TECH_OCCS:
+        return "tech"
     if o & ARTIST_OCCS:
         return "artists"
     return "icons"
@@ -254,13 +341,21 @@ def norm_name(s):
     return re.sub(r"[^a-z0-9]+", "", s.lower())
 
 
-IMG_OK = re.compile(r"\.(jpe?g|png)$", re.I)
+IMG_OK = re.compile(r"\.(jpe?g|png|svg|webp)$", re.I)
 
 
 def normalize_image(raw):
     """Turn a Commons FilePath URL into a clean https URL, or None."""
     if not raw:
         return None
+    if raw.startswith("http://"):
+        raw = "https://" + raw[len("http://"):]
+    if "thumb.wikimedia.org" in raw:
+        return raw.replace("thumb.wikimedia.org", "upload.wikimedia.org")
+    if "wikia.nocookie.net" in raw:      # Fandom needs its ?cb=...&path-prefix=... query
+        return raw
+    if "upload.wikimedia.org" in raw:
+        return raw.split("?")[0]
     uri = unquote(raw)
     if "Special:FilePath/" not in uri:
         return None
@@ -284,6 +379,110 @@ def clean_desc(d, fallback):
     return d
 
 
+
+
+CHAR_TITLES = ("The ", "Professor ", "Captain ", "Princess ", "Prince ", "Dr. ", "Mr. ", "Mrs. ",
+               "Sir ", "Lord ", "Lady ", "King ", "Queen ", "Aunt ", "Uncle ", "General ")
+
+
+def char_aliases(name):
+    """Answer-checking aliases for a character: 'The Joker' -> 'Joker', 'Monkey D. Luffy' -> 'Luffy'."""
+    out = []
+    for t in CHAR_TITLES:
+        if name.startswith(t) and len(name) - len(t) >= 3:
+            out.append(name[len(t):])
+    if "(" in name and ")" in name:              # 'Batman (Bruce Wayne)'
+        head, inner = name.split("(", 1)
+        out += [head.strip(), inner.rsplit(")", 1)[0].strip()]
+    parts = name.replace(".", "").split()
+    if len(parts) >= 3 and len(parts[-1]) >= 3:  # 'Monkey D. Luffy' -> 'Luffy'
+        out.append(parts[-1])
+    seen, keep = set(), []
+    for a in out:
+        if a and norm_name(a) != norm_name(name) and a not in seen:
+            seen.add(a)
+            keep.append(a)
+    return keep[:4]
+
+
+def merge_characters(recs, dropped):
+    """Append the harvested fictional characters (Marvel/DC/GoT/HP/anime/games/...) as records.
+
+    Every character must have an image; gender comes from P21 or is inferred from the
+    description; age is null (they are not people); they are all `visual` so they can appear in
+    kiss/marry/kill and draft rounds.
+    """
+    path = os.path.join(DATA, "characters.json")
+    cache_path = os.path.join(DATA, "char_images.json")
+    raw_path = os.path.join(DATA, "characters_raw.json")
+    if not os.path.exists(path):
+        return recs
+    chars = json.load(open(path))
+    cache = json.load(open(cache_path)) if os.path.exists(cache_path) else {}
+    raw = json.load(open(raw_path)) if os.path.exists(raw_path) else {}
+    mapping = raw.get("mapping", {})
+    char_ids = {c["id"] for c in chars}
+    char_names = {norm_name(c["name"]) for c in chars}
+    before = len(recs)
+    recs = [r for r in recs
+            if r["id"] not in char_ids and norm_name(r["name"]) not in char_names]
+    if before != len(recs):
+        print(f"characters took precedence over {before - len(recs)} human records")
+    seen = {norm_name(r["name"]) for r in recs}
+
+    added = 0
+    for c in chars:
+        qid = c["id"]
+        img = normalize_image(c.get("image") or cache.get(qid) or "")
+        if not img:
+            dropped["char_no_image"] += 1
+            continue
+        name = (c.get("name") or "").strip()
+        if not name or len(name) < 2 or norm_name(name) in seen:
+            dropped["char_dupe"] += 1
+            continue
+        desc = (c.get("desc") or "").strip()
+        g = GENDER.get((c.get("gender") or "").lower())
+        if not g:
+            low = desc.lower()
+            g = "female" if "female" in low else "male" if "male" in low else "other"
+        franch = mapping.get(qid) or []
+        tags = ["fictional", "character"]
+        if franch:
+            tags.append(slug(franch[0].split(" (")[0]))
+        for o in (c.get("occupations") or "").split("|")[:3]:
+            if o:
+                tags.append(slug(o))
+        tags = [t[:31].strip("-") for t in dict.fromkeys(t for t in tags if t)][:8]
+        sl = c.get("sitelinks", 0)
+        recs.append({
+            "_char": True,
+            "id": qid,
+            "name": name,
+            "gender": g,
+            "category": "fantasy",
+            "tags": tags,
+            "description": clean_desc(desc, "Fictional character."),
+            "image": img,
+            "popularity": max(sl, 1),
+            "country": None,
+            "birthYear": None,
+            "occupations": [],
+            "aliases": char_aliases(name),
+            "workFame": sl,
+            "tier": "A+" if sl >= 60 else "A",
+            "optIn": False,
+            "age": None,
+            "deathYear": None,
+            "beauty": 1,
+            "visual": True,
+        })
+        seen.add(norm_name(name))
+        added += 1
+    print(f"merged {added} fictional characters (with images)")
+    return recs
+
+
 def main():
     p1 = json.load(open(os.path.join(DATA, "phase1.json")))
     det = json.load(open(os.path.join(DATA, "details.json")))
@@ -291,6 +490,10 @@ def main():
         os.path.join(DATA, "pick_cats.json")) else {}
     pick_names = json.load(open(os.path.join(DATA, "pick_names.json"))) if os.path.exists(
         os.path.join(DATA, "pick_names.json")) else {}
+    fame = json.load(open(os.path.join(DATA, "fame.json"))) if os.path.exists(
+        os.path.join(DATA, "fame.json")) else {}
+    vitals = json.load(open(os.path.join(DATA, "vitals.json"))) if os.path.exists(
+        os.path.join(DATA, "vitals.json")) else {}
 
     recs, dropped = [], collections.Counter()
     for qid, base in p1.items():
@@ -311,13 +514,22 @@ def main():
         countries = [c for c in (d.get("countries") or "").split("|") if c]
         country = countries[0] if countries else None
         desc_raw = (d.get("desc") or "").lower()
-        for c in countries:                       # prefer the citizenship the description mentions
-            a = ADJ.get(c)
-            if a and a in desc_raw:
-                country = c
-                break
+        desc_head = desc_raw.split(",")[0]
+        for scope in (desc_head, desc_raw):        # prefer the demonym the description leads with
+            for c in countries:
+                a = ADJ.get(c)
+                if a and re.search(r"\b" + re.escape(a) + r"\b", scope):
+                    country = c
+                    break
+            else:
+                continue
+            break
         birth = (d.get("birth") or "")[:4]
         birth_year = int(birth) if birth.isdigit() else None
+        v = vitals.get(qid) or {}
+        death_raw = (v.get("death") or "")[:4]
+        death_year = int(death_raw) if death_raw.isdigit() else None
+        age = age_of(birth_year, death_year)
 
         tags = []
         for t in (kept or occs[:3]):
@@ -375,14 +587,17 @@ def main():
             base["cat"] = pc if pc != "picks" else derive_category(kept, occs, country)
         if base["bucket"].startswith("fame") or base["bucket"] == "indian":
             base["cat"] = "fantasy" if base["bucket"] == "fame_fiction" else derive_category(kept, occs, country)
-        if base["cat"] not in ("fantasy",):
-            bc = best_category(d.get("desc"), kept, occs, country)
+        if base["cat"] != "fantasy":
+            bc = best_category(d.get("desc"), kept, occs, country) or derive_category(kept, occs, country)
             if bc:
                 base["cat"] = bc
         if base["cat"] == "india":                 # too small to be a category of its own
             base["cat"] = "icons"
-        if not image and base["cat"] != "fantasy":
+        if not image:                              # every record must have a portrait
             dropped["no_image"] += 1
+            continue
+        if age is not None and age > MAX_AGE:      # only faces people can plausibly vote on
+            dropped["too_old"] += 1
             continue
         if base["cat"] == "scientists" and not (set(kept) & SCIENTIST_OCCS):
             base["cat"] = "tech" if (set(kept) & TECH_OCCS) else (
@@ -419,13 +634,19 @@ def main():
             "category": base["cat"],
             "tags": clean_tags,
             "description": desc,
-            "image": image,
+            "image": normalize_image(image) or image,
             "popularity": base.get("sitelinks", 0),
             "country": country,
             "birthYear": birth_year,
             "occupations": kept,
             "aliases": aliases[:6],
+            "workFame": fame.get(qid, {}).get("work", 0),
+            "deathYear": death_year,
+            "age": age,
+            "beauty": beauty_score(kept, occs, base["cat"]),
         })
+
+    recs = merge_characters(recs, dropped)
 
     # dedupe by name, keep the most notable
     recs.sort(key=lambda r: (not r.get("_pick"), -r["popularity"]))
@@ -442,8 +663,32 @@ def main():
              "tech", "models", "creators", "glamour", "history", "writers", "artists", "fantasy", "icons"]
     unique.sort(key=lambda r: (order.index(r["category"]), -r["popularity"]))
 
+    before = len(unique)
+    kept = []
+    for r in unique:
+        rule = FAME_RULES.get(r["category"], FAME_RULE_DEFAULT)
+        solo, work = r["popularity"], r.get("workFame", 0)
+        famous = solo >= rule["solo"]
+        if not famous and rule["with_work"]:
+            famous = solo >= rule["with_work"] and work >= rule["work"]
+        if r.get("_pick") and r["category"] not in OPT_IN_CATEGORIES:
+            famous = True
+        if r.get("_char"):          # characters from A-tier franchises, each with an image
+            famous = True
+        r["tier"] = "A+" if (solo >= 80 or (solo >= 40 and work >= 60)) else "A"
+        r["optIn"] = r["category"] in OPT_IN_CATEGORIES
+        # "visual" = the kind of person you can put in a kiss/marry/kill round
+        r["visual"] = (not r["optIn"]) and r["beauty"] >= 1
+        if famous:
+            kept.append(r)
+        else:
+            dropped["pruned_" + r["category"]] += 1
+    unique = kept
+    print(f"pruned {before - len(unique)} below-bar records -> {len(unique)} kept")
+
     for r in unique:
         r.pop("_pick", None)
+        r.pop("_char", None)
         if not r["description"] or len(r["description"]) < 12:
             r["description"] = (f"{r['occupations'][0].capitalize()} from {r['country']}."
                                 if r["occupations"] and r["country"] else "Notable public figure.")

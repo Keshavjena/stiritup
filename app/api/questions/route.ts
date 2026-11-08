@@ -35,12 +35,19 @@ export async function GET(req: NextRequest) {
     let questions: string[] = [];
     let personRounds: any = undefined;
 
+    const scenarioMode = mature || mode === "spicy"
+      ? (Math.random() > 0.5 ? "spicy" : "dark")
+      : mode === "challenge"
+        ? "quirky"
+        : "all";
+
     if (gameId === "kiss-marry-kill") {
       try {
         personRounds = generateKMKRounds({
           gender: kmkGender,
           category: kmkCategory,
-          count: Math.min(limit, 50)
+          count: Math.min(limit, 50),
+          scenarioMode
         });
         if (personRounds && personRounds.length > 0) {
           // Exactly synchronize the displayed question text with the 3 person image cards!
@@ -57,7 +64,8 @@ export async function GET(req: NextRequest) {
         personRounds = generateWYRRounds({
           gender: kmkGender,
           category: kmkCategory,
-          count: Math.min(limit, 50)
+          count: Math.min(limit, 50),
+          scenarioMode
         });
         if (personRounds && personRounds.length > 0) {
           // Exactly synchronize the displayed dilemma text with Option A and Option B!

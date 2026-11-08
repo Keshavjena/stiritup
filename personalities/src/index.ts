@@ -35,24 +35,58 @@ export const PERSONALITIES_BY_CATEGORY: Record<string, Personality[]> = {
   icons: Icons,
 }
 
-/** Flat list of all personalities (alias kept for backwards compatibility). */
-export const EXPANDED_PERSONALITIES: Personality[] = [
-  ...Bollywood, ...Hollywood, ...Actors, ...Singers, ...Athletes, ...Scientists, ...Tech, ...Models, ...Creators, ...GlamourModels, ...History, ...Writers, ...Artists, ...Fantasy, ...Icons,
+/** Categories that are opt-in only (never part of a default round). */
+export const OPT_IN_CATEGORIES = ["scientists", "history"] as const
+
+/** The default pool: everyone visual (models, actors, athletes, creators...) except opt-ins. */
+export const EXPANDED_PERSONALITIES: Personality[] = (
+  [...Bollywood, ...Hollywood, ...Actors, ...Singers, ...Athletes, ...Tech, ...Models, ...Creators, ...GlamourModels, ...Writers, ...Artists, ...Fantasy, ...Icons]
+).filter((p) => p.visual)
+
+/** Recognisable but not a looks-based round: writers, tech, icons. */
+export const NON_VISUAL_PERSONALITIES: Personality[] = (
+  [...Bollywood, ...Hollywood, ...Actors, ...Singers, ...Athletes, ...Tech, ...Models, ...Creators, ...GlamourModels, ...Writers, ...Artists, ...Fantasy, ...Icons]
+).filter((p) => !p.visual)
+
+/** The opt-in pool (scientists + history, A+ tier only). Use only on request. */
+export const OPT_IN_PERSONALITIES: Personality[] = [
+  ...Scientists, ...History,
 ]
 
-export const ALL_PERSONALITIES = EXPANDED_PERSONALITIES
+/** Everything: default pool + non-visual + opt-in. */
+export const ALL_PERSONALITIES: Personality[] = [
+  ...EXPANDED_PERSONALITIES,
+  ...NON_VISUAL_PERSONALITIES,
+  ...OPT_IN_PERSONALITIES,
+]
 
 export function byCategory(category: string): Personality[] {
   return PERSONALITIES_BY_CATEGORY[category] ?? []
 }
 
 export function byGender(gender: string): Personality[] {
-  return ALL_PERSONALITIES.filter((p) => p.gender === gender)
+  return EXPANDED_PERSONALITIES.filter((p) => p.gender === gender)
 }
 
-/** Random sample of `n` distinct personalities, optionally filtered. */
-export function sample(n: number, filter?: (p: Personality) => boolean): Personality[] {
-  const pool = filter ? ALL_PERSONALITIES.filter(filter) : [...ALL_PERSONALITIES]
+/** Appearance-forward pool only (beauty 2: models, adult performers, pageant winners). */
+export function beautyFirst(): Personality[] {
+  return EXPANDED_PERSONALITIES.filter((p) => p.beauty === 2)
+}
+
+/** A+ (household names) only. */
+export function aPlus(includeOptIn = false): Personality[] {
+  const pool = includeOptIn ? ALL_PERSONALITIES : EXPANDED_PERSONALITIES
+  return pool.filter((p) => p.tier === "A+")
+}
+
+/**
+ * Random sample of `n` distinct personalities.
+ * Pass `{ includeOptIn: true }` (or a category named "scientists" / "history") to use the
+ * opt-in pool - those categories are excluded by default.
+ */
+export function sample(n: number, filter?: (p: Personality) => boolean, opts: { includeOptIn?: boolean } = {}): Personality[] {
+  const pool = (opts.includeOptIn ? ALL_PERSONALITIES : EXPANDED_PERSONALITIES)
+    .filter(filter ?? (() => true)).slice()
   for (let i = pool.length - 1; i > 0; i--) {
     const j = Math.floor(Math.random() * (i + 1))
     ;[pool[i], pool[j]] = [pool[j], pool[i]]

@@ -14,7 +14,10 @@ CATS = {"bollywood", "hollywood", "actors", "singers", "athletes", "scientists",
         "models", "creators", "glamour", "history", "writers", "artists", "fantasy", "india",
         "icons"}
 GENDERS = {"male", "female", "non-binary", "other"}
-IMG = re.compile(r"^https://commons\.wikimedia\.org/wiki/Special:FilePath/[^\s]+\.(jpe?g|png)$", re.I)
+IMG = re.compile(
+    r"^(https://commons\.wikimedia\.org/wiki/Special:FilePath/[^\s]+\.(jpe?g|png|svg|webp)"
+    r"|https://static\.wikia\.nocookie\.net/[^\s]+"
+    r"|https://upload\.wikimedia\.org/[^\s]+\.(jpe?g|png|webp|svg))$", re.I)
 SLUG = re.compile(r"^[a-z0-9]+(-[a-z0-9]+)*$")
 
 
@@ -46,10 +49,10 @@ def main():
             err("bad_gender", r)
         if r["category"] not in CATS:
             err("bad_category", r)
-        if r["image"] and not IMG.match(r["image"]):
+        if r["image"] and not IMG.match(r["image"].split("?")[0]):
             err("bad_image_url", r)
-        if not r["image"] and r["category"] != "fantasy":
-            err("no_image", r)
+        if not r["image"]:
+            err("no_image", r)          # every record must be playable with a portrait
         if not (2 <= len(r["name"]) <= 80):
             err("bad_name_length", r)
         if re.search(r"(list of|disambiguation|\(born)", r["name"], re.I):
@@ -65,6 +68,19 @@ def main():
             err("dupe_tag", r)
         if not isinstance(r["popularity"], int) or r["popularity"] <= 0:
             err("bad_popularity", r)
+        if r.get("tier") not in ("A", "A+"):
+            err("bad_tier", r)
+        if not isinstance(r.get("workFame"), int):
+            err("bad_workfame", r)
+        age = r.get("age")
+        if age is not None and (not isinstance(age, int) or age > 70 or age < 0):
+            err("bad_age", r)
+        if r.get("beauty") not in (0, 1, 2):
+            err("bad_beauty", r)
+        if not isinstance(r.get("visual"), bool):
+            err("bad_visual", r)
+        if r.get("optIn") is not (r["category"] in ("scientists", "history")):
+            err("bad_optin_flag", r)
 
     cats = collections.Counter(r["category"] for r in rows)
     gens = collections.Counter(r["gender"] for r in rows)
@@ -94,7 +110,17 @@ def main():
         if bad:
             live += "- failures: " + ", ".join(f"{n} ({e})" for n, e in bad[:10]) + "\n"
 
+    noimg = sum(1 for r in rows if not r["image"])
+    ages = [r["age"] for r in rows if r.get("age") is not None]
+    tiers = collections.Counter(r.get("tier") for r in rows)
+    optin = collections.Counter(r["category"] for r in rows if r.get("optIn"))
     lines = [f"# Seed dataset QA report\n",
+             f"**Tiers:** A+ {tiers.get('A+', 0):,} · A {tiers.get('A', 0):,}  \n"
+             f"**Images:** {len(rows) - noimg:,}/{len(rows):,} have a portrait · "
+             f"**oldest age:** {max(ages) if ages else 'n/a'}  \n"
+             f"**Default (visual) pool:** {sum(1 for r in rows if r.get('visual')):,}  \n"
+             f"**Opt-in pool (excluded from default rounds):** "
+             + ", ".join(f"{k} {v:,}" for k, v in optin.items()) + "\n",
              f"**Records:** {len(rows):,}  \n"
              f"**With portrait image:** {with_img:,} ({with_img/len(rows)*100:.1f}%)  \n"
              f"**Unique ids / names:** {len(ids):,} / {len(names):,}\n",

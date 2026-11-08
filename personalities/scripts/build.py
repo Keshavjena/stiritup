@@ -33,10 +33,10 @@ other_sports = ["Q2066131", "Q10843402", "Q12369333", "Q11607585", "Q11303721", 
                 "Q12737077", "Q2309784", "Q5570756"]
 
 BUCKETS = [
-    dict(key="bollywood", occ=ACTOR, cap=1800, minsl=3, extra="?p wdt:P27 wd:Q668 .", cat="bollywood"),
-    dict(key="hollywood", occ=ACTOR, cap=2600, minsl=5,
+    dict(key="bollywood", occ=ACTOR, cap=4200, minsl=3, extra="?p wdt:P27 wd:Q668 .", cat="bollywood"),
+    dict(key="hollywood", occ=ACTOR, cap=9000, minsl=5,
          extra="?p wdt:P27 ?c . FILTER(?c IN (" + ", ".join("wd:" + q for q in US_UK) + "))", cat="hollywood"),
-    dict(key="actors", occ=ACTOR, cap=2600, minsl=6, cat="actors"),
+    dict(key="actors", occ=ACTOR, cap=8000, minsl=6, cat="actors"),
     dict(key="singers", occ=SINGER, cap=2600, minsl=5, cat="singers"),
     dict(key="football", occ=["Q937857"], cap=1300, minsl=6, cat="athletes"),
     dict(key="cricket", occ=["Q12299841"], cap=700, minsl=3, cat="athletes"),
@@ -94,6 +94,27 @@ BUCKETS = [
     dict(key="fame_eg", p27="Q79", cap=400, minsl=22, cat="icons"),
     dict(key="fame_tr", p27="Q43", cap=400, minsl=25, cat="icons"),
     dict(key="fame_ru", p27="Q159", cap=500, minsl=35, cat="icons"),
+    # ---- extra sports / creator pools requested for the game ----
+    dict(key="spr_f1", occ=["Q10841764", "Q10349745"], cap=1200, minsl=10, cat="athletes"),
+    dict(key="spr_wwe", occ=["Q13474373"], cap=1200, minsl=8, cat="athletes"),
+    dict(key="spr_ufc", occ=["Q11607585", "Q1127261"], cap=1200, minsl=8, cat="athletes"),
+    dict(key="spr_esports", occ=["Q4379701"], cap=800, minsl=6, cat="creators"),
+    dict(key="spr_other", occ=["Q11303721", "Q13415036", "Q10833314", "Q12299841", "Q3665646",
+                               "Q2309784", "Q10873124", "Q13381886", "Q19204627", "Q10871364",
+                               "Q12737077", "Q5570756", "Q10843402", "Q12369333", "Q13141064",
+                               "Q10843263", "Q15117302", "Q11513337", "Q11607585", "Q11338576",
+                               "Q13474373", "Q10349745", "Q10841764", "Q937857"],
+         cap=3000, minsl=12, cat="athletes"),
+    dict(key="creators3", occ=["Q17125263", "Q94791573", "Q57414145", "Q2045208", "Q4379701"],
+         cap=4000, minsl=5, cat="creators"),
+    dict(key="onlyfans", occ=["Q132831288", "Q3286043", "Q488111", "Q728711"],
+         cap=2500, minsl=4, cat="glamour"),
+    dict(key="influencer2", occ=["Q2045208", "Q17125263", "Q94791573"], cap=2500, minsl=8, cat="creators"),
+    # ---- 18+ / glamour and internet-creator expansion ----
+    dict(key="adult_big", occ=["Q488111", "Q3286043", "Q132831288", "Q728711"], cap=9000, minsl=1, cat="glamour"),
+    dict(key="pageant", occ=["Q18581305"], cap=5000, minsl=1, cat="models"),
+    dict(key="creators_big", occ=["Q17125263", "Q94791573", "Q57414145", "Q2045208", "Q4379701"],
+         cap=9000, minsl=2, cat="creators"),
 ]
 
 
@@ -227,18 +248,48 @@ def main():
     print("PHASE1", flush=True)
     add_closure_buckets()
     for b in BUCKETS:
+        cache = os.path.join(P1, b["key"] + ".json")
+        if not os.path.exists(cache) and b["key"] in {"history", "writers", "artists"}:
+            # these pools are preserved in extra_candidates.json; don't refetch them
+            print(f" bucket {b['key']}: cache missing, using harvested candidates", flush=True)
+            continue
         print(" bucket", b["key"], flush=True)
         phase1(b)
 
     # merge with bucket priority (earlier buckets win)
     people = {}
     for i, b in enumerate(BUCKETS):
-        for qid, sl in json.load(open(os.path.join(P1, b["key"] + ".json"))):
+        cache_file = os.path.join(P1, b["key"] + ".json")
+        if not os.path.exists(cache_file):
+            continue
+        for qid, sl in json.load(open(cache_file)):
             if qid not in people:
                 cat = b["cat"]
                 people[qid] = dict(qid=qid, sitelinks=sl, bucket=b["key"], cat=cat, rank=i)
     print("unique ids:", len(people), flush=True)
     json.dump(people, open(os.path.join(DATA, "phase1.json"), "w"))
+
+    extra_path = os.path.join(DATA, "extra_candidates.json")
+    if os.path.exists(extra_path):
+        extra = json.load(open(extra_path))
+        for q, rec in extra.items():
+            people.setdefault(q, dict(rec))
+        print(f"merged {len(extra)} harvested candidates", flush=True)
+        json.dump(people, open(os.path.join(DATA, "phase1.json"), "w"))
+
+    if "--phase1-only" in sys.argv:
+        print("phase1 only - stopping", flush=True)
+        return
+
+    fame_path = os.path.join(DATA, "fame.json")
+    if os.path.exists(fame_path) and "--no-screen" not in sys.argv:
+        fame = json.load(open(fame_path))
+        def screen(rec):
+            w = fame.get(rec["qid"], {}).get("work", 0)
+            return rec["sitelinks"] >= 10 or w >= 20
+        before = len(people)
+        people = {q: r for q, r in people.items() if q in fame and screen(r)}
+        print(f"pre-screen for detail fetch: {before} -> {len(people)}", flush=True)
 
     qids = list(people)
     batches = [qids[i:i + 50] for i in range(0, len(qids), 50)]
