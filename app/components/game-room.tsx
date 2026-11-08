@@ -27,17 +27,18 @@ interface GameRoomProps {
 }
 
 export const ROOM_CATEGORIES = [
-  { id: "all", label: "All Personalities", desc: "Top-tier stars across all categories" },
+  { id: "all", label: "All Personalities", desc: "Entertainment A-listers across pop culture" },
   { id: "hollywood", label: "Hollywood", desc: "DiCaprio, Scarlett, Pitt, Zendaya" },
   { id: "bollywood", label: "Bollywood", desc: "SRK, Deepika, Amitabh, Salman" },
   { id: "singers", label: "Singers & Pop", desc: "Taylor Swift, Drake, Beyoncé, Weeknd" },
   { id: "creators", label: "Creators & Streamers", desc: "MrBeast, Speed, Kai Cenat, KSI" },
-  { id: "athletes", label: "Athletes", desc: "Messi, Ronaldo, LeBron, Serena" },
-  { id: "f1", label: "Formula 1", desc: "Hamilton, Verstappen, Leclerc, Norris" },
-  { id: "combat", label: "UFC & Combat", desc: "Conor McGregor, Jon Jones, Khabib" },
-  { id: "wwe", label: "WWE Superstars", desc: "The Rock, Roman Reigns, Undertaker" },
-  { id: "adultstars", label: "OnlyFans & Glamour (18+)", desc: "Mia Khalifa, Riley Reid, Corinna Kopf" },
+  { id: "glamour", label: "Glamour & Models", desc: "Kendall Jenner, Bella Hadid, Emily Ratajkowski" },
+  { id: "adultstars", label: "Adult Entertainment (18+)", desc: "Mia Khalifa, Riley Reid, Angela White" },
   { id: "fantasy", label: "Fantasy & Anime", desc: "Goku, Naruto, Batman, Iron Man" },
+  { id: "athletes", label: "Athletes (Opt-In)", desc: "Messi, Ronaldo, LeBron, Serena" },
+  { id: "f1", label: "Formula 1 (Opt-In)", desc: "Hamilton, Verstappen, Leclerc, Norris" },
+  { id: "combat", label: "UFC & Combat (Opt-In)", desc: "Conor McGregor, Jon Jones, Khabib" },
+  { id: "wwe", label: "WWE Superstars (Opt-In)", desc: "The Rock, Roman Reigns, Undertaker" },
 ]
 
 export function GameRoom({

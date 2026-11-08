@@ -186,7 +186,7 @@ async function generateQuestionsWithAI(
       break;
     case "kiss-marry-kill":
       const genderDesc = kmkGender === "female" ? "famous female actresses, pop stars, models, or adult stars" : kmkGender === "male" ? "famous male actors, musicians, or celebrities" : "a mix of famous male and female celebrities";
-      const catDesc = kmkCategory === "bollywood" ? "strictly Bollywood / Indian cinema stars" : kmkCategory === "hollywood" ? "Hollywood A-listers" : kmkCategory === "popstars" ? "global pop stars and musicians" : kmkCategory === "adultstars" ? "famous adult movie stars and models" : kmkCategory === "fantasy" ? "popular anime and fantasy characters" : "popular global and Indian celebrities";
+      const catDesc = kmkCategory === "bollywood" ? "strictly Bollywood / Indian cinema stars" : kmkCategory === "hollywood" ? "Hollywood A-listers" : kmkCategory === "popstars" ? "global pop stars and musicians" : kmkCategory === "glamour" ? "high-fashion supermodels and runway icons" : kmkCategory === "adultstars" ? "famous adult entertainment stars and OnlyFans creators" : kmkCategory === "fantasy" ? "popular anime and fantasy characters" : "popular global and Indian celebrities";
       formatGuide = `Each question MUST select 3 distinct famous figures from ${catDesc} (${genderDesc}), formatted as 'Choose between: [Option A], [Option B], and [Option C] for Kiss, Marry, and Kill.'`;
       break;
     case "rapid-fire":

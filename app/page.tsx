@@ -271,20 +271,12 @@ export default function Home() {
           </h1>
         </div>
         <div className="flex items-center gap-1.5 sm:gap-2">
-          <a href="/question-bank" className="rounded-lg border border-zinc-800 hover:bg-zinc-900 text-zinc-400 font-bold uppercase text-[9px] tracking-wider px-2 sm:px-3 h-8 inline-flex items-center">Question bank</a>
           <Button
             variant="ghost"
             onClick={() => setIsRulesOpen(true)}
-            className="rounded-lg border border-zinc-800 hover:bg-zinc-900 hover:text-white text-zinc-400 font-bold uppercase text-[9px] tracking-wider px-2 sm:px-3 h-8 hidden sm:inline-flex"
+            className="rounded-lg border border-zinc-800 hover:bg-zinc-900 hover:text-white text-zinc-400 font-bold uppercase text-[9px] tracking-wider px-2.5 sm:px-3 h-8 inline-flex"
           >
             Rules
-          </Button>
-          <Button
-            variant="ghost"
-            onClick={() => setIsCatalogOpen(true)}
-            className="rounded-lg border border-zinc-800 hover:bg-zinc-900 hover:text-white text-zinc-400 font-bold uppercase text-[9px] tracking-wider px-2 sm:px-3 h-8 hidden sm:inline-flex"
-          >
-            Catalog
           </Button>
           <Button
             onClick={() => setIsMenuOpen(true)}
@@ -297,8 +289,8 @@ export default function Home() {
 
       <main className="relative z-10 px-3 sm:px-6 lg:px-12 flex flex-col lg:flex-row gap-6 lg:gap-12 mt-4 sm:mt-8 mb-8 sm:mb-12 flex-1 pb-safe">
         
-        {/* Left Column: Hero Typography & Join Lobby */}
-        <div className="flex-1 flex flex-col justify-center max-w-2xl py-2 sm:py-6">
+        {/* Left Column: Hero Typography & Join Lobby (Sticky on desktop to eliminate empty void) */}
+        <div className="flex-1 flex flex-col justify-start lg:sticky lg:top-24 lg:self-start max-w-md xl:max-w-lg py-2 sm:py-6">
           <motion.div 
             initial={{ opacity: 0, y: 20 }} 
             animate={{ opacity: 1, y: 0 }} 

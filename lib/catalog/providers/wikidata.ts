@@ -147,31 +147,16 @@ function inferCategory(
   const countryIds = p27Claims.map((c: any) => c.mainsnak?.datavalue?.value?.id)
   const isIndian = countryIds.includes("Q668") || descLower.includes("indian") || descLower.includes("bollywood")
 
-  // Adult film actor (Q488111) / pornographic actor
+  // 1. Adult film actor (Q488111) / pornographic actor only
   if (
     occupationIds.includes("Q488111") ||
-    occupationIds.includes("Q4610556") ||
     descLower.includes("pornographic") ||
     descLower.includes("adult film")
   ) {
     return { category: "adultstars", isFictional: false }
   }
 
-  // Singer / Musician / Popstar
-  const isMusician =
-    occupationIds.includes("Q177220") || // singer
-    occupationIds.includes("Q639669") || // musician
-    occupationIds.includes("Q2252262") || // rapper
-    occupationIds.includes("Q753110") || // songwriter
-    descLower.includes("singer") ||
-    descLower.includes("musician") ||
-    descLower.includes("rapper")
-
-  if (isMusician && !descLower.includes("actor")) {
-    return { category: "popstars", isFictional: false }
-  }
-
-  // Actor / Actress
+  // 2. Actor / Actress
   const isActor =
     occupationIds.includes("Q33999") || // actor
     occupationIds.includes("Q10800557") || // film actor
@@ -183,6 +168,32 @@ function inferCategory(
       return { category: "bollywood", isFictional: false }
     }
     return { category: "hollywood", isFictional: false }
+  }
+
+  // 3. Fashion Model (Q4610556 = model, Q275952 = glamour model) - Never mix with adult stars!
+  const isModel =
+    occupationIds.includes("Q4610556") ||
+    occupationIds.includes("Q275952") ||
+    descLower.includes("fashion model") ||
+    descLower.includes("supermodel") ||
+    descLower.includes("model")
+
+  if (isModel) {
+    return { category: "models", isFictional: false }
+  }
+
+  // 4. Singer / Musician / Popstar
+  const isMusician =
+    occupationIds.includes("Q177220") || // singer
+    occupationIds.includes("Q639669") || // musician
+    occupationIds.includes("Q2252262") || // rapper
+    occupationIds.includes("Q753110") || // songwriter
+    descLower.includes("singer") ||
+    descLower.includes("musician") ||
+    descLower.includes("rapper")
+
+  if (isMusician) {
+    return { category: "popstars", isFictional: false }
   }
 
   // Athletes

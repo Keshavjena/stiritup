@@ -116,8 +116,8 @@ export function seedInitialCatalog(): { seeded: number; existing: number } {
   const insertPerson = db.prepare(`
     INSERT INTO people (
       id, name, normalized_name, gender, category, tags, primary_image_id,
-      provider, external_id, description, aliases, popularity, moderation_status, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      provider, external_id, description, aliases, popularity, opt_in, moderation_status, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `)
 
   const insertImage = db.prepare(`
@@ -141,6 +141,8 @@ export function seedInitialCatalog(): { seeded: number; existing: number } {
     const sourceUrl = PLACEHOLDER_IMAGE_URL
     const attribution = `Default portrait for ${celeb.name} (Seed Catalog)`
 
+    const isOptIn = celeb.category === "athletes" ? 1 : 0
+
     insertPerson.run(
       personId,
       celeb.name,
@@ -154,6 +156,7 @@ export function seedInitialCatalog(): { seeded: number; existing: number } {
       `${celeb.category.toUpperCase()} personality`,
       JSON.stringify(aliases),
       95,
+      isOptIn,
       "approved",
       now,
       now
@@ -200,8 +203,8 @@ export function seedExpandedPersonalities(): { added: number; existing: number }
   const insertPerson = db.prepare(`
     INSERT INTO people (
       id, name, normalized_name, gender, category, tags, primary_image_id,
-      provider, external_id, description, aliases, popularity, moderation_status, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      provider, external_id, description, aliases, popularity, opt_in, moderation_status, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `)
   const insertImage = db.prepare(`
     INSERT INTO person_images (
@@ -228,6 +231,8 @@ export function seedExpandedPersonalities(): { added: number; existing: number }
     const imageId = generateId("img_exp")
     const personImageUrl = person.imageUrl || PLACEHOLDER_IMAGE_URL
 
+    const isOptIn = (person.category === "athletes" || person.category === "tech" || person.category === "scientists" || person.category === "history") ? 1 : 0
+
     insertPerson.run(
       personId,
       person.name,
@@ -241,6 +246,7 @@ export function seedExpandedPersonalities(): { added: number; existing: number }
       person.description,
       JSON.stringify(aliases),
       person.popularity || 95,
+      isOptIn,
       "approved",
       now,
       now
@@ -332,8 +338,8 @@ export function bulkAddPersons(input: {
   const insertPerson = db.prepare(`
     INSERT INTO people (
       id, name, normalized_name, gender, category, tags, primary_image_id,
-      provider, external_id, description, aliases, popularity, moderation_status, created_at, updated_at
-    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
+      provider, external_id, description, aliases, popularity, opt_in, moderation_status, created_at, updated_at
+    ) VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)
   `)
 
   const insertImage = db.prepare(`
@@ -380,6 +386,8 @@ export function bulkAddPersons(input: {
     const personId = generateId("p_custom")
     const imageId = generateId("img_custom")
 
+    const isOptIn = ["scientists", "history", "tech", "writers", "artists", "athletes", "f1", "combat", "wwe", "racing", "sports"].includes(cat) ? 1 : 0
+
     insertPerson.run(
       personId,
       baseName,
@@ -393,6 +401,7 @@ export function bulkAddPersons(input: {
       `Custom added personality: ${baseName}`,
       JSON.stringify(aliases),
       95,
+      isOptIn,
       "approved",
       now,
       now
@@ -448,8 +457,12 @@ export function getPeople(params: CatalogSearchParams = {}): PaginatedResult<Per
 
   if (params.category && params.category !== "all") {
     const cat = params.category.toLowerCase().trim()
-    if (cat === "adultstars" || cat === "glamour" || cat === "onlyfans" || cat === "models") {
-      whereClauses.push("p.category IN ('glamour', 'adultstars', 'onlyfans', 'models')")
+    if (cat === "models") {
+      whereClauses.push("p.category = 'models'")
+    } else if (cat === "glamour") {
+      whereClauses.push("p.category = 'glamour'")
+    } else if (cat === "adultstars" || cat === "onlyfans" || cat === "adult") {
+      whereClauses.push("p.category IN ('adultstars', 'onlyfans')")
     } else if (cat === "popstars" || cat === "singers") {
       whereClauses.push("p.category IN ('singers', 'popstars')")
     } else if (cat === "fantasy" || cat === "anime" || cat === "gaming") {

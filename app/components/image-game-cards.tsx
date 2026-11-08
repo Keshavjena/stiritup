@@ -51,6 +51,250 @@ function UncroppedPortrait({
 
 // ----------------- Kiss Marry Kill 3-Card Interactive Component -----------------
 
+export interface KMKRoleConfig {
+  id: "kiss" | "marry" | "kill"
+  label: string
+  activeBtn: string
+  badgeClass: string
+  cardActive: string
+}
+
+/**
+ * Returns dynamic, bold, and contextually styled action roles for Kiss Marry Kill.
+ * Adapts based on scenario tone (e.g. Dark/Apocalypse, History/Weird, Glamour/Adult, Creators/Pop, Fantasy/Anime, or Classic).
+ * Retains strict internal keys ('kiss', 'marry', 'kill') for stable networking and syncing.
+ */
+export function getContextualKMKRoles(
+  scenario?: string,
+  persons?: [PersonCard, PersonCard, PersonCard] | PersonCard[]
+): [KMKRoleConfig, KMKRoleConfig, KMKRoleConfig] {
+  const text = (scenario || "").toLowerCase()
+  const cats = persons?.map((p) => (p.category || "").toLowerCase()).join(" ") || ""
+  const names = persons?.map((p) => (p.name || "").toLowerCase()).join(" ") || ""
+  const contextStr = `${text} ${cats} ${names}`
+
+  // 1. Glamour & Adult (Spicy, Bold, Risqué)
+  if (
+    cats.includes("adultstars") ||
+    cats.includes("onlyfans") ||
+    cats.includes("glamour") ||
+    cats.includes("models") ||
+    contextStr.includes("spicy") ||
+    contextStr.includes("penthouse") ||
+    contextStr.includes("bedroom") ||
+    contextStr.includes("dating show") ||
+    contextStr.includes("monaco") ||
+    contextStr.includes("heist") ||
+    contextStr.includes("yacht")
+  ) {
+    return [
+      {
+        id: "kiss",
+        label: "🔥 Wild Night",
+        activeBtn: "bg-gradient-to-r from-pink-600 to-rose-500 text-white border-rose-400 shadow-lg shadow-rose-500/40 font-black tracking-wider",
+        badgeClass: "bg-rose-500 text-white border-rose-400 shadow-md shadow-rose-500/30",
+        cardActive: "border-rose-500 ring-2 ring-rose-500/40 shadow-xl shadow-rose-500/20"
+      },
+      {
+        id: "marry",
+        label: "💍 Put a Ring On It",
+        activeBtn: "bg-gradient-to-r from-amber-400 to-yellow-400 text-black border-amber-300 shadow-lg shadow-amber-500/40 font-black tracking-wider",
+        badgeClass: "bg-amber-400 text-black border-amber-300 shadow-md shadow-amber-500/30",
+        cardActive: "border-amber-400 ring-2 ring-amber-400/40 shadow-xl shadow-amber-500/20"
+      },
+      {
+        id: "kill",
+        label: "🚫 Ghost & Block",
+        activeBtn: "bg-gradient-to-r from-red-600 to-rose-700 text-white border-red-500 shadow-lg shadow-red-600/40 font-black tracking-wider",
+        badgeClass: "bg-red-600 text-white border-red-500 shadow-md shadow-red-600/30",
+        cardActive: "border-red-600 ring-2 ring-red-600/40 shadow-xl shadow-red-600/20"
+      }
+    ]
+  }
+
+  // 2. History & Weird / Royalty / Ancient
+  if (
+    cats.includes("history") ||
+    cats.includes("historical") ||
+    cats.includes("academic") ||
+    contextStr.includes("monarch") ||
+    contextStr.includes("throne") ||
+    contextStr.includes("empire") ||
+    contextStr.includes("medieval") ||
+    contextStr.includes("guillotine") ||
+    contextStr.includes("ancient") ||
+    contextStr.includes("exile") ||
+    contextStr.includes("taco truck") ||
+    contextStr.includes("ikea") ||
+    contextStr.includes("cursed") ||
+    contextStr.includes("genie")
+  ) {
+    return [
+      {
+        id: "kiss",
+        label: "👑 Royal Favor",
+        activeBtn: "bg-gradient-to-r from-purple-600 to-indigo-600 text-white border-purple-400 shadow-lg shadow-purple-500/40 font-black tracking-wider",
+        badgeClass: "bg-purple-600 text-white border-purple-400 shadow-md shadow-purple-500/30",
+        cardActive: "border-purple-500 ring-2 ring-purple-500/40 shadow-xl shadow-purple-500/20"
+      },
+      {
+        id: "marry",
+        label: "🏰 Crown Monarch",
+        activeBtn: "bg-gradient-to-r from-amber-400 to-amber-500 text-black border-amber-300 shadow-lg shadow-amber-500/40 font-black tracking-wider",
+        badgeClass: "bg-amber-400 text-black border-amber-300 shadow-md shadow-amber-500/30",
+        cardActive: "border-amber-400 ring-2 ring-amber-400/40 shadow-xl shadow-amber-500/20"
+      },
+      {
+        id: "kill",
+        label: "⚔️ Send to Exile",
+        activeBtn: "bg-gradient-to-r from-stone-800 to-zinc-900 text-rose-300 border-zinc-700 shadow-lg shadow-zinc-900/50 font-black tracking-wider",
+        badgeClass: "bg-stone-800 text-rose-300 border-zinc-700 shadow-md shadow-zinc-900/30",
+        cardActive: "border-stone-500 ring-2 ring-stone-500/40 shadow-xl shadow-stone-500/20"
+      }
+    ]
+  }
+
+  // 3. Dark, Apocalypse, Bunker, Zombie, High Stakes
+  if (
+    contextStr.includes("fallout") ||
+    contextStr.includes("nuclear") ||
+    contextStr.includes("zombie") ||
+    contextStr.includes("demon") ||
+    contextStr.includes("cult") ||
+    contextStr.includes("cartel") ||
+    contextStr.includes("hostage") ||
+    contextStr.includes("treason") ||
+    contextStr.includes("prison") ||
+    contextStr.includes("poison") ||
+    contextStr.includes("murder") ||
+    contextStr.includes("bunker") ||
+    contextStr.includes("minefield") ||
+    contextStr.includes("sacrific")
+  ) {
+    return [
+      {
+        id: "kiss",
+        label: "🛡️ Bunker Ally",
+        activeBtn: "bg-gradient-to-r from-emerald-600 to-teal-600 text-white border-emerald-400 shadow-lg shadow-emerald-600/40 font-black tracking-wider",
+        badgeClass: "bg-emerald-600 text-white border-emerald-400 shadow-md shadow-emerald-600/30",
+        cardActive: "border-emerald-500 ring-2 ring-emerald-500/40 shadow-xl shadow-emerald-500/20"
+      },
+      {
+        id: "marry",
+        label: "🩸 Blood Pact",
+        activeBtn: "bg-gradient-to-r from-amber-500 to-orange-500 text-black border-amber-300 shadow-lg shadow-orange-500/40 font-black tracking-wider",
+        badgeClass: "bg-orange-500 text-black border-amber-300 shadow-md shadow-orange-500/30",
+        cardActive: "border-orange-500 ring-2 ring-orange-500/40 shadow-xl shadow-orange-500/20"
+      },
+      {
+        id: "kill",
+        label: "💀 Feed to Horde",
+        activeBtn: "bg-gradient-to-r from-red-800 to-red-950 text-red-200 border-red-700 shadow-lg shadow-red-950/60 font-black tracking-wider",
+        badgeClass: "bg-red-900 text-red-200 border-red-700 shadow-md shadow-red-900/40",
+        cardActive: "border-red-700 ring-2 ring-red-700/50 shadow-xl shadow-red-900/30"
+      }
+    ]
+  }
+
+  // 4. Creators, Streamers & Viral Pop
+  if (
+    cats.includes("creators") ||
+    cats.includes("youtubers") ||
+    cats.includes("influencers") ||
+    cats.includes("streamers") ||
+    contextStr.includes("podcast") ||
+    contextStr.includes("viral") ||
+    contextStr.includes("live-stream") ||
+    contextStr.includes("billboard") ||
+    contextStr.includes("search history") ||
+    contextStr.includes("dms") ||
+    contextStr.includes("clout")
+  ) {
+    return [
+      {
+        id: "kiss",
+        label: "✨ Viral Collab",
+        activeBtn: "bg-gradient-to-r from-cyan-500 to-blue-600 text-white border-cyan-400 shadow-lg shadow-cyan-500/40 font-black tracking-wider",
+        badgeClass: "bg-cyan-500 text-white border-cyan-400 shadow-md shadow-cyan-500/30",
+        cardActive: "border-cyan-400 ring-2 ring-cyan-400/40 shadow-xl shadow-cyan-500/20"
+      },
+      {
+        id: "marry",
+        label: "💍 Clout Marriage",
+        activeBtn: "bg-gradient-to-r from-amber-400 to-yellow-400 text-black border-amber-300 shadow-lg shadow-amber-400/40 font-black tracking-wider",
+        badgeClass: "bg-amber-400 text-black border-amber-300 shadow-md shadow-amber-400/30",
+        cardActive: "border-amber-400 ring-2 ring-amber-400/40 shadow-xl shadow-amber-400/20"
+      },
+      {
+        id: "kill",
+        label: "🚫 Cancel Forever",
+        activeBtn: "bg-gradient-to-r from-rose-700 to-red-700 text-white border-rose-500 shadow-lg shadow-rose-700/40 font-black tracking-wider",
+        badgeClass: "bg-rose-700 text-white border-rose-500 shadow-md shadow-rose-700/30",
+        cardActive: "border-rose-600 ring-2 ring-rose-600/40 shadow-xl shadow-rose-600/20"
+      }
+    ]
+  }
+
+  // 5. Fantasy, Anime, Fiction & Superheroes
+  if (
+    cats.includes("fantasy") ||
+    cats.includes("anime") ||
+    cats.includes("gaming") ||
+    contextStr.includes("multiverse") ||
+    contextStr.includes("superpower") ||
+    contextStr.includes("isekai")
+  ) {
+    return [
+      {
+        id: "kiss",
+        label: "⚡ Waifu / Husbando",
+        activeBtn: "bg-gradient-to-r from-fuchsia-600 to-pink-500 text-white border-fuchsia-400 shadow-lg shadow-fuchsia-500/40 font-black tracking-wider",
+        badgeClass: "bg-fuchsia-600 text-white border-fuchsia-400 shadow-md shadow-fuchsia-500/30",
+        cardActive: "border-fuchsia-500 ring-2 ring-fuchsia-500/40 shadow-xl shadow-fuchsia-500/20"
+      },
+      {
+        id: "marry",
+        label: "🛡️ Duo Partner",
+        activeBtn: "bg-gradient-to-r from-amber-400 to-amber-500 text-black border-amber-300 shadow-lg shadow-amber-500/40 font-black tracking-wider",
+        badgeClass: "bg-amber-400 text-black border-amber-300 shadow-md shadow-amber-500/30",
+        cardActive: "border-amber-400 ring-2 ring-amber-400/40 shadow-xl shadow-amber-500/20"
+      },
+      {
+        id: "kill",
+        label: "💥 Delete Timeline",
+        activeBtn: "bg-gradient-to-r from-red-600 to-rose-700 text-white border-red-500 shadow-lg shadow-red-600/40 font-black tracking-wider",
+        badgeClass: "bg-red-600 text-white border-red-500 shadow-md shadow-red-600/30",
+        cardActive: "border-red-600 ring-2 ring-red-600/40 shadow-xl shadow-red-600/20"
+      }
+    ]
+  }
+
+  // 6. Default High-Energy Bold & Fun
+  return [
+    {
+      id: "kiss",
+      label: "💋 Kiss",
+      activeBtn: "bg-gradient-to-r from-pink-500 to-rose-500 text-white border-pink-400 shadow-lg shadow-pink-500/30 font-black",
+      badgeClass: "bg-pink-500 text-white border-pink-400 shadow-md shadow-pink-500/20",
+      cardActive: "border-pink-500 ring-2 ring-pink-500/30 shadow-xl shadow-pink-500/10"
+    },
+    {
+      id: "marry",
+      label: "💍 Marry",
+      activeBtn: "bg-gradient-to-r from-amber-400 to-yellow-400 text-black border-amber-300 shadow-lg shadow-amber-500/30 font-black",
+      badgeClass: "bg-amber-400 text-black border-amber-300 shadow-md shadow-amber-500/20",
+      cardActive: "border-amber-400 ring-2 ring-amber-400/30 shadow-xl shadow-amber-500/10"
+    },
+    {
+      id: "kill",
+      label: "🔪 Kill",
+      activeBtn: "bg-gradient-to-r from-red-600 to-red-700 text-white border-red-500 shadow-lg shadow-red-600/30 font-black",
+      badgeClass: "bg-red-600 text-white border-red-500 shadow-md shadow-red-600/20",
+      cardActive: "border-red-600 ring-2 ring-red-600/30 shadow-xl shadow-red-600/10"
+    }
+  ]
+}
+
 interface KMKImageCardsProps {
   persons: [PersonCard, PersonCard, PersonCard]
   selections: { kiss?: string; marry?: string; kill?: string }
@@ -58,6 +302,7 @@ interface KMKImageCardsProps {
   onSubmit: () => void
   hasSubmitted: boolean
   playerName: string
+  scenario?: string
   disabled?: boolean
 }
 
@@ -68,34 +313,13 @@ export function KMKImageCards({
   onSubmit,
   hasSubmitted,
   playerName,
+  scenario,
   disabled = false
 }: KMKImageCardsProps) {
   const isAllComplete = Boolean(selections.kiss && selections.marry && selections.kill)
   const assignedCount = [selections.kiss, selections.marry, selections.kill].filter(Boolean).length
 
-  const roles = [
-    {
-      id: "kiss" as const,
-      label: "💋 Kiss",
-      activeBtn: "bg-pink-500 text-white border-pink-400 shadow-lg shadow-pink-500/30 font-black",
-      badgeClass: "bg-pink-500 text-white border-pink-400 shadow-md shadow-pink-500/20",
-      cardActive: "border-pink-500 ring-2 ring-pink-500/30 shadow-xl shadow-pink-500/10"
-    },
-    {
-      id: "marry" as const,
-      label: "💍 Marry",
-      activeBtn: "bg-amber-400 text-black border-amber-300 shadow-lg shadow-amber-500/30 font-black",
-      badgeClass: "bg-amber-400 text-black border-amber-300 shadow-md shadow-amber-500/20",
-      cardActive: "border-amber-400 ring-2 ring-amber-400/30 shadow-xl shadow-amber-500/10"
-    },
-    {
-      id: "kill" as const,
-      label: "🔪 Kill",
-      activeBtn: "bg-red-600 text-white border-red-500 shadow-lg shadow-red-600/30 font-black",
-      badgeClass: "bg-red-600 text-white border-red-500 shadow-md shadow-red-600/20",
-      cardActive: "border-red-600 ring-2 ring-red-600/30 shadow-xl shadow-red-600/10"
-    }
-  ]
+  const roles = getContextualKMKRoles(scenario, persons)
 
   const getAssignedRole = (name: string): "kiss" | "marry" | "kill" | undefined => {
     return (Object.entries(selections).find(([, val]) => val === name)?.[0] as
@@ -126,44 +350,26 @@ export function KMKImageCards({
       <div className="flex flex-col gap-4 md:hidden">
         {/* Mobile Real-Time Selection Tracker Pill Bar */}
         <div className="grid grid-cols-3 gap-1.5 p-2 rounded-2xl bg-zinc-950/90 border border-zinc-800 shadow-lg">
-          <div
-            className={`p-1.5 rounded-xl border text-center transition-all ${
-              selections.kiss
-                ? "bg-pink-500/15 border-pink-500/50 text-pink-300 shadow-sm shadow-pink-500/10"
-                : "bg-zinc-900/60 border-zinc-800/80 text-zinc-500"
-            }`}
-          >
-            <span className="block text-[8px] uppercase tracking-wider font-extrabold text-zinc-400">💋 Kiss</span>
-            <span className="truncate block font-black text-[11px] text-white">
-              {selections.kiss || "Tap below"}
-            </span>
-          </div>
-
-          <div
-            className={`p-1.5 rounded-xl border text-center transition-all ${
-              selections.marry
-                ? "bg-amber-500/15 border-amber-500/50 text-amber-300 shadow-sm shadow-amber-500/10"
-                : "bg-zinc-900/60 border-zinc-800/80 text-zinc-500"
-            }`}
-          >
-            <span className="block text-[8px] uppercase tracking-wider font-extrabold text-zinc-400">💍 Marry</span>
-            <span className="truncate block font-black text-[11px] text-white">
-              {selections.marry || "Tap below"}
-            </span>
-          </div>
-
-          <div
-            className={`p-1.5 rounded-xl border text-center transition-all ${
-              selections.kill
-                ? "bg-red-500/15 border-red-500/50 text-red-300 shadow-sm shadow-red-500/10"
-                : "bg-zinc-900/60 border-zinc-800/80 text-zinc-500"
-            }`}
-          >
-            <span className="block text-[8px] uppercase tracking-wider font-extrabold text-zinc-400">🔪 Kill</span>
-            <span className="truncate block font-black text-[11px] text-white">
-              {selections.kill || "Tap below"}
-            </span>
-          </div>
+          {roles.map((r) => {
+            const selectedVal = selections[r.id]
+            return (
+              <div
+                key={r.id}
+                className={`p-1.5 rounded-xl border text-center transition-all ${
+                  selectedVal
+                    ? `${r.badgeClass} shadow-sm`
+                    : "bg-zinc-900/60 border-zinc-800/80 text-zinc-500"
+                }`}
+              >
+                <span className="block text-[8px] uppercase tracking-wider font-extrabold text-zinc-300 truncate">
+                  {r.label}
+                </span>
+                <span className="truncate block font-black text-[11px] text-white">
+                  {selectedVal || "Tap below"}
+                </span>
+              </div>
+            )
+          })}
         </div>
 
         {/* 3 Dedicated Mobile Cards with Tall Uncropped Portraits */}

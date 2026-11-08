@@ -59,7 +59,11 @@ export function seed32kCatalog(options: {
       country = COALESCE(country, ?),
       birth_year = COALESCE(birth_year, ?),
       occupations = CASE WHEN occupations = '[]' OR occupations IS NULL THEN ? ELSE occupations END,
-      primary_image_id = COALESCE(primary_image_id, ?),
+      primary_image_id = CASE
+        WHEN primary_image_id IS NULL THEN ?
+        WHEN primary_image_id LIKE 'img_local%' OR primary_image_id LIKE 'img_exp%' THEN ?
+        ELSE primary_image_id
+      END,
       tier = COALESCE(?, tier),
       opt_in = ?,
       updated_at = ?
@@ -106,7 +110,10 @@ export function seed32kCatalog(options: {
   const now = new Date().toISOString()
   const batchSize = options.batchSize || 2000
   const minPopThreshold = options.minPopularity !== undefined ? options.minPopularity : 0
-  const OPT_IN_CATEGORIES = new Set(["scientists", "history", "tech", "writers", "artists"])
+  const OPT_IN_CATEGORIES = new Set([
+    "scientists", "history", "tech", "writers", "artists",
+    "athletes", "f1", "ufc", "wwe", "combat", "sports", "racing"
+  ])
   let insertedPeople = 0
   let insertedImages = 0
 

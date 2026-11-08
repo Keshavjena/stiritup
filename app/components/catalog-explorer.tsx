@@ -191,16 +191,69 @@ export function CatalogExplorer({ isOpen, onClose }: CatalogExplorerProps) {
       const res = await fetch("/api/catalog/matching", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ personId: person.id, autoAttachHighConfidence: false })
+        body: JSON.stringify({ personId: person.id, autoAttachHighConfidence: true })
       })
       const json = await res.json()
-      if (json.success) {
+      if (json.success && json.data) {
         setMatchingResult(json.data)
+        if (json.data.attachedImage) {
+          setPeople((prev) =>
+            prev.map((p) =>
+              p.id === person.id
+                ? {
+                    ...p,
+                    primaryImage: json.data.attachedImage,
+                    images: [json.data.attachedImage, ...(p.images || [])]
+                  }
+                : p
+            )
+          )
+        }
       }
     } catch (err) {
       console.error("Matching pipeline error:", err)
     } finally {
       setMatchingLoading(false)
+    }
+  }
+
+  // Handle applying a matched candidate image to a person
+  const handleApplyMatchCandidate = async (cand: any) => {
+    if (!matchingPerson) return
+    const img = cand.candidate?.primaryCandidateImage
+    if (!img) return
+    try {
+      const res = await fetch(`/api/catalog/people/${matchingPerson.id}`, {
+        method: "POST",
+        headers: { "Content-Type": "application/json" },
+        body: JSON.stringify({
+          url: img.url,
+          thumbnailUrl: img.thumbnailUrl || img.url,
+          sourceUrl: img.sourcePageUrl,
+          license: img.license,
+          author: img.author,
+          attribution: img.formattedAttribution,
+          isPrimary: true,
+          verificationStatus: "verified"
+        })
+      })
+      const json = await res.json()
+      if (json.success && json.data) {
+        setPeople((prev) =>
+          prev.map((p) =>
+            p.id === matchingPerson.id
+              ? {
+                  ...p,
+                  primaryImage: json.data,
+                  images: [json.data, ...(p.images || [])]
+                }
+              : p
+          )
+        )
+        setMatchingModalOpen(false)
+      }
+    } catch (err) {
+      console.error("Failed to apply candidate image:", err)
     }
   }
 
@@ -1117,6 +1170,16 @@ export function CatalogExplorer({ isOpen, onClose }: CatalogExplorerProps) {
                         >
                           Reject Match
                         </Button>
+                        {cand.candidate.primaryCandidateImage && (
+                          <Button
+                            onClick={() => handleApplyMatchCandidate(cand)}
+                            size="sm"
+                            className="bg-emerald-400 hover:bg-emerald-300 text-black font-extrabold text-[10px] h-7 px-3 border-0 flex items-center gap-1 shadow-md shadow-emerald-500/20"
+                          >
+                            <Check className="w-3 h-3 text-black stroke-[3]" />
+                            Apply Portrait
+                          </Button>
+                        )}
                       </div>
                     </div>
                   ))}

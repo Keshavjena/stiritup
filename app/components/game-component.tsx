@@ -37,7 +37,7 @@ import { BeerChugAnimation } from "./beer-chug-animation"
 import { getGameContent } from "../../lib/game-data/questions"
 import { useSocket } from "@/hooks/useSocket"
 import { motion, AnimatePresence } from "framer-motion"
-import { KMKImageCards, WYRImageCards } from "./image-game-cards"
+import { KMKImageCards, WYRImageCards, getContextualKMKRoles } from "./image-game-cards"
 import { LivePlayersSidebar } from "./live-players-sidebar"
 import { CustomGameCard } from "@/lib/custom-game/types"
 import { CustomGameBuilder } from "./custom-game/custom-game-builder"
@@ -1923,12 +1923,13 @@ export function GameComponent({
                       { id: "bollywood", label: "Bollywood" },
                       { id: "singers", label: "Singers & Pop" },
                       { id: "creators", label: "Creators & Streamers" },
-                      { id: "athletes", label: "Athletes" },
-                      { id: "f1", label: "F1 Racing" },
-                      { id: "combat", label: "UFC & Combat" },
-                      { id: "wwe", label: "WWE Wrestling" },
-                      { id: "adultstars", label: "OnlyFans & Glamour (18+)" },
-                      { id: "fantasy", label: "Fantasy & Anime" }
+                      { id: "glamour", label: "Glamour & Models" },
+                      { id: "adultstars", label: "Adult Stars (18+)" },
+                      { id: "fantasy", label: "Fantasy & Anime" },
+                      { id: "athletes", label: "Athletes (Opt-In)" },
+                      { id: "f1", label: "F1 Racing (Opt-In)" },
+                      { id: "combat", label: "UFC & Combat (Opt-In)" },
+                      { id: "wwe", label: "WWE Wrestling (Opt-In)" }
                     ].map((c) => (
                       <button
                         key={c.id}
@@ -2055,6 +2056,7 @@ export function GameComponent({
                             onSubmit={submitKMKChoices}
                             hasSubmitted={hasSubmitted}
                             playerName={myUser}
+                            scenario={currentPersonRound.scenario || currentContent}
                           />
                         ) : (
                           /* Text Option Fallback Panel */
@@ -2070,25 +2072,25 @@ export function GameComponent({
 
                             <div className="space-y-2">
                               {kmkOptionsList?.map((opt) => {
+                                const roles = getContextualKMKRoles(currentContent, undefined)
                                 return (
                                   <div key={opt} className="p-2.5 bg-zinc-950/60 border border-zinc-800 rounded-xl flex flex-col sm:flex-row justify-between items-center gap-2">
                                     <span className="font-extrabold text-xs text-left uppercase tracking-wider text-zinc-200 flex-1">{opt}</span>
                                     <div className="flex gap-1.5">
-                                      {(['kiss', 'marry', 'kill'] as const).map((role) => {
-                                        const labels = { kiss: "💋 Kiss", marry: "💍 Marry", kill: "🔪 Kill" }
-                                        const isSelected = kmkSelections[role] === opt
+                                      {roles.map((r) => {
+                                        const isSelected = kmkSelections[r.id] === opt
                                         return (
                                           <Button
-                                            key={role}
+                                            key={r.id}
                                             size="sm"
-                                            onClick={() => selectKMK(opt, role)}
+                                            onClick={() => selectKMK(opt, r.id)}
                                             className={`h-8 px-2.5 rounded-lg text-[9px] font-extrabold uppercase tracking-wider transition-all ${
                                               isSelected 
-                                                ? role === "kiss" ? "bg-pink-500 text-white shadow-md" : role === "marry" ? "bg-amber-400 text-black shadow-md" : "bg-red-600 text-white shadow-md"
+                                                ? r.activeBtn
                                                 : "border border-zinc-800 bg-zinc-900 text-zinc-400 hover:bg-zinc-800 hover:text-zinc-200"
                                             }`}
                                           >
-                                            {labels[role]}
+                                            {r.label}
                                           </Button>
                                         )
                                       })}
