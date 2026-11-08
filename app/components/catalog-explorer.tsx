@@ -393,13 +393,14 @@ export function CatalogExplorer({ isOpen, onClose }: CatalogExplorerProps) {
     { id: "bollywood", label: "Bollywood" },
     { id: "popstars", label: "Pop Stars" },
     { id: "creators", label: "Creators & Streamers" },
-    { id: "athletes", label: "Athletes" },
-    { id: "f1", label: "Formula 1" },
-    { id: "combat", label: "UFC & Combat" },
-    { id: "wwe", label: "WWE Wrestling" },
-    { id: "adultstars", label: "OnlyFans & Glamour" },
+    { id: "glamour", label: "Glamour & Models" },
+    { id: "adultstars", label: "Adult Stars (18+)" },
     { id: "fantasy", label: "Fantasy & Heroes" },
-    { id: "anime", label: "Anime" }
+    { id: "anime", label: "Anime" },
+    { id: "athletes", label: "Athletes (Opt-In)" },
+    { id: "f1", label: "Formula 1 (Opt-In)" },
+    { id: "combat", label: "UFC & Combat (Opt-In)" },
+    { id: "wwe", label: "WWE (Opt-In)" }
   ]
 
   return (
@@ -893,10 +894,12 @@ export function CatalogExplorer({ isOpen, onClose }: CatalogExplorerProps) {
                     <option value="hollywood">Hollywood</option>
                     <option value="bollywood">Bollywood</option>
                     <option value="popstars">Pop Stars & Music</option>
+                    <option value="creators">Creators & Streamers</option>
+                    <option value="glamour">Glamour & Models</option>
+                    <option value="adultstars">Adult Stars (18+)</option>
                     <option value="fantasy">Anime & Fantasy</option>
-                    <option value="adultstars">Adult Stars & Models</option>
-                    <option value="athletes">Athletes</option>
-                    <option value="other">Other / Meme</option>
+                    <option value="athletes">Athletes (Opt-In)</option>
+                    <option value="other">Other / Pop Culture</option>
                   </select>
                 </div>
 
@@ -1152,13 +1155,13 @@ export function CatalogExplorer({ isOpen, onClose }: CatalogExplorerProps) {
                         </div>
 
                         <div className="text-right">
-                          <span className="font-black text-sm text-amber-400">{cand.score}/100</span>
-                          <span className="block text-[9px] uppercase text-zinc-500">{cand.confidence}</span>
+                          <span className="font-mono font-bold text-sm text-amber-400 tabular-nums">{cand.score}/100</span>
+                          <span className="block text-[9px] font-mono uppercase tracking-wider text-zinc-500">{cand.confidence}</span>
                         </div>
                       </div>
 
-                      <p className="text-[10px] text-zinc-400 leading-relaxed bg-zinc-950 p-2 rounded-lg">
-                        <strong>Reasoning:</strong> {cand.reasoning}
+                      <p className="text-[11px] text-zinc-300 leading-relaxed bg-zinc-950/80 p-2.5 rounded-lg border border-zinc-900">
+                        <strong className="text-zinc-400 font-semibold">Reasoning:</strong> {cand.reasoning}
                       </p>
 
                       <div className="flex justify-end gap-2 pt-1">

@@ -1878,13 +1878,14 @@ export function GameComponent({
                 {/* AI Generator Toggle */}
                 <button
                   onClick={() => setAiEnabled(!aiEnabled)}
-                  className={`px-3 py-1 rounded-xl text-[9px] font-extrabold uppercase tracking-wider transition-colors border ${
+                  className={`px-3 py-1 rounded-xl text-[9px] font-bold uppercase tracking-wider transition-colors border flex items-center gap-1.5 ${
                     aiEnabled
-                      ? "bg-purple-500/20 border-purple-500/50 text-purple-300"
+                      ? "bg-purple-500/15 border-purple-500/40 text-purple-300"
                       : "bg-zinc-900 border-zinc-800 text-zinc-400 hover:text-zinc-200"
                   }`}
                 >
-                  {aiEnabled ? "🤖 Groq AI Options: ON" : "📚 Local Database (15k+): ON"}
+                  <Sparkles className="w-3 h-3 text-amber-400" />
+                  <span>{aiEnabled ? "Groq AI: Active" : "19k Database: Active"}</span>
                 </button>
               </div>
 
@@ -1894,9 +1895,9 @@ export function GameComponent({
                   <label className="text-[8px] font-bold uppercase tracking-wider text-zinc-500">Gender Pool:</label>
                   <div className="flex gap-1">
                     {[
-                      { id: "female", label: "👩 Female" },
-                      { id: "male", label: "👨 Male" },
-                      { id: "mixed", label: "🔀 Mixed" }
+                      { id: "female", label: "Female" },
+                      { id: "male", label: "Male" },
+                      { id: "mixed", label: "Mixed" }
                     ].map((g) => (
                       <button
                         key={g.id}
@@ -2103,15 +2104,15 @@ export function GameComponent({
                             <Button
                               onClick={submitKMKChoices}
                               disabled={!isAllComplete}
-                              className={`w-full h-10 text-xs font-black uppercase tracking-wider rounded-xl transition-all border-0 shadow-lg ${
+                              className={`w-full h-10 text-xs font-bold uppercase tracking-wider rounded-xl transition-all border-0 shadow-lg ${
                                 hasSubmitted
                                   ? "bg-emerald-500 hover:bg-emerald-400 text-black"
                                   : isAllComplete
-                                  ? "bg-amber-400 hover:bg-amber-300 text-black"
+                                  ? "bg-amber-400 hover:bg-amber-300 text-black font-extrabold"
                                   : "bg-zinc-800 text-zinc-500 cursor-not-allowed"
                               }`}
                             >
-                              {hasSubmitted ? "✓ Update My Choices" : "Submit Choices 💋 💍 🔪"}
+                              {hasSubmitted ? "Update My Choices" : "Submit Choices"}
                             </Button>
                           </div>
                         )}

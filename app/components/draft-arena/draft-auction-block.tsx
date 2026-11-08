@@ -322,15 +322,15 @@ export function DraftAuctionBlock({
             </div>
 
             <div className="flex items-baseline gap-2.5 mt-0.5">
-              <span className="text-3xl font-black text-white tracking-tight">
+              <span className="text-3xl font-mono font-bold text-white tracking-tight tabular-nums">
                 {preset.currencySymbol}{currentBidAmount}
               </span>
               {currentBid ? (
-                <span className="text-xs sm:text-sm font-extrabold text-amber-300 truncate max-w-[150px] sm:max-w-[220px]">
+                <span className="text-xs sm:text-sm font-semibold text-amber-300 truncate max-w-[150px] sm:max-w-[220px]">
                   by {currentBid.bidderName}
                 </span>
               ) : (
-                <span className="text-xs text-zinc-500 italic">No bids placed yet</span>
+                <span className="text-xs text-zinc-500">No bids placed yet</span>
               )}
             </div>
           </div>
@@ -339,7 +339,7 @@ export function DraftAuctionBlock({
             <span className="text-[10px] text-zinc-400 block uppercase font-bold tracking-wider">
               Min Raise
             </span>
-            <span className="text-base sm:text-lg font-mono font-black text-amber-400">
+            <span className="text-base sm:text-lg font-mono font-bold text-amber-400 tabular-nums">
               {preset.currencySymbol}{minRequiredBid}
             </span>
           </div>

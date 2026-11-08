@@ -359,20 +359,20 @@ export function CustomGameBuilder({
       <div className="bg-zinc-900/40 border border-zinc-800 rounded-2xl p-5 shadow-xl flex flex-col md:flex-row items-start md:items-center justify-between gap-4">
         <div className="flex-1 w-full space-y-1.5">
           <div className="flex items-center gap-2">
-            <span className="text-xl">⚙️</span>
+            <SlidersHorizontal className="w-4 h-4 text-amber-400 flex-shrink-0" />
             {isHost ? (
               <Input
                 value={deck.title}
                 onChange={(e) => updateDeck({ ...deck, title: e.target.value })}
                 placeholder="Name Your Custom Deck..."
-                className="bg-zinc-900/80 border-zinc-700/80 font-black text-sm uppercase tracking-wide text-white h-9 rounded-xl max-w-sm"
+                className="bg-zinc-900/80 border-zinc-700/80 font-bold text-sm tracking-wide text-white h-9 rounded-xl max-w-sm"
               />
             ) : (
-              <h3 className="font-black text-base uppercase text-white tracking-wide">
+              <h3 className="font-bold text-base text-white tracking-wide">
                 {deck.title}
               </h3>
             )}
-            <Badge className="bg-amber-400 text-black font-black text-[9px] uppercase px-2 py-0.5">
+            <Badge className="bg-zinc-800 text-zinc-300 border border-zinc-700/80 font-mono text-[9px] uppercase px-2 py-0.5 tabular-nums">
               {deck.cards.length} Cards
             </Badge>
           </div>
@@ -783,16 +783,16 @@ export function CustomGameBuilder({
         <div className="bg-zinc-900/30 border border-zinc-800 rounded-3xl p-5 sm:p-6 space-y-5 shadow-xl">
           <div className="space-y-1">
             <div className="flex items-center gap-2">
-              <span className="text-xl">🌟</span>
-              <h4 className="text-xs font-black uppercase tracking-wider text-white">
-                18,000+ Pop-Culture & Celebrity Card Generator
+              <Sparkles className="w-4 h-4 text-amber-400" />
+              <h4 className="text-xs font-bold uppercase tracking-wider text-white">
+                Pop-Culture & Celebrity Card Generator
               </h4>
-              <Badge className="bg-pink-500/20 border-pink-500/40 text-pink-300 font-black text-[8px] uppercase">
-                18k Catalog
+              <Badge className="bg-zinc-800 text-zinc-300 border border-zinc-700/80 font-mono text-[8px] uppercase tabular-nums">
+                19k Catalog
               </Badge>
             </div>
             <p className="text-[11px] text-zinc-400 leading-relaxed">
-              Dynamically generate celebrity dilemmas, room vibe-checks, speed roast challenges, and apocalyptic Kiss Marry Kill trios with Hollywood icons, Bollywood stars, YouTubers, athletes, and anime legends.
+              Dynamically generate celebrity dilemmas, room vibe-checks, speed roast challenges, and apocalyptic Kiss Marry Kill trios with Hollywood icons, Bollywood stars, YouTubers, models, and anime legends.
             </p>
           </div>
 
@@ -814,22 +814,23 @@ export function CustomGameBuilder({
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
               {[
-                { id: "all", label: "🔥 All Stars" },
-                { id: "hollywood", label: "🎬 Hollywood & TV" },
-                { id: "bollywood", label: "✨ Bollywood" },
-                { id: "creators", label: "📱 Streamers / YouTube" },
-                { id: "singers", label: "🎵 Music & Pop" },
-                { id: "athletes", label: "⚽ Athletes & Sports" },
-                { id: "glamour", label: "💎 Glamour & Models" },
-                { id: "fantasy", label: "⚔️ Anime & Fantasy" }
+                { id: "all", label: "All Pop Culture" },
+                { id: "hollywood", label: "Hollywood & TV" },
+                { id: "bollywood", label: "Bollywood" },
+                { id: "creators", label: "Streamers & YouTube" },
+                { id: "singers", label: "Music & Pop" },
+                { id: "glamour", label: "Glamour & Models" },
+                { id: "adultstars", label: "Adult Stars (18+)" },
+                { id: "fantasy", label: "Anime & Fantasy" },
+                { id: "athletes", label: "Athletes (Opt-In)" }
               ].map((c) => (
                 <button
                   key={c.id}
                   type="button"
                   onClick={() => setPersCategory(c.id)}
-                  className={`p-2 rounded-xl text-[10px] font-extrabold uppercase tracking-wide border transition-all text-center ${
+                  className={`p-2 rounded-xl text-[10px] font-bold uppercase tracking-wide border transition-all text-center ${
                     persCategory === c.id
-                      ? "bg-zinc-100 text-black border-white shadow-md"
+                      ? "bg-zinc-100 text-black border-white shadow-md font-extrabold"
                       : "bg-zinc-950/80 border-zinc-800 text-zinc-400 hover:bg-zinc-800 hover:text-white"
                   }`}
                 >
@@ -846,10 +847,10 @@ export function CustomGameBuilder({
             </label>
             <div className="grid grid-cols-2 sm:grid-cols-4 gap-1.5">
               {[
-                { id: "all" as const, label: "🎲 Wild Mix (All)", desc: "Dilemmas, votes & KMK" },
-                { id: "quirky" as const, label: "🎪 Quirky & Absurd", desc: "Awkward elevator scenarios" },
-                { id: "dark" as const, label: "💀 Dark & Apocalyptic", desc: "Zombies, bunker pacts & mafia" },
-                { id: "spicy" as const, label: "🌶️ Spicy & Unhinged", desc: "High drama & savage roasts" }
+                { id: "all" as const, label: "Wild Mix (All)", desc: "Dilemmas, votes & KMK" },
+                { id: "quirky" as const, label: "Quirky & Absurd", desc: "Awkward elevator scenarios" },
+                { id: "dark" as const, label: "Dark & Apocalyptic", desc: "Zombies, bunker pacts & trials" },
+                { id: "spicy" as const, label: "Late Night Spicy (18+)", desc: "High drama & roasts" }
               ].map((s) => (
                 <button
                   key={s.id}
