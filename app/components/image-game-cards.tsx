@@ -73,41 +73,71 @@ export function getContextualKMKRoles(
   const names = persons?.map((p) => (p.name || "").toLowerCase()).join(" ") || ""
   const contextStr = `${text} ${cats} ${names}`
 
-  // 1. Glamour & Adult (Spicy, Bold, Risqué)
+  // 1. Adult Stars & OnlyFans (Bold, Risqué, Uncensored 18+)
   if (
     cats.includes("adultstars") ||
     cats.includes("onlyfans") ||
-    cats.includes("glamour") ||
-    cats.includes("models") ||
-    contextStr.includes("spicy") ||
-    contextStr.includes("penthouse") ||
+    contextStr.includes("onlyfans") ||
+    contextStr.includes("subathon") ||
     contextStr.includes("bedroom") ||
-    contextStr.includes("dating show") ||
-    contextStr.includes("monaco") ||
-    contextStr.includes("heist") ||
-    contextStr.includes("yacht")
+    contextStr.includes("wildest")
   ) {
     return [
       {
         id: "kiss",
-        label: "🔥 Wild Night",
-        activeBtn: "bg-gradient-to-r from-pink-600 to-rose-500 text-white border-rose-400 shadow-lg shadow-rose-500/40 font-black tracking-wider",
+        label: "🔥 Wild Hookup",
+        activeBtn: "bg-gradient-to-r from-pink-600 via-rose-600 to-red-500 text-white border-rose-400 shadow-lg shadow-rose-500/40 font-black tracking-wider",
         badgeClass: "bg-rose-500 text-white border-rose-400 shadow-md shadow-rose-500/30",
         cardActive: "border-rose-500 ring-2 ring-rose-500/40 shadow-xl shadow-rose-500/20"
       },
       {
         id: "marry",
-        label: "💍 Put a Ring On It",
-        activeBtn: "bg-gradient-to-r from-amber-400 to-yellow-400 text-black border-amber-300 shadow-lg shadow-amber-500/40 font-black tracking-wider",
+        label: "💍 Lock It Down",
+        activeBtn: "bg-gradient-to-r from-amber-400 via-yellow-400 to-orange-400 text-black border-amber-300 shadow-lg shadow-amber-500/40 font-black tracking-wider",
         badgeClass: "bg-amber-400 text-black border-amber-300 shadow-md shadow-amber-500/30",
         cardActive: "border-amber-400 ring-2 ring-amber-400/40 shadow-xl shadow-amber-500/20"
       },
       {
         id: "kill",
-        label: "🚫 Ghost & Block",
-        activeBtn: "bg-gradient-to-r from-red-600 to-rose-700 text-white border-red-500 shadow-lg shadow-red-600/40 font-black tracking-wider",
+        label: "🚫 Unsub & Block",
+        activeBtn: "bg-gradient-to-r from-red-600 to-rose-800 text-white border-red-500 shadow-lg shadow-red-600/40 font-black tracking-wider",
         badgeClass: "bg-red-600 text-white border-red-500 shadow-md shadow-red-600/30",
         cardActive: "border-red-600 ring-2 ring-red-600/40 shadow-xl shadow-red-600/20"
+      }
+    ]
+  }
+
+  // 2. High Fashion, Glamour & Supermodels (Met Gala, Catwalk, Runway)
+  if (
+    cats.includes("glamour") ||
+    cats.includes("models") ||
+    contextStr.includes("met gala") ||
+    contextStr.includes("runway") ||
+    contextStr.includes("supermodel") ||
+    contextStr.includes("monaco") ||
+    contextStr.includes("yacht")
+  ) {
+    return [
+      {
+        id: "kiss",
+        label: "✨ VIP Afterparty",
+        activeBtn: "bg-gradient-to-r from-fuchsia-600 to-pink-500 text-white border-pink-400 shadow-lg shadow-pink-500/40 font-black tracking-wider",
+        badgeClass: "bg-fuchsia-600 text-white border-pink-400 shadow-md shadow-pink-500/30",
+        cardActive: "border-fuchsia-500 ring-2 ring-fuchsia-500/40 shadow-xl shadow-fuchsia-500/20"
+      },
+      {
+        id: "marry",
+        label: "💎 Power Couple",
+        activeBtn: "bg-gradient-to-r from-amber-300 to-yellow-500 text-black border-amber-200 shadow-lg shadow-amber-300/40 font-black tracking-wider",
+        badgeClass: "bg-amber-300 text-black border-amber-200 shadow-md shadow-amber-300/30",
+        cardActive: "border-amber-300 ring-2 ring-amber-300/40 shadow-xl shadow-amber-300/20"
+      },
+      {
+        id: "kill",
+        label: "✂️ Cut From Show",
+        activeBtn: "bg-gradient-to-r from-stone-800 to-zinc-900 text-zinc-300 border-zinc-700 shadow-lg shadow-zinc-900/50 font-black tracking-wider",
+        badgeClass: "bg-stone-800 text-zinc-300 border-zinc-700 shadow-md shadow-zinc-900/30",
+        cardActive: "border-zinc-600 ring-2 ring-zinc-600/40 shadow-xl shadow-zinc-600/20"
       }
     ]
   }

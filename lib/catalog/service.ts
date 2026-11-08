@@ -222,8 +222,20 @@ export function seedExpandedPersonalities(): { added: number; existing: number }
     const norm = normalizePersonName(baseName)
     const existing = checkStmt.get(norm)
     if (existing) {
+      const existingId = (existing as any).id
       db.prepare("UPDATE people SET popularity = MAX(COALESCE(popularity, 0), ?), category = COALESCE(?, category) WHERE id = ?")
-        .run(person.popularity || 95, person.category, (existing as any).id)
+        .run(person.popularity || 95, person.category, existingId)
+
+      if (person.imageUrl && !person.imageUrl.includes("placeholder-user") && !person.imageUrl.includes("upload.wikimedia.org/wikipedia/commons/thumb")) {
+        const fullImg = person.imageUrl.includes("?") ? person.imageUrl : `${person.imageUrl}?width=600`
+        const thumbImg = person.imageUrl.includes("?") ? person.imageUrl : `${person.imageUrl}?width=300`
+        // Update person_images if exists or attach
+        db.prepare(`
+          UPDATE person_images 
+          SET url = ?, thumbnail_url = ?, is_broken = 0, updated_at = ?
+          WHERE person_id = ? AND (url LIKE '%placeholder%' OR url LIKE '%upload.wikimedia.org/wikipedia/commons/thumb%')
+        `).run(fullImg, thumbImg, now, existingId)
+      }
       continue
     }
 
@@ -457,10 +469,8 @@ export function getPeople(params: CatalogSearchParams = {}): PaginatedResult<Per
 
   if (params.category && params.category !== "all") {
     const cat = params.category.toLowerCase().trim()
-    if (cat === "models") {
-      whereClauses.push("p.category = 'models'")
-    } else if (cat === "glamour") {
-      whereClauses.push("p.category = 'glamour'")
+    if (cat === "models" || cat === "glamour") {
+      whereClauses.push("p.category IN ('glamour', 'models') AND p.category != 'adultstars'")
     } else if (cat === "adultstars" || cat === "onlyfans" || cat === "adult") {
       whereClauses.push("p.category IN ('adultstars', 'onlyfans')")
     } else if (cat === "popstars" || cat === "singers") {

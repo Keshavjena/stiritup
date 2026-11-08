@@ -56,12 +56,12 @@ export function seed32kCatalog(options: {
     UPDATE people SET
       external_id = COALESCE(external_id, ?),
       popularity = MAX(popularity, ?),
+      category = CASE WHEN category = 'glamour' AND ? = 'adultstars' THEN 'adultstars' ELSE category END,
       country = COALESCE(country, ?),
       birth_year = COALESCE(birth_year, ?),
       occupations = CASE WHEN occupations = '[]' OR occupations IS NULL THEN ? ELSE occupations END,
       primary_image_id = CASE
-        WHEN primary_image_id IS NULL THEN ?
-        WHEN primary_image_id LIKE 'img_local%' OR primary_image_id LIKE 'img_exp%' THEN ?
+        WHEN primary_image_id IS NULL OR primary_image_id LIKE 'img_local%' OR primary_image_id LIKE 'img_exp%' THEN COALESCE(?, primary_image_id)
         ELSE primary_image_id
       END,
       tier = COALESCE(?, tier),
@@ -137,6 +137,7 @@ export function seed32kCatalog(options: {
         updateExisting.run(
           item.id,
           item.popularity || 0,
+          item.category || "",
           item.country || null,
           item.birthYear != null ? item.birthYear : null,
           JSON.stringify(item.occupations || []),

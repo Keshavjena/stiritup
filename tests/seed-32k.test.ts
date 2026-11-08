@@ -24,8 +24,8 @@ test("Personality Seed Dataset & Pure Pop-Culture Catalog (18k+ Stars, Opt-In Fi
     const categories = categoriesRow.map((r) => r.category)
 
     const expectedCategories = [
-      "actors", "athletes", "bollywood", "creators",
-      "fantasy", "glamour", "hollywood", "icons",
+      "actors", "adultstars", "athletes", "bollywood", "creators",
+      "fantasy", "hollywood", "icons",
       "models", "singers"
     ]
 

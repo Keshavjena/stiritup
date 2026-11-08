@@ -2698,7 +2698,8 @@ export function GameComponent({
                   <option value="f1">F1 Racing Drivers</option>
                   <option value="combat">UFC & Combat Stars</option>
                   <option value="wwe">WWE Wrestling Superstars</option>
-                  <option value="adultstars">OnlyFans & Glamour</option>
+                  <option value="glamour">Glamour & Fashion Models</option>
+                  <option value="adultstars">Adult Stars & OnlyFans (18+)</option>
                   <option value="anime">Anime & Fantasy Heroes</option>
                   <option value="other">Wild / Custom Names</option>
                 </select>

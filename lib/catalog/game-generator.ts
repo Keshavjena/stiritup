@@ -237,19 +237,19 @@ export function generateKMKRounds(options: {
       return true
     }
 
-    // Try to weave in 1 verified portrait if available and valid
-    if (withPortrait.length > 0) {
-      for (let pAttempt = 0; pAttempt < withPortrait.length; pAttempt++) {
-        const candidate = withPortrait[(portraitCursor + pAttempt) % withPortrait.length]
-        if (canPick(candidate)) {
-          selected.push(candidate)
-          portraitCursor = (portraitCursor + pAttempt + 1) % withPortrait.length
-          break
-        }
+    // Prioritize personalities with verified portraits for all 3 slots
+    const primarySource = withPortrait.length >= 3 ? withPortrait : allShuffled
+    let pAttempt = 0
+    while (selected.length < 3 && pAttempt < primarySource.length) {
+      const candidate = primarySource[(portraitCursor + pAttempt) % primarySource.length]
+      pAttempt++
+      if (canPick(candidate)) {
+        selected.push(candidate)
       }
     }
+    portraitCursor = (portraitCursor + pAttempt) % Math.max(1, primarySource.length)
 
-    // Fill remaining slots from randomized pool
+    // Fill any remaining slots from randomized pool if needed
     let passAttempts = 0
     while (selected.length < 3 && passAttempts < allShuffled.length) {
       passAttempts++
@@ -381,13 +381,15 @@ export function generateWYRRounds(options: {
 
   const rounds: WYRGameRound[] = []
   const usedPairKeys = new Set<string>()
+  const withPortrait = shuffle(pool.filter((p) => personToPersonCard(p).hasVerifiedPortrait))
   const allShuffled = shuffle(pool)
+  const primarySource = withPortrait.length >= 2 ? withPortrait : allShuffled
 
   let lastRoundIds = new Set<string>()
   const recentHistoryQueue: string[] = []
   const LRU_MAX = Math.min(10, Math.max(2, Math.floor(pool.length / 2)))
 
-  let poolCursor = Math.floor(Math.random() * allShuffled.length)
+  let poolCursor = Math.floor(Math.random() * primarySource.length)
   let attempts = 0
 
   while (rounds.length < count && attempts < 1000) {
@@ -406,13 +408,13 @@ export function generateWYRRounds(options: {
     }
 
     let passAttempts = 0
-    while (selected.length < 2 && passAttempts < allShuffled.length) {
+    while (selected.length < 2 && passAttempts < primarySource.length) {
       passAttempts++
-      if (poolCursor >= allShuffled.length) {
+      if (poolCursor >= primarySource.length) {
         poolCursor = 0
-        allShuffled.splice(0, allShuffled.length, ...shuffle(pool))
+        primarySource.splice(0, primarySource.length, ...(withPortrait.length >= 2 ? shuffle(withPortrait) : shuffle(pool)))
       }
-      const candidate = allShuffled[poolCursor++]
+      const candidate = primarySource[poolCursor++]
       if (canPick(candidate)) {
         selected.push(candidate)
       }
@@ -420,7 +422,7 @@ export function generateWYRRounds(options: {
 
     // Fallback if LRU too strict for smaller category
     if (selected.length < 2) {
-      for (const candidate of allShuffled) {
+      for (const candidate of primarySource) {
         if (selected.length >= 2) break
         if (canPick(candidate, true)) {
           selected.push(candidate)

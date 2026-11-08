@@ -37,7 +37,7 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         category: "Leader",
         subtitle: "DC Universe / Gotham City",
         description: "Master strategist, peak human martial artist, contingency plan for everything.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b9/Batman_Cosplay_2017.jpg/440px-Batman_Cosplay_2017.jpg",
+        imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Batman_Cosplay_2017.jpg",
         baseValuation: 24,
         stats: { Intellect: 98, Combat: 95, Tactics: 99, Stealth: 96, OVR: 97 },
         tags: ["DC", "Justice League", "Street Tier", "Prep God"]
@@ -48,7 +48,7 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         category: "Tech",
         subtitle: "Marvel / Avengers",
         description: "Billionaire tech prodigy armed with nanotech armor and orbital strike arrays.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/22/Iron_Man_cosplay_at_MCM_London_Comic_Con.jpg/440px-Iron_Man_cosplay_at_MCM_London_Comic_Con.jpg",
+        imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Iron_Man_cosplay_at_MCM_London_Comic_Con.jpg",
         baseValuation: 25,
         stats: { Intellect: 99, Firepower: 94, Mobility: 90, Tech: 99, OVR: 95 },
         tags: ["Marvel", "Avengers", "Tech", "Billionaire"]
@@ -59,7 +59,7 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         category: "Brawler",
         subtitle: "DC Universe / Metropolis",
         description: "The Man of Steel. Solar-powered invulnerability, heat vision, and FTL flight.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d6/Superman_Cosplay_2016.jpg/440px-Superman_Cosplay_2016.jpg",
+        imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Superman_Cosplay_2016.jpg",
         baseValuation: 30,
         stats: { Strength: 100, Speed: 98, Durability: 100, Firepower: 96, OVR: 99 },
         tags: ["DC", "Justice League", "Cosmic", "Solar"]
@@ -70,7 +70,7 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         category: "Wildcard",
         subtitle: "Marvel / Queens",
         description: "Proportional spider agility, precognitive spider-sense, and heart of gold.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Spider-Man_Cosplay_2019.jpg/440px-Spider-Man_Cosplay_2019.jpg",
+        imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Spider-Man_Cosplay_2019.jpg",
         baseValuation: 20,
         stats: { Agility: 98, Reflexes: 99, Intellect: 90, Strength: 85, OVR: 92 },
         tags: ["Marvel", "Avengers", "Street Tier", "Acrobat"]
@@ -81,7 +81,7 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         category: "Brawler",
         subtitle: "Asgard / God of Thunder",
         description: "Immortal Asgardian god wielding lightning and planetary-cracking Stormbreaker.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/3/30/Thor_cosplay_2019.jpg/440px-Thor_cosplay_2019.jpg",
+        imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Thor_cosplay_2019.jpg",
         baseValuation: 28,
         stats: { Strength: 98, Durability: 96, Energy: 95, Combat: 90, OVR: 96 },
         tags: ["Marvel", "Avengers", "God", "Cosmic"]
@@ -92,7 +92,7 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         category: "Brawler",
         subtitle: "X-Men / Weapon X",
         description: "Adamantium skeleton, razor claws, berserker rage, and inexhaustible healing.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/7/7b/Hugh_Jackman_by_Gage_Skidmore_3.jpg/440px-Hugh_Jackman_by_Gage_Skidmore_3.jpg",
+        imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Hugh_Jackman_by_Gage_Skidmore_3.jpg",
         baseValuation: 24,
         stats: { Power: 91, Durability: 99, Combat: 95, Instinct: 96, OVR: 95 },
         tags: ["Marvel", "X-Men", "Mutant", "Healer"]
@@ -103,7 +103,7 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         category: "Leader",
         subtitle: "DC Universe / Themyscira",
         description: "Amazonian warrior princess with divine combat grace and Lasso of Truth.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/5b/Gal_Gadot_by_Gage_Skidmore_2.jpg/440px-Gal_Gadot_by_Gage_Skidmore_2.jpg",
+        imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Gal_Gadot_by_Gage_Skidmore_2.jpg",
         baseValuation: 27,
         stats: { Power: 95, Combat: 98, Speed: 92, Leadership: 94, OVR: 96 },
         tags: ["DC", "Justice League", "Amazon", "Demigod"]
@@ -114,7 +114,7 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         category: "Wildcard",
         subtitle: "Marvel / Merc with a Mouth",
         description: "Chaotic regenerative assassin who breaks the fourth wall and cannot die.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/14/Deadpool_2_Japan_Premiere_Red_Carpet_Ryan_Reynolds_%28cropped%29.jpg/440px-Deadpool_2_Japan_Premiere_Red_Carpet_Ryan_Reynolds_%28cropped%29.jpg",
+        imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Deadpool_2_Japan_Premiere_Red_Carpet_Ryan_Reynolds_(cropped).jpg",
         baseValuation: 21,
         stats: { Power: 88, Chaos: 100, Regeneration: 100, Humor: 100, OVR: 93 },
         tags: ["Marvel", "Anti-Hero", "Mercenary", "Regeneration"]
@@ -125,7 +125,7 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         category: "Mystic",
         subtitle: "Marvel / Chaos Magic",
         description: "Reality-warping sorceress wielding cosmic chaos magic capable of reshaping reality.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/27/Elizabeth_Olsen_by_Gage_Skidmore_2.jpg/440px-Elizabeth_Olsen_by_Gage_Skidmore_2.jpg",
+        imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Elizabeth_Olsen_by_Gage_Skidmore_2.jpg",
         baseValuation: 29,
         stats: { Power: 99, RealityWarp: 100, Energy: 98, Psyche: 85, OVR: 97 },
         tags: ["Marvel", "Avengers", "Mystic", "Chaos Magic"]
@@ -136,7 +136,7 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         category: "Tech",
         subtitle: "Marvel / Wakanda",
         description: "Vibranium-weave habit, superhuman agility, and the royal intellect of Wakanda.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/23/Chadwick_Boseman_by_Gage_Skidmore_July_2014.jpg/440px-Chadwick_Boseman_by_Gage_Skidmore_July_2014.jpg",
+        imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Chadwick_Boseman_by_Gage_Skidmore_July_2014.jpg",
         baseValuation: 25,
         stats: { Power: 90, Tech: 96, Leadership: 97, Agility: 94, OVR: 95 },
         tags: ["Marvel", "Wakanda", "Avenger", "Vibranium"]
@@ -181,7 +181,7 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         category: "Forward",
         subtitle: "Inter Miami / Argentina",
         description: "8x Ballon d'Or winner with unmatched dribbling and vision.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c1/Lionel_Messi_20180626.jpg/440px-Lionel_Messi_20180626.jpg",
+        imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Leo_Messi_Argentina_v_Egypt_7_July_2026-1.jpg",
         baseValuation: 28,
         stats: { Pace: 85, Shooting: 92, Passing: 94, Dribbling: 95, OVR: 93 },
         tags: ["La Liga", "Argentina", "World Cup Champion", "Playmaker"]
@@ -192,7 +192,7 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         category: "Forward",
         subtitle: "Al Nassr / Portugal",
         description: "All-time greatest goalscorer with lethal aerial threat and clutch instinct.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/8c/Cristiano_Ronaldo_2018.jpg/440px-Cristiano_Ronaldo_2018.jpg",
+        imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Cristiano_Ronaldo_Croatia_v_Portugal_2_July_2026-075_(cropped).jpg",
         baseValuation: 27,
         stats: { Pace: 87, Shooting: 94, Passing: 80, Physical: 88, OVR: 92 },
         tags: ["Premier League", "La Liga", "Portugal", "UCL Legend"]
@@ -203,7 +203,7 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         category: "Midfielder",
         subtitle: "Real Madrid / Croatia",
         description: "Golden Ball winner, eternal engine, exquisite outside-of-the-boot passing.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/bf/Luka_Modric_Interview_2021_%28cropped%29.jpg/440px-Luka_Modric_Interview_2021_%28cropped%29.jpg",
+        imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Luka_Modric_Croatia_v_Portugal_2_July_2026-055.jpg",
         baseValuation: 18,
         stats: { Pace: 70, Shooting: 77, Passing: 91, Dribbling: 89, OVR: 88 },
         tags: ["La Liga", "Croatia", "UCL Legend", "Playmaker"]
@@ -214,7 +214,7 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         category: "Defender",
         subtitle: "Spain Legend",
         description: "Aggressive defending titan, master of header goals in 93rd minutes.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a7/Sergio_Ramos_2018.jpg/440px-Sergio_Ramos_2018.jpg",
+        imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Sergio_Ramos_Interview_2021_(cropped).jpg",
         baseValuation: 17,
         stats: { Pace: 72, Defending: 88, Physical: 86, Shooting: 70, OVR: 87 },
         tags: ["La Liga", "Spain", "World Cup Champion", "UCL Legend"]
@@ -225,7 +225,7 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         category: "Forward",
         subtitle: "Real Madrid / France",
         description: "Blistering acceleration and world-class finishing on the grandest stages.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/57/2019-07-17_SG_Dynamo_Dresden_vs._Paris_Saint-Germain_by_Sandro_Halank%E2%80%93129_%28cropped%29.jpg/440px-2019-07-17_SG_Dynamo_Dresden_vs._Paris_Saint-Germain_by_Sandro_Halank%E2%80%93129_%28cropped%29.jpg",
+        imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Kylian_Mbappe_France_v_Senegal_16_June_2026-391_(cropped).jpg",
         baseValuation: 25,
         stats: { Pace: 97, Shooting: 90, Passing: 82, Dribbling: 92, OVR: 91 },
         tags: ["Ligue 1", "La Liga", "France", "World Cup Champion"]
@@ -236,7 +236,7 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         category: "Forward",
         subtitle: "Manchester City / Norway",
         description: "Physical powerhouse and ruthless penalty box poacher.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/07/Erling_Haaland_2023_%28cropped%29.jpg/440px-Erling_Haaland_2023_%28cropped%29.jpg",
+        imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Erling_Haaland_France_v_Norway_26_June_26-008.jpg",
         baseValuation: 24,
         stats: { Pace: 89, Shooting: 93, Passing: 66, Physical: 88, OVR: 90 },
         tags: ["Premier League", "Norway", "UCL Champion"]
@@ -247,7 +247,7 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         category: "Midfielder",
         subtitle: "Manchester City / Belgium",
         description: "Master tactician with laser-guided passes and venomous long shots.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/40/Kevin_De_Bruyne_201807091.jpg/440px-Kevin_De_Bruyne_201807091.jpg",
+        imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Kevin_De_Bruyne_USMNT_v_Belgium_Mar_28_2026-64_(cropped).jpg",
         baseValuation: 23,
         stats: { Pace: 72, Shooting: 88, Passing: 95, Dribbling: 87, OVR: 91 },
         tags: ["Premier League", "Belgium", "Playmaker", "UCL Champion"]
@@ -258,7 +258,7 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         category: "Midfielder",
         subtitle: "Real Madrid / England",
         description: "Complete box-to-box maestro with uncanny maturity and clutch goals.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Jude_Bellingham_2023.jpg/440px-Jude_Bellingham_2023.jpg",
+        imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Jude_Bellingham_England_v_Ghana_23_June_2026-061_(cropped).jpg",
         baseValuation: 22,
         stats: { Pace: 80, Shooting: 86, Passing: 88, Physical: 85, OVR: 90 },
         tags: ["La Liga", "England", "UCL Champion"]
@@ -269,7 +269,7 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         category: "Midfielder",
         subtitle: "Manchester City / Spain",
         description: "The midfield anchor of modern football, Euro 2024 MVP.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Rodri_2023.jpg/440px-Rodri_2023.jpg",
+        imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Rodri_2023.jpg",
         baseValuation: 20,
         stats: { Pace: 66, Shooting: 80, Passing: 86, Defending: 87, OVR: 90 },
         tags: ["Premier League", "Spain", "UCL Champion"]
@@ -280,7 +280,7 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         category: "Goalkeeper",
         subtitle: "Liverpool / Brazil",
         description: "Calm, heroic 1v1 stops and pinpoint distribution under pressure.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0e/Alisson_Becker_2018.jpg/440px-Alisson_Becker_2018.jpg",
+        imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Alisson_Becker_Brazil_V_Morocco_13_June_2026-117_(cropped).jpg",
         baseValuation: 16,
         stats: { Diving: 86, Handling: 85, Reflexes: 89, Speed: 56, OVR: 89 },
         tags: ["Premier League", "Brazil", "UCL Champion"]
@@ -323,7 +323,7 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         category: "Method Lead",
         subtitle: "Oscar Winner / Inception & Titanic",
         description: "Generational leading man with unmatched dramatic intensity and box-office prestige.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/25/Leonardo_DiCaprio_2014.jpg/440px-Leonardo_DiCaprio_2014.jpg",
+        imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Leonardo_DiCaprio_-_BFI_Southbank_3_(crop).jpg",
         baseValuation: 28,
         stats: { Fame: 99, Acting: 98, Charisma: 96, BoxOffice: 95, OVR: 97 },
         tags: ["Oscar Winner", "A-List", "Drama", "Blockbuster"]
@@ -334,7 +334,7 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         category: "Powerhouse Producer",
         subtitle: "Barbie / Harley Quinn",
         description: "Billion-dollar box office phenomenon, celebrated producer, and modern cinematic icon.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/0b/Margot_Robbie_at_Somerset_House_in_2013_%28cropped%29.jpg/440px-Margot_Robbie_at_Somerset_House_in_2013_%28cropped%29.jpg",
+        imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Margot_Robbie_at_the_Paris_premiere_of_%22Wuthering_Heights%22.jpg",
         baseValuation: 27,
         stats: { Fame: 98, Charisma: 99, Producer: 96, Range: 95, OVR: 97 },
         tags: ["Barbie", "LuckyChap", "A-List", "Global Star"]
@@ -345,7 +345,7 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         category: "Hollywood Royalty",
         subtitle: "Fight Club / Once Upon a Time",
         description: "Two-time Oscar winner, Hollywood legend, and effortless charisma machine.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4c/Brad_Pitt_2019_by_Glenn_Francis.jpg/440px-Brad_Pitt_2019_by_Glenn_Francis.jpg",
+        imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Brad_Pitt-69858.jpg",
         baseValuation: 25,
         stats: { Fame: 97, Charisma: 99, CoolFactor: 98, Range: 92, OVR: 95 },
         tags: ["Oscar Winner", "Legend", "Fight Club", "Plan B"]
@@ -356,7 +356,7 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         category: "Charming Lead",
         subtitle: "Drive / La La Land / Barbie",
         description: "Acclaimed versatile star known for comedic brilliance, intense neo-noirs, and viral musical numbers.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/f/f6/Ryan_Gosling_in_2018.jpg/440px-Ryan_Gosling_in_2018.jpg",
+        imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/GoslingBFI081223_(22_of_30)_(53388157347)_(cropped).jpg",
         baseValuation: 24,
         stats: { Fame: 96, Acting: 95, ScreenPresence: 98, Musicality: 90, OVR: 95 },
         tags: ["Barbie", "La La Land", "Drive", "Heartthrob"]
@@ -367,7 +367,7 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         category: "Dramatic Master",
         subtitle: "Oppenheimer / Peaky Blinders",
         description: "Best Actor Oscar winner with piercing presence, master of quiet fury and dramatic tension.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a5/Cillian_Murphy_Press_Conference_Oppenheimer.jpg/440px-Cillian_Murphy_Press_Conference_Oppenheimer.jpg",
+        imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/CillianMurphy-TIFF2025-01-Cropped_(cropped).png",
         baseValuation: 26,
         stats: { Fame: 95, Acting: 100, Intensity: 99, Discipline: 96, OVR: 97 },
         tags: ["Oscar Winner", "Oppenheimer", "Peaky Blinders", "Master"]
@@ -378,7 +378,7 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         category: "Generational Icon",
         subtitle: "Euphoria / Dune / Spider-Man",
         description: "Two-time Emmy-winning actress, global fashion pioneer, and unstoppable young superstar.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/Zendaya_-_2019_by_Glenn_Francis.jpg/440px-Zendaya_-_2019_by_Glenn_Francis.jpg",
+        imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Zendaya-byPhilipRomano.jpg",
         baseValuation: 26,
         stats: { Fame: 99, Style: 100, Acting: 94, Influence: 98, OVR: 97 },
         tags: ["Emmy Winner", "Dune", "Fashion Icon", "Euphoria"]
@@ -389,7 +389,7 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         category: "Blockbuster Titan",
         subtitle: "Black Widow / Marriage Story",
         description: "Highest-grossing leading actress of all time with two Academy Award nominations in a single year.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/0/02/Scarlett_Johansson_by_Gage_Skidmore_2_%28cropped%29.jpg/440px-Scarlett_Johansson_by_Gage_Skidmore_2_%28cropped%29.jpg",
+        imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Scarlett_Johansson-8588.jpg",
         baseValuation: 26,
         stats: { Fame: 98, BoxOffice: 100, Acting: 95, Action: 93, OVR: 96 },
         tags: ["Marvel", "Avenger", "A-List", "Highest Grossing"]
@@ -400,7 +400,7 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         category: "Action Legend",
         subtitle: "John Wick / The Matrix",
         description: "Beloved global action superstar celebrated for practical stunt mastery and wholesome culture.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/90/Keanu_Reeves_%28Crop_and_Levels%29_%28cropped%29.jpg/440px-Keanu_Reeves_%28Crop_and_Levels%29_%28cropped%29.jpg",
+        imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Keanu_Reeves_%E2%80%93_Dogstar_%E2%80%93_Tons_of_Rock_2026-3.jpg",
         baseValuation: 25,
         stats: { Fame: 97, Combat: 96, Likability: 100, Longevity: 96, OVR: 96 },
         tags: ["Matrix", "John Wick", "Action", "Icon"]
@@ -411,7 +411,7 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         category: "Leading Man",
         subtitle: "Dune / Wonka",
         description: "Generational box office titan leading back-to-back blockbusters Dune: Part Two and Wonka.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/5/52/Timoth%C3%A9e_Chalamet_2019.jpg/440px-Timoth%C3%A9e_Chalamet_2019.jpg",
+        imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Timoth%C3%A9e_Chalamet-63541_(cropped).jpg",
         baseValuation: 25,
         stats: { Fame: 97, Acting: 96, BoxOffice: 95, Trendsetter: 97, OVR: 96 },
         tags: ["Dune", "Wonka", "Oscar Nominee", "Leading Man"]
@@ -422,7 +422,7 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         category: "Breakout Star",
         subtitle: "Euphoria / Anyone But You",
         description: "Fastest rising producer and dramatic powerhouse driving modern box office hits.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/e/e0/Sydney_Sweeney_at_Berlinale_2023.jpg/440px-Sydney_Sweeney_at_Berlinale_2023.jpg",
+        imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Sydney_Sweeney_at_the_2024_Toronto_International_Film_Festival_04_(Cropped).jpg",
         baseValuation: 23,
         stats: { Fame: 96, Charisma: 97, Producer: 92, Hype: 98, OVR: 94 },
         tags: ["Euphoria", "Producer", "Rom-Com", "Breakout"]
@@ -465,7 +465,7 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         category: "Cultural Phenom",
         subtitle: "The Eras Tour / 14x Grammy Winner",
         description: "Billionaire music industry sovereign, defining pop culture storytelling and historic stadium tours.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b5/191125_Taylor_Swift_at_the_2019_American_Music_Awards.png/440px-191125_Taylor_Swift_at_the_2019_American_Music_Awards.png",
+        imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Taylor_Swift_at_the_2023_MTV_Video_Music_Awards_(3).png",
         baseValuation: 30,
         stats: { Fame: 100, Songwriting: 99, Empire: 100, Fanbase: 100, OVR: 100 },
         tags: ["Eras Tour", "Grammy", "Billionaire", "Icon"]
@@ -476,7 +476,7 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         category: "Vocal Sovereign",
         subtitle: "Renaissance / 32x Grammy Winner",
         description: "Most decorated Grammy artist in music history, master choreographer and undisputed live performer.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/17/Beyonc%C3%A9_at_The_Lion_King_European_Premiere_2019.png/440px-Beyonc%C3%A9_at_The_Lion_King_European_Premiere_2019.png",
+        imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Beyonc%C3%A9_-_Tottenham_Hotspur_Stadium_-_1st_June_2023_(10_of_118)_(52946364598)_(best_crop).jpg",
         baseValuation: 29,
         stats: { Fame: 99, Vocals: 100, StagePresence: 100, Legacy: 99, OVR: 99 },
         tags: ["Queen Bey", "Grammy Legend", "Renaissance", "Performer"]
@@ -487,7 +487,7 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         category: "Synth Pop King",
         subtitle: "Blinding Lights / After Hours",
         description: "Spotify record-holder for the #1 billboard hit of all time Blinding Lights.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a0/The_Weeknd_Cannes_2023.png/440px-The_Weeknd_Cannes_2023.png",
+        imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/The_Weeknd_Cannes_2023.png",
         baseValuation: 27,
         stats: { Fame: 98, Streaming: 100, Production: 96, Vocals: 95, OVR: 97 },
         tags: ["Blinding Lights", "Starboy", "Billboard #1", "RnB"]
@@ -498,7 +498,7 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         category: "Hip-Hop Megastar",
         subtitle: "OVO Sound / Billboard Record Holder",
         description: "Most charted singles in Billboard history with unmatched hitmaking continuity.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/2/28/Drake_July_2016.jpg/440px-Drake_July_2016.jpg",
+        imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Drake_July_2016.jpg",
         baseValuation: 26,
         stats: { Fame: 98, Hits: 99, Flow: 94, Culture: 97, OVR: 96 },
         tags: ["OVO", "Billboard", "Rap", "Hitmaker"]
@@ -509,7 +509,7 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         category: "Mogul & Superstar",
         subtitle: "Fenty / Diamonds",
         description: "Billionaire cosmetics and fashion empire founder, nine-time Grammy winner.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c2/Rihanna_Fenty_2018.png/440px-Rihanna_Fenty_2018.png",
+        imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Rihanna_visits_U.S._Embassy_in_Barbados_2024_(cropped).jpg",
         baseValuation: 28,
         stats: { Fame: 99, Style: 100, Hits: 96, Business: 99, OVR: 98 },
         tags: ["Fenty", "Super Bowl", "Diamonds", "Billionaire"]
@@ -520,7 +520,7 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         category: "Alt-Pop Prodigy",
         subtitle: "9x Grammy & 2x Oscar Winner",
         description: "Youngest double Oscar winner in history with genre-bending anthems and authenticity.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d3/Billie_Eilish_at_the_2024_Golden_Globes.jpg/440px-Billie_Eilish_at_the_2024_Golden_Globes.jpg",
+        imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/BillieEilishO2140725-39_-_54665577407_(cropped).jpg",
         baseValuation: 26,
         stats: { Fame: 97, Artistry: 98, Oscar: 99, Production: 95, OVR: 96 },
         tags: ["Grammy", "Oscar Winner", "Alt Pop", "Visionary"]
@@ -531,7 +531,7 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         category: "Funk Virtuoso",
         subtitle: "Silk Sonic / 15x Grammy Winner",
         description: "Unmatched live showman, retro funk genius, and multi-instrumentalist.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b1/Bruno_Mars_in_2017.jpg/440px-Bruno_Mars_in_2017.jpg",
+        imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/BrunoMars24KMagicWorldTourLive_(cropped).jpg",
         baseValuation: 25,
         stats: { Fame: 96, Showmanship: 100, Vocals: 98, Funk: 99, OVR: 96 },
         tags: ["Silk Sonic", "Grammy", "Funk", "Showman"]
@@ -542,7 +542,7 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         category: "Nu-Disco Queen",
         subtitle: "Future Nostalgia / Radical Optimism",
         description: "Three-time Grammy winner whose electric disco grooves dominated dancefloors worldwide.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/1c/Dua_Lipa_at_the_2024_Golden_Globes_%28cropped%29.jpg/440px-Dua_Lipa_at_the_2024_Golden_Globes_%28cropped%29.jpg",
+        imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Dua_Lipa-69798_(cropped).jpg",
         baseValuation: 24,
         stats: { Fame: 96, Dance: 97, Bops: 96, Glamour: 98, OVR: 95 },
         tags: ["Future Nostalgia", "Grammy", "Disco Pop", "Global"]
@@ -553,7 +553,7 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         category: "Rap God",
         subtitle: "8 Mile / Greatest Lyricist",
         description: "Diamond-certified hip-hop immortal, rapid-fire lyrical technician, and Oscar winner.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/4/4a/Eminem_-_Concert_for_Valor_in_Washington%2C_D.C._Nov._11%2C_2014_%282%29_%28cropped%29.jpg/440px-Eminem_-_Concert_for_Valor_in_Washington%2C_D.C._Nov._11%2C_2014_%282%29_%28cropped%29.jpg",
+        imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Eminem_-_Concert_for_Valor_in_Washington%2C_D.C._Nov._11%2C_2014_(2)_(cropped).jpg",
         baseValuation: 27,
         stats: { Fame: 98, LyricalSpeed: 100, Legacy: 99, Technicality: 99, OVR: 98 },
         tags: ["Slim Shady", "Rap God", "Oscar Winner", "Hip Hop"]
@@ -564,7 +564,7 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         category: "Vocal Virtuoso",
         subtitle: "Wicked / Positions",
         description: "Four-octave vocal virtuoso with whistle-register agility, star of Wicked.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d9/Ariana_Grande_at_the_2020_Grammy_Awards.png/440px-Ariana_Grande_at_the_2020_Grammy_Awards.png",
+        imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Ariana_Grande_promoting_Wicked_(2024).jpg",
         baseValuation: 25,
         stats: { Fame: 98, VocalRange: 100, Agility: 97, Wicked: 96, OVR: 96 },
         tags: ["Grammy", "Wicked", "Whistle Note", "Vocal Queen"]
@@ -607,7 +607,7 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         category: "King of Romance",
         subtitle: "King Khan / Jawan & DDLJ",
         description: "Global superstar of Indian cinema, breaking all-time box office records with historic charisma.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/6/6e/Shah_Rukh_Khan_graces_the_launch_of_the_new_Santro.jpg/440px-Shah_Rukh_Khan_graces_the_launch_of_the_new_Santro.jpg",
+        imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Shah_Rukh_Khan_graces_the_launch_of_the_new_Santro.jpg",
         baseValuation: 30,
         stats: { Stardom: 100, Charisma: 100, BoxOffice: 99, Romance: 100, OVR: 99 },
         tags: ["King Khan", "SRK", "Blockbuster", "Global Icon"]
@@ -618,7 +618,7 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         category: "Global Megastar",
         subtitle: "Padmaavat / Kalki / Cannes",
         description: "India's highest-paid leading actress, Time 100 honoree, and international fashion royalty.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/b/b6/Deepika_Padukone_Cannes_2019.jpg/440px-Deepika_Padukone_Cannes_2019.jpg",
+        imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Deepika_Padukone_2025_(1).png",
         baseValuation: 28,
         stats: { Stardom: 99, Grace: 100, Acting: 97, GlobalReach: 98, OVR: 98 },
         tags: ["Cannes", "Time 100", "Blockbuster", "Queen"]
@@ -629,7 +629,7 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         category: "Greek God Dancer",
         subtitle: "War / Krrish / Dhoom 2",
         description: "Celebrated for peerless dance virtuosity, Greek-god screen presence, and high-octane action.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/9/9c/Hrithik_at_Rado_launch.jpg/440px-Hrithik_at_Rado_launch.jpg",
+        imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Hrithik_at_Rado_launch.jpg",
         baseValuation: 27,
         stats: { Stardom: 97, Dancing: 100, Action: 98, ScreenCharm: 98, OVR: 97 },
         tags: ["Greek God", "Dance Legend", "War", "Action"]
@@ -640,7 +640,7 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         category: "National Award Star",
         subtitle: "Gangubai Kathiawadi / RRR",
         description: "National Award-winning actress celebrated for transformative dramatic weight and versatility.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/1/12/Alia_Bhatt_at_Berlinale_2022.jpg/440px-Alia_Bhatt_at_Berlinale_2022.jpg",
+        imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Alia_Bhatt_attends_at_the_2026_Cannes_Film_Festival_(cropped)_(cropped).jpg",
         baseValuation: 27,
         stats: { Stardom: 98, Acting: 99, Versatility: 98, CriticalAcclaim: 98, OVR: 98 },
         tags: ["National Award", "Gangubai", "Met Gala", "RRR"]
@@ -651,7 +651,7 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         category: "Actor's Actor",
         subtitle: "Animal / Rockstar / Barfi",
         description: "Effortless method brilliance, starring in the historic blockbuster Animal.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/a2/Ranbir_Kapoor_promoting_Brahmastra.jpg/440px-Ranbir_Kapoor_promoting_Brahmastra.jpg",
+        imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Ranbir_Kapoor_snapped_at_Kalina_airport.jpg",
         baseValuation: 26,
         stats: { Stardom: 97, Acting: 99, Intensity: 97, Range: 98, OVR: 97 },
         tags: ["Animal", "Rockstar", "Method", "Superstar"]
@@ -662,7 +662,7 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         category: "High-Voltage Dynamo",
         subtitle: "Bajirao Mastani / Gully Boy",
         description: "Explosive, theatrical chameleon with boundary-pushing fashion and raw passion.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/d/d4/Ranveer_Singh_in_2023.jpg/440px-Ranveer_Singh_in_2023.jpg",
+        imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Ranveer_Singh_in_2023_(1)_(cropped).jpg",
         baseValuation: 25,
         stats: { Stardom: 96, Energy: 100, Transformation: 98, Fashion: 100, OVR: 96 },
         tags: ["Gully Boy", "Energy", "Chameleon", "Style"]
@@ -673,7 +673,7 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         category: "Bhaijaan of Bollywood",
         subtitle: "Tiger / Bajrangi Bhaijaan",
         description: "One of the most mass-adored box-office titans in film history with unmatched fandom.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/8/86/Salman_Khan_at_Tubelight_trailer_launch.jpg/440px-Salman_Khan_at_Tubelight_trailer_launch.jpg",
+        imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Salmanrampwalk.png",
         baseValuation: 27,
         stats: { Stardom: 99, MassAppeal: 100, Fandom: 100, Swag: 98, OVR: 97 },
         tags: ["Bhaijaan", "Tiger", "Mass Hero", "Megastar"]
@@ -684,7 +684,7 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         category: "Shahenshah of Cinema",
         subtitle: "Sholay / Deewaar / Piku",
         description: "The Star of the Millennium, iconic baritone voice, and defining pillar of Indian culture.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/c6/Indian_actor_Amitabh_Bachchan.jpg/440px-Indian_actor_Amitabh_Bachchan.jpg",
+        imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Indian_actor_Amitabh_Bachchan.jpg",
         baseValuation: 29,
         stats: { Stardom: 100, Voice: 100, Gravitas: 100, Legacy: 100, OVR: 99 },
         tags: ["Shahenshah", "Big B", "Legend", "Millennium Star"]
@@ -695,7 +695,7 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         category: "Global Trailblazer",
         subtitle: "Citadel / Barfi! / Miss World",
         description: "Miss World 2000 winner, Hollywood franchise lead in Citadel, and international producer.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/a/ad/Priyanka_Chopra_at_Bulgary_launch%2C_2024.jpg/440px-Priyanka_Chopra_at_Bulgary_launch%2C_2024.jpg",
+        imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Priyanka_Chopra_at_Bulgary_launch,_2024_(cropped).jpg",
         baseValuation: 26,
         stats: { Stardom: 97, GlobalReach: 99, Charisma: 98, Adaptability: 96, OVR: 96 },
         tags: ["Miss World", "Citadel", "Global", "Trailblazer"]
@@ -706,7 +706,7 @@ export const DRAFT_PRESETS: DraftPreset[] = [
         category: "Blockbuster Siren",
         subtitle: "Tiger 3 / Chikni Chameli / Kay Beauty",
         description: "Blockbuster action star, Bollywood's defining dance siren, and founder of Kay Beauty.",
-        imageUrl: "https://upload.wikimedia.org/wikipedia/commons/thumb/c/cd/Katrina_Kaif_promoting_Bharat_in_2019.jpg/440px-Katrina_Kaif_promoting_Bharat_in_2019.jpg",
+        imageUrl: "https://commons.wikimedia.org/wiki/Special:FilePath/Katrina_Kaif_in_2018.jpg",
         baseValuation: 24,
         stats: { Stardom: 96, Dancing: 99, ScreenGlam: 99, Business: 94, OVR: 95 },
         tags: ["Tiger", "Dance", "Kay Beauty", "Superstar"]
