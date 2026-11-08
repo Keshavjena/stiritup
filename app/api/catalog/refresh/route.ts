@@ -1,17 +1,14 @@
 import { NextRequest, NextResponse } from "next/server"
 import { runIncrementalCatalogRefresh } from "@/lib/catalog/refresh-service"
+import { isAuthorizedCron } from "@/lib/security/auth"
 
 export const dynamic = "force-dynamic"
 
 export async function POST(req: NextRequest) {
   try {
-    const authHeader = req.headers.get("authorization")
-    const cronSecret = process.env.CRON_SECRET
-
-    // If CRON_SECRET is configured, check bearer token
-    if (cronSecret && authHeader !== `Bearer ${cronSecret}`) {
+    if (!isAuthorizedCron(req)) {
       return NextResponse.json(
-        { success: false, error: "Unauthorized" },
+        { success: false, error: "Unauthorized: Invalid or missing cron secret" },
         { status: 401 }
       )
     }

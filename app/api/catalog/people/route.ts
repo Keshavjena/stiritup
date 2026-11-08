@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server"
 import { getPeople, upsertPerson } from "@/lib/catalog/service"
+import { isAuthorizedAdmin } from "@/lib/security/auth"
 
 export const dynamic = "force-dynamic"
 
@@ -50,23 +51,28 @@ export async function GET(req: NextRequest) {
 export async function POST(req: NextRequest) {
   try {
     const body = await req.json()
-    if (!body.name) {
+    const name = typeof body.name === "string" ? body.name.trim().slice(0, 100) : ""
+    if (!name) {
       return NextResponse.json(
-        { success: false, error: "Person name is required" },
+        { success: false, error: "Valid person name (max 100 chars) is required" },
         { status: 400 }
       )
     }
 
+    const isAdmin = isAuthorizedAdmin(req)
+    // Only authorized admins can directly write pre-approved records
+    const status = isAdmin ? (body.moderationStatus || "approved") : "pending"
+
     const person = upsertPerson({
-      name: body.name,
+      name,
       gender: body.gender,
-      category: body.category,
-      tags: body.tags,
+      category: typeof body.category === "string" ? body.category.trim().slice(0, 50) : body.category,
+      tags: Array.isArray(body.tags) ? body.tags.slice(0, 20) : body.tags,
       provider: body.provider || "community",
       externalId: body.externalId,
-      description: body.description,
-      aliases: body.aliases,
-      moderationStatus: body.moderationStatus || "approved"
+      description: typeof body.description === "string" ? body.description.trim().slice(0, 500) : body.description,
+      aliases: Array.isArray(body.aliases) ? body.aliases.slice(0, 20) : body.aliases,
+      moderationStatus: status
     })
 
     return NextResponse.json({

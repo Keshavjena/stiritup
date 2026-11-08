@@ -42,12 +42,53 @@ export function releaseJobLock(lockName: string, lockedBy: string): void {
 /**
  * Performs a lightweight HTTP check to verify source image existence and health
  */
+function isSafeExternalImageUrl(urlStr: string): boolean {
+  try {
+    const parsed = new URL(urlStr)
+    if (parsed.protocol !== "https:" && parsed.protocol !== "http:") {
+      return false
+    }
+    const hostname = parsed.hostname.toLowerCase()
+
+    if (
+      hostname === "localhost" ||
+      hostname === "127.0.0.1" ||
+      hostname === "0.0.0.0" ||
+      hostname === "::1" ||
+      hostname.endsWith(".local") ||
+      hostname.endsWith(".internal") ||
+      hostname === "169.254.169.254"
+    ) {
+      return false
+    }
+
+    const match = hostname.match(/^(\d{1,3})\.(\d{1,3})\.(\d{1,3})\.(\d{1,3})$/)
+    if (match) {
+      const octet1 = parseInt(match[1], 10)
+      const octet2 = parseInt(match[2], 10)
+      if (octet1 === 10 || octet1 === 127) return false
+      if (octet1 === 169 && octet2 === 254) return false
+      if (octet1 === 192 && octet2 === 168) return false
+      if (octet1 === 172 && octet2 >= 16 && octet2 <= 31) return false
+    }
+
+    return true
+  } catch {
+    return false
+  }
+}
+
 async function checkRemoteImageHealth(
   imageUrl: string
 ): Promise<{ ok: boolean; status: number; contentType?: string; error?: string }> {
   // If local static asset, always valid
   if (imageUrl.startsWith("/")) {
     return { ok: true, status: 200, contentType: "image/jpeg" }
+  }
+
+  // SSRF Protection: Reject private/loopback/cloud-metadata destinations
+  if (!isSafeExternalImageUrl(imageUrl)) {
+    return { ok: false, status: 400, error: "Disallowed target URL (SSRF protection)" }
   }
 
   const controller = new AbortController()

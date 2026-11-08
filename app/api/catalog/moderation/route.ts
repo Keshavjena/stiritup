@@ -5,11 +5,19 @@ import {
   rejectCommunitySubmission,
   removeCatalogContent
 } from "@/lib/catalog/moderation-service"
+import { isAuthorizedAdmin } from "@/lib/security/auth"
 
 export const dynamic = "force-dynamic"
 
 export async function GET(req: NextRequest) {
   try {
+    if (!isAuthorizedAdmin(req)) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized: Admin authorization required" },
+        { status: 401 }
+      )
+    }
+
     const { searchParams } = new URL(req.url)
     const status = (searchParams.get("status") || "pending") as any
 
@@ -31,6 +39,13 @@ export async function GET(req: NextRequest) {
 
 export async function POST(req: NextRequest) {
   try {
+    if (!isAuthorizedAdmin(req)) {
+      return NextResponse.json(
+        { success: false, error: "Unauthorized: Admin authorization required" },
+        { status: 401 }
+      )
+    }
+
     const body = await req.json()
     const { action, submissionId, reason, targetType, targetId, reviewerId } = body
 

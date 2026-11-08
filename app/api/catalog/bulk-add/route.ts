@@ -13,10 +13,21 @@ export async function POST(req: NextRequest) {
       )
     }
 
+    // Guard against oversized payload attacks (max 10,000 characters)
+    if (names.length > 10000) {
+      return NextResponse.json(
+        { success: false, error: "Payload too large. Maximum 10,000 characters allowed per bulk addition." },
+        { status: 413 }
+      )
+    }
+
+    const safeCategory = typeof category === "string" ? category.trim().slice(0, 50) : undefined
+    const safeAddedBy = typeof addedBy === "string" ? addedBy.trim().slice(0, 50) : undefined
+
     const result = bulkAddPersons({
       rawNames: names,
-      category,
-      addedBy,
+      category: safeCategory,
+      addedBy: safeAddedBy,
       gender
     })
 

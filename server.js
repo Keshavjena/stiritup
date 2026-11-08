@@ -13,10 +13,14 @@ app.prepare().then(() => {
   const httpServer = createServer(handler);
 
   const io = new Server(httpServer, {
+    pingInterval: 20000, // 20s heartbeat to prevent Cloudflare 100s proxy timeout
+    pingTimeout: 15000,
     cors: {
       origin: process.env.ALLOWED_ORIGINS
-        ? process.env.ALLOWED_ORIGINS.split(",")
-        : "*",
+        ? process.env.ALLOWED_ORIGINS.split(",").map((o) => o.trim())
+        : dev
+          ? ["http://localhost:3000", "http://127.0.0.1:3000"]
+          : false,
       methods: ["GET", "POST"],
       credentials: true
     }
@@ -27,12 +31,34 @@ app.prepare().then(() => {
   //   code, players, gameId, gameStarted, gameContent, personRounds,
   //   contentIndex, currentContent, currentPlayer, playerScores, sips,
   //   votes, kmkVotes, votingReveal, timerActive, timeLeft, timerDuration,
-  //   settings, gameHistory
+  //   settings, gameHistory, cleanupTimeout
   // }
   const rooms = {};
 
+  function scheduleRoomCleanup(roomCode) {
+    const room = rooms[roomCode];
+    if (!room) return;
+    if (room.cleanupTimeout) {
+      clearTimeout(room.cleanupTimeout);
+      room.cleanupTimeout = null;
+    }
+    // Purge room from memory after 15 minutes of all players disconnecting
+    if (room.players.every((p) => !p.connected)) {
+      room.cleanupTimeout = setTimeout(() => {
+        if (rooms[roomCode] && rooms[roomCode].players.every((p) => !p.connected)) {
+          if (rooms[roomCode].draftTimerInterval) {
+            clearInterval(rooms[roomCode].draftTimerInterval);
+            rooms[roomCode].draftTimerInterval = null;
+          }
+          delete rooms[roomCode];
+          console.log(`[Memory Cleanup] Purged inactive room ${roomCode} after TTL expiration.`);
+        }
+      }, 15 * 60 * 1000);
+    }
+  }
+
   function getOrCreateRoom(rawCode) {
-    const code = (rawCode || "").toUpperCase().trim();
+    const code = (rawCode || "").toUpperCase().trim().slice(0, 16);
     if (!rooms[code]) {
       rooms[code] = {
         code,
@@ -55,8 +81,14 @@ app.prepare().then(() => {
         settings: {},
         gameHistory: [],
         draftState: null,
-        draftTimerInterval: null
+        draftTimerInterval: null,
+        cleanupTimeout: null,
+        createdAt: Date.now()
       };
+    } else if (rooms[code].cleanupTimeout) {
+      // Re-activating room: cancel pending cleanup
+      clearTimeout(rooms[code].cleanupTimeout);
+      rooms[code].cleanupTimeout = null;
     }
     return rooms[code];
   }
@@ -234,15 +266,35 @@ app.prepare().then(() => {
     }, 1000);
   }
 
+  const HOST_ACTIONS = new Set([
+    "start-game",
+    "sync-questions",
+    "update-custom-deck",
+    "skip-content",
+    "shuffle-content",
+    "award-point",
+    "toggle-timer",
+    "reset-timer",
+    "custom-persons-added"
+  ]);
+
+  const HOST_DRAFT_ACTIONS = new Set([
+    "init-draft",
+    "sold-item",
+    "pass-item",
+    "next-item",
+    "undo-bid",
+    "reset-draft"
+  ]);
+
   io.on("connection", (socket) => {
     console.log("Client connected:", socket.id);
 
     socket.on("join-room", (rawCode, rawName, deviceId) => {
-      const roomCode = (rawCode || "").toUpperCase().trim();
-      const playerName = (rawName || "").trim();
+      const roomCode = String(rawCode || "").toUpperCase().trim().slice(0, 16);
+      const playerName = String(rawName || "").trim().slice(0, 40);
       if (!roomCode || !playerName) return;
 
-      socket.join(roomCode);
       const room = getOrCreateRoom(roomCode);
 
       // Check if player exists by name (case-insensitive) or by stable deviceId
@@ -251,6 +303,16 @@ app.prepare().then(() => {
           (p.name && p.name.toLowerCase() === playerName.toLowerCase()) ||
           (deviceId && p.deviceId && p.deviceId === deviceId)
       );
+
+      // Enforce room player capacity (max 50)
+      if (room.players.length >= 50 && !existingPlayer) {
+        socket.emit("room-error", { message: "Room is full (maximum 50 players reached)." });
+        return;
+      }
+
+      socket.join(roomCode);
+      socket.data = socket.data || {};
+      socket.data.roomCode = roomCode;
 
       if (existingPlayer) {
         // Player rejoining with same name or device: preserve their state, scores, and answers
@@ -308,7 +370,7 @@ app.prepare().then(() => {
     });
 
     const handleLeave = (rawCode) => {
-      const roomCode = (rawCode || "").toUpperCase().trim();
+      const roomCode = String(rawCode || "").toUpperCase().trim().slice(0, 16);
       const room = rooms[roomCode];
       if (!room) return;
 
@@ -328,12 +390,13 @@ app.prepare().then(() => {
 
         broadcastRoomPlayers(roomCode);
 
-        // If all players disconnected, pause/clear draft timer
+        // If all players disconnected, pause/clear draft timer and schedule TTL cleanup
         if (room.players.every((p) => !p.connected)) {
           if (room.draftTimerInterval) {
             clearInterval(room.draftTimerInterval);
             room.draftTimerInterval = null;
           }
+          scheduleRoomCleanup(roomCode);
         }
       }
     };
@@ -347,6 +410,11 @@ app.prepare().then(() => {
       const roomCode = (rawCode || "").toUpperCase().trim();
       const room = rooms[roomCode];
       if (room) {
+        const sender = room.players.find((p) => p.id === socket.id);
+        if (!sender || !sender.isHost) {
+          console.warn(`[Security] Blocked unauthorized select-game from non-host ${socket.id} in room ${roomCode}`);
+          return;
+        }
         room.gameId = gameId;
         room.gameStarted = false;
         room.gameContent = [];
@@ -364,6 +432,11 @@ app.prepare().then(() => {
       const roomCode = (rawCode || "").toUpperCase().trim();
       const room = rooms[roomCode];
       if (room && settings) {
+        const sender = room.players.find((p) => p.id === socket.id);
+        if (!sender || !sender.isHost) {
+          console.warn(`[Security] Blocked unauthorized update-room-settings from non-host ${socket.id} in room ${roomCode}`);
+          return;
+        }
         room.settings = { ...room.settings, ...settings };
         io.to(roomCode).emit("room-settings-updated", room.settings);
       }
@@ -373,6 +446,11 @@ app.prepare().then(() => {
       const roomCode = (rawCode || "").toUpperCase().trim();
       const room = rooms[roomCode];
       if (room) {
+        const sender = room.players.find((p) => p.id === socket.id);
+        if (!sender || !sender.isHost) {
+          console.warn(`[Security] Blocked unauthorized start-game from non-host ${socket.id} in room ${roomCode}`);
+          return;
+        }
         room.gameStarted = true;
         if (gameId) room.gameId = gameId;
         if (settings) room.settings = { ...room.settings, ...settings };
@@ -389,6 +467,12 @@ app.prepare().then(() => {
       const room = rooms[roomCode];
 
       if (room && action) {
+        const sender = room.players.find((p) => p.id === socket.id);
+        if (HOST_ACTIONS.has(action.type) && (!sender || !sender.isHost)) {
+          console.warn(`[Security] Blocked unauthorized game-action '${action.type}' from ${socket.id} in room ${roomCode}`);
+          return;
+        }
+
         if (action.type === "start-game") {
           room.gameStarted = true;
           room.settings = action.payload || {};
@@ -477,10 +561,15 @@ app.prepare().then(() => {
     socket.on("cast-vote", (rawCode, voteData) => {
       const roomCode = (rawCode || "").toUpperCase().trim();
       const room = rooms[roomCode];
-      if (room && voteData) {
-        const voter = voteData.voterName || voteData.voter;
-        if (voter && voteData.candidate) {
-          room.votes[voter] = voteData.candidate;
+      if (room && voteData && typeof voteData === "object") {
+        const voter = typeof (voteData.voterName || voteData.voter) === "string"
+          ? String(voteData.voterName || voteData.voter).slice(0, 50)
+          : null;
+        const candidate = typeof voteData.candidate === "string"
+          ? String(voteData.candidate).slice(0, 100)
+          : null;
+        if (voter && candidate) {
+          room.votes[voter] = candidate;
         }
       }
       io.to(roomCode).emit("cast-vote", voteData);
@@ -488,17 +577,20 @@ app.prepare().then(() => {
 
     socket.on("send-reaction", (rawCode, reaction) => {
       const roomCode = (rawCode || "").toUpperCase().trim();
-      io.to(roomCode).emit("send-reaction", reaction);
+      const safeReaction = typeof reaction === "string" ? reaction.slice(0, 20) : "🔥";
+      io.to(roomCode).emit("send-reaction", safeReaction);
     });
 
     socket.on("anonymous-prompt", (rawCode, promptText) => {
       const roomCode = (rawCode || "").toUpperCase().trim();
       const room = rooms[roomCode];
-      if (room && promptText) {
+      const sanitized = typeof promptText === "string" ? promptText.trim().slice(0, 300) : "";
+      if (room && sanitized) {
         const insertIndex = (room.contentIndex + 1) % (room.gameContent.length || 1);
-        room.gameContent.splice(insertIndex, 0, `Anonymous Prompt: ${promptText}`);
+        room.gameContent.splice(insertIndex, 0, `Anonymous Prompt: ${sanitized}`);
+        io.to(roomCode).emit("anonymous-prompt", sanitized);
       }
-      io.to(roomCode).emit("anonymous-prompt", promptText);
+    });
     });
 
     socket.on("sync-sips", (rawCode, sipsData) => {
@@ -545,6 +637,12 @@ app.prepare().then(() => {
       if (!room || !action) return;
 
       const { type, payload } = action;
+
+      const sender = room.players.find((p) => p.id === socket.id);
+      if (HOST_DRAFT_ACTIONS.has(type) && (!sender || !sender.isHost)) {
+        console.warn(`[Security] Blocked unauthorized draft-action '${type}' from non-host ${socket.id} in room ${roomCode}`);
+        return;
+      }
 
       if (type === "init-draft") {
         const { preset, teams } = payload;
@@ -817,8 +915,12 @@ app.prepare().then(() => {
 
     socket.on("disconnect", () => {
       console.log("Client disconnected:", socket.id);
-      for (const roomCode of Object.keys(rooms)) {
-        handleLeave(roomCode);
+      if (socket.data && socket.data.roomCode) {
+        handleLeave(socket.data.roomCode);
+      } else {
+        for (const roomCode of Object.keys(rooms)) {
+          handleLeave(roomCode);
+        }
       }
     });
   });
